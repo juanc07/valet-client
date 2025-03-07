@@ -68,71 +68,78 @@ function MainContent() {
   const wallet = useWallet();
   const { publicKey, connected } = wallet;
   const navigate = useNavigate();
-  const [hasNavigated, setHasNavigated] = useState(false);
+  const [hasCheckedWallet, setHasCheckedWallet] = useState(false);
 
   useEffect(() => {
     const handleWalletConnection = async () => {
-      if (connected && publicKey && !hasNavigated) {
-        const walletAddress = publicKey.toBase58();
-        try {
-          const user = await getUserByWallet(walletAddress);
-          if (user) {
-            setCurrentUser(user);
-            toast.success(`Welcome back!`, {
+      if (!connected || !publicKey || hasCheckedWallet) return;
+
+      const walletAddress = publicKey.toBase58();
+      console.log("Checking wallet:", walletAddress);
+
+      try {
+        const user = await getUserByWallet(walletAddress);
+        console.log("User response:", user);
+
+        if (user) {
+          // User exists
+          setCurrentUser(user);
+          toast.success(`Welcome back!`, {
+            description: `Connected as ${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`,
+            duration: 3000,
+          });
+        } else {
+          // User not found, create new user
+          const newUserData: Omit<User, "userId"> = {
+            username: `user_${walletAddress.slice(0, 8)}`,
+            solanaWalletAddress: walletAddress,
+            password: "default_password",
+            email: `${walletAddress.slice(0, 8)}@valet.temp`,
+            firstName: "",
+            lastName: "",
+            age: 0,
+            country: "",
+            mobileNumber: "",
+            twitterHandle: "",
+            discordId: "",
+            telegramId: "",
+          };
+          try {
+            console.log("Creating user with data:", newUserData);
+            const newUser = await createUser(newUserData);
+            console.log("Created user response:", newUser);
+            setCurrentUser(newUser);
+            toast.success(`Account created!`, {
               description: `Connected as ${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`,
               duration: 3000,
             });
-            console.log("Existing user fetched:", user);
-          }
-        } catch (error: any) {
-          if (error.message.includes("User not found")) {
-            const newUserData: Omit<User, "userId"> = {
-              username: `user_${walletAddress.slice(0, 8)}`,
-              solanaWalletAddress: walletAddress,
-              password: "default_password",
-              email: `${walletAddress.slice(0, 8)}@valet.temp`,
-              firstName: "",
-              lastName: "",
-              age: 0,
-              country: "",
-              mobileNumber: "",
-              twitterHandle: "",
-              discordId: "",
-              telegramId: "",
-            };
-            try {
-              console.log("Creating user with data:", newUserData);
-              const newUser = await createUser(newUserData);
-              console.log("Created user response:", newUser);
-              setCurrentUser(newUser);
-              toast.success(`Account created!`, {
-                description: `Connected as ${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`,
-                duration: 3000,
-              });
-            } catch (createError) {
-              console.error("Create user error:", createError);
-              toast.error("Failed to create user", {
-                description: "Please try again",
-                duration: 3000,
-              });
-              return;
-            }
-          } else {
-            toast.error("Failed to fetch user", {
-              description: "Connection Error",
+          } catch (createError) {
+            console.error("Create user error:", createError);
+            toast.error("Failed to create user", {
+              description: "Please try again",
               duration: 3000,
             });
             return;
           }
         }
-        console.log("Navigating to /update-profile with currentUser:", currentUser);
-        navigate("/update-profile");
-        setHasNavigated(true);
+
+        // Navigate after setting user
+        setTimeout(() => {
+          console.log("Navigating to /update-profile with currentUser:", currentUser);
+          navigate("/update-profile");
+          setHasCheckedWallet(true);
+        }, 0);
+      } catch (error) {
+        console.error("Error during wallet connection:", error);
+        toast.error("Failed to connect wallet", {
+          description: "An unexpected error occurred. Please try again.",
+          duration: 3000,
+        });
       }
     };
 
     handleWalletConnection();
-  }, [connected, publicKey, setCurrentUser, navigate, hasNavigated]);
+  }, [connected, publicKey, setCurrentUser, navigate, hasCheckedWallet]);
 
   useEffect(() => {
     console.log("MainContent currentUser:", currentUser);

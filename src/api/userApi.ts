@@ -9,6 +9,11 @@ interface AgentCountResponse {
   count: number;
 }
 
+// Interface for the response from getUserByWallet
+interface GetUserByWalletResponse {
+  user: User | null;
+}
+
 export const createUser = async (userData: Omit<User, 'userId'>): Promise<User> => {
   return fetchWrapper(`${BASE_URL}/users`, {
     method: 'POST',
@@ -18,8 +23,9 @@ export const createUser = async (userData: Omit<User, 'userId'>): Promise<User> 
 };
 
 // New endpoint to fetch user by Solana wallet address
-export const getUserByWallet = async (solanaWalletAddress: string): Promise<User> => {
-  return fetchWrapper(`${BASE_URL}/users/by-wallet/${solanaWalletAddress}`);
+export const getUserByWallet = async (solanaWalletAddress: string): Promise<User | null> => {
+  const response = await fetchWrapper<GetUserByWalletResponse>(`${BASE_URL}/users/by-wallet/${solanaWalletAddress}`);
+  return response.user; // Return the user or null directly
 };
 
 // Existing endpoints (unchanged)
