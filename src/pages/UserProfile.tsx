@@ -2,19 +2,11 @@ import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCopy } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "sonner";
-import { getUser } from "../api/userApi";
+import { getUser, getAgentCount } from "../api/userApi";
 import { User } from "../interfaces/user";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useNavigate } from "react-router-dom";
 import { countryOptions } from "../data/countries";
-
-// Mock function for agent count (replace with actual API call)
-const getAgentCount = async (userId: string): Promise<number> => {
-  console.log("Fetching agent count for userId:", userId);
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(5), 500); // Mock: 5 agents
-  });
-};
 
 interface UserProfileProps {
   userId: string;
@@ -78,7 +70,10 @@ export default function UserProfile({ userId }: UserProfileProps) {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-        <div className="text-center text-xl">Loading...</div>
+        <div className="flex flex-col items-center">
+          <div className="w-16 h-16 border-4 border-t-4 border-[#6894f3] border-solid rounded-full animate-spin"></div>
+          <p className="mt-4 text-xl font-medium">Loading your profile...</p>
+        </div>
       </div>
     );
   }

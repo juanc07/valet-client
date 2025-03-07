@@ -3,6 +3,11 @@ import { fetchWrapper } from '../utils/fetchWrapper';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
+// Interface for agent count response
+interface AgentCountResponse {
+  count: number;
+}
+
 export const createUser = async (userData: Omit<User, 'userId'>): Promise<User> => {
   return fetchWrapper(`${BASE_URL}/users`, {
     method: 'POST',
@@ -31,6 +36,13 @@ export const updateUser = async (userId: string, userData: Partial<User>): Promi
     body: JSON.stringify(userData),
     headers: { 'Content-Type': 'application/json' },
   });
+};
+
+export const getAgentCount = async (userId: string): Promise<number> => {
+  const response = await fetchWrapper<AgentCountResponse>(`${BASE_URL}/users/${userId}/agents/count`, {
+    method: "GET",
+  });
+  return response.count; // Now TypeScript knows response has a 'count' property
 };
 
 export const deleteUser = async (userId: string): Promise<{ message: string }> => {
