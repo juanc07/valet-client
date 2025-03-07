@@ -46,5 +46,5 @@ export interface Agent {
     twitterAccessSecret?: string; // required if platform contains twitter
     twitterHandle?: string; // optional
     agentType: "basic" | "puppetos" | "thirdparty"; // required in creation default to basic
-    userId: string;  // use current userId
+    createdBy: string;  // userId who created the agent
   }

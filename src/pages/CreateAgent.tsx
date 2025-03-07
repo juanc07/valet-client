@@ -21,7 +21,7 @@ interface FormData {
   humor: boolean;
   formality: string;
   catchphrase: string;
-  agentType: "basic" | "puppetos" | "thirdparty";
+  agentType: "puppetos" | "basic";
   openaiApiKey: string;
 }
 
@@ -109,11 +109,11 @@ export default function CreateAgent() {
         catchphrase: formData.catchphrase,
       },
       agentType: formData.agentType,
-      userId: currentUser.userId,
+      createdBy: currentUser.userId,
       openaiApiKey: formData.openaiApiKey,
     };
 
-    console.log("Submitting agentData:", agentData); // Debug payload
+    console.log("Submitting agentData:", JSON.stringify(agentData, null, 2)); // Pretty-print payload
 
     try {
       const response = await fetchWrapper<{ message: string; agentId: string }>(
@@ -144,7 +144,7 @@ export default function CreateAgent() {
         openaiApiKey: "",
       });
     } catch (err: any) {
-      console.error("Error creating agent:", err.message, err.stack); // Detailed error logging
+      console.error("Error creating agent:", err.message, err.stack);
       setError("Failed to create agent.");
       toast.error("Agent Creation Failed", {
         description: err.message || "Please try again later.",
@@ -168,7 +168,7 @@ export default function CreateAgent() {
                 <div
                   className="flex flex-col lg:flex-row items-center border border-[#494848] px-2 py-4 xl:px-4 xl:py-4 rounded-lg text-center duration-700 lg:text-left cursor-pointer hover:bg-gray-900"
                   onClick={() =>
-                    setFormData((prev) => ({ ...prev, agentType: "thirdparty" }))
+                    setFormData((prev) => ({ ...prev, agentType: "basic" }))
                   }
                 >
                   <img
@@ -196,8 +196,8 @@ export default function CreateAgent() {
                   <input
                     type="radio"
                     name="agentType"
-                    value="thirdparty"
-                    checked={formData.agentType === "thirdparty"}
+                    value="basic"
+                    checked={formData.agentType === "basic"}
                     onChange={handleChange}
                     className="mt-5 lg:mt-3 p-2"
                   />
