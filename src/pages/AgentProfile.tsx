@@ -5,7 +5,8 @@ import { Agent } from "../interfaces/agent";
 import { getAgentById } from "../api/agentApi";
 import { toast } from "sonner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCopy } from "@fortawesome/free-solid-svg-icons";
+import { faCopy, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import { useUser } from "../context/UserContext"; // Added import
 
 export default function AgentProfile() {
   const { agentId } = useParams<{ agentId: string }>();
@@ -35,6 +36,7 @@ export default function AgentProfile() {
   const [loading, setLoading] = useState<boolean>(true);
 
   const { connected: walletConnected } = useWallet();
+  const { currentUser } = useUser(); // Added to access context, though not used yet
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -106,7 +108,7 @@ export default function AgentProfile() {
     if (agentId && walletConnected) {
       fetchAgentData();
     }
-  }, [agentId, walletConnected]);
+  }, [agentId, walletConnected, navigate]);
 
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -121,6 +123,10 @@ export default function AgentProfile() {
         duration: 2000,
       });
     });
+  };
+
+  const handleBack = () => {
+    navigate("/youragent"); // viewMode is preserved in UserContext
   };
 
   if (loading) {
@@ -359,6 +365,17 @@ export default function AgentProfile() {
                 <label className="block text-lg mb-2">Created By</label>
                 <p className="w-full border border-[#494848] text-white p-2 rounded-lg bg-[#222128]">{agentData.createdBy || "Not set"}</p>
               </div>
+            </div>
+
+            {/* Back Button */}
+            <div className="mt-6">
+              <button
+                onClick={handleBack}
+                className="py-2 px-4 bg-[#6a94f0] text-black rounded-lg hover:bg-white/10 hover:text-white transition-all duration-400 flex items-center justify-center gap-2 mx-auto"
+              >
+                <FontAwesomeIcon icon={faArrowLeft} />
+                Back
+              </button>
             </div>
           </div>
         </div>

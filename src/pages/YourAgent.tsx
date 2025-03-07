@@ -4,20 +4,21 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEdit, faEye, faTrash, faCopy } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "sonner";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { Agent } from "../interfaces/agent"; // Your full Agent interface
-import { getAllAgents, deleteAgent } from "../api/agentApi"; // For all agents and delete
-import { getAgentsByUserId } from "../api/userApi"; // For current user's agents
-import { useUser } from "../context/UserContext"; // Assuming you have a UserContext to get the current user
+import { Agent } from "../interfaces/agent";
+import { getAllAgents, deleteAgent } from "../api/agentApi";
+import { getAgentsByUserId } from "../api/userApi";
+import { useUser } from "../context/UserContext";
 
 function YourAgent() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [viewMode, setViewMode] = useState<"myAgents" | "othersAgents">("myAgents"); // Dropdown state
   const { connected: walletConnected } = useWallet();
-  const { currentUser } = useUser(); // Get the current user from context
+  const { currentUser, viewMode, setViewMode } = useUser();
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("YourAgent - viewMode from context:", viewMode); // Log viewMode on mount/update
+
     if (!walletConnected || !currentUser?.userId) {
       navigate("/");
       return;
@@ -27,11 +28,11 @@ function YourAgent() {
       try {
         setLoading(true);
         if (viewMode === "myAgents") {
-          // Fetch only current user's agents
+          console.log("Fetching My Agents for user:", currentUser.userId);
           const userAgents = await getAgentsByUserId(currentUser.userId);
           setAgents(userAgents);
         } else {
-          // Fetch all agents and filter out current user's agents
+          console.log("Fetching Other People's Agents");
           const allAgents = await getAllAgents();
           const othersAgents = allAgents.filter(agent => agent.createdBy !== currentUser.userId);
           setAgents(othersAgents);
@@ -48,7 +49,7 @@ function YourAgent() {
     };
 
     fetchAgents();
-  }, [walletConnected, currentUser, navigate, viewMode]); // Re-fetch when viewMode changes
+  }, [walletConnected, currentUser, navigate, viewMode]);
 
   const handleDelete = async (agentId: string) => {
     if (!confirm(`Are you sure you want to delete agent with ID: ${agentId}?`)) return;
