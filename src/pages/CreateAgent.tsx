@@ -1,4 +1,4 @@
-import { useState, ChangeEvent, FormEvent } from "react";
+import { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import puppet from "../assets/puppet.jpg";
 import openai from "../assets/openai.jpg";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -8,6 +8,8 @@ import {
   faXTwitter,
 } from "@fortawesome/free-brands-svg-icons";
 import { toast } from "sonner";
+import { useWallet } from "@solana/wallet-adapter-react"; // Import useWallet
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 interface FormData {
   name: string;
@@ -31,13 +33,24 @@ export default function CreateAgent() {
   const [error, setError] = useState<string>("");
   const [connected, setConnected] = useState<boolean>(false);
 
+  const { connected: walletConnected } = useWallet(); // Get wallet connection status
+  const navigate = useNavigate();
+
+  // Navigate to Start if wallet is not connected
+  useEffect(() => {
+    if (!walletConnected) {
+      navigate("/"); // Redirect to Start page
+    }
+  }, [walletConnected, navigate]);
+
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
-      [name]: name === "age" ? (isNaN(Number(value)) ? value : Number(value)) : value,
+      [name]:
+        name === "age" ? (isNaN(Number(value)) ? value : Number(value)) : value,
     }));
   };
 
@@ -75,7 +88,6 @@ export default function CreateAgent() {
       puppetosSelected: false,
     });
   };
-
 
   return (
     <>
@@ -245,12 +257,15 @@ export default function CreateAgent() {
                   <button
                     type="button"
                     className="w-full py-2 rounded-4xl flex items-center justify-center gap-2 cursor-pointer text-nowrap transition-all duration-400 ease-in-out backdrop-blur-lg border border-[#6a94f0] hover:bg-white/15"
+                    onClick={() => setConnected(true)} // Temporary local state toggle (replace with wallet logic if needed)
                   >
                     Connect With <FontAwesomeIcon icon={faXTwitter} />
                   </button>
                 ) : (
                   <button
+                    type="button"
                     className="w-full py-2 rounded-4xl flex items-center justify-center gap-2 text-black cursor-pointer bg-[#6a94f0] transition-all duration-400 ease-in-out backdrop-blur-lg border border-white/10 hover:bg-white/10"
+                    onClick={() => setConnected(false)} // Temporary local state toggle
                   >
                     Disconnect <FontAwesomeIcon icon={faXTwitter} />
                   </button>

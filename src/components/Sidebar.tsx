@@ -1,10 +1,12 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { House, Users, UserPlus, FileText } from "lucide-react";
+import { useUser } from "../context/UserContext"; // Import useUser
 
 const Sidebar = () => {
   const location = useLocation();
   const active = location.pathname;
+  const { currentUser } = useUser(); // Get currentUser from context
 
   const menuItems = [
     { name: "Home", path: "/", icon: <House className="text-2xl" /> },
@@ -18,6 +20,15 @@ const Sidebar = () => {
       path: "/createagent",
       icon: <UserPlus className="text-2xl" />,
     },
+    ...(currentUser
+      ? [
+          {
+            name: "Update Profile",
+            path: "/update-profile",
+            icon: <UserPlus className="text-2xl" />, // Reuse UserPlus or choose another icon
+          },
+        ]
+      : []),
     {
       name: "Documentation",
       path: "",

@@ -1,17 +1,22 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image1 from "../assets/logo.png";
 import { Logs, House, Users, UserPlus, FileText } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { toast } from "sonner";
+import { useUser } from "../context/UserContext";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isWalletMenuOpen, setIsWalletMenuOpen] = useState(false);
+  const { currentUser } = useUser();
   const wallet = useWallet();
   const { publicKey, connected, disconnect, connecting } = wallet;
   const { setVisible } = useWalletModal();
+  const navigate = useNavigate();
+
+  console.log("Header currentUser:", currentUser); // Debug log
 
   const handleWalletClick = async () => {
     try {
@@ -42,39 +47,11 @@ export default function Header() {
         description: "Your wallet has been successfully disconnected",
         duration: 3000,
       });
+      navigate("/"); // Redirect to Start page on disconnect
     } catch (error) {
-      ("");
+      console.error("Disconnect error:", error);
     }
   };
-
-  useEffect(() => {
-    if (connected && publicKey) {
-
-      toast.success(`Wallet connected`, {
-        description: `Connected as ${publicKey
-          .toBase58()
-          .slice(0, 4)}...${publicKey.toBase58().slice(-4)}`,
-        duration: 3000,
-      });
-    }
-  }, [connected, publicKey]);
-
-  useEffect(() => {
-    const handleConnectionError = (event: any) => {
-      if (event.error && event.message) {
-        toast.error("Connection Error", {
-          description: event.message || "Failed to connect wallet",
-          duration: 3000,
-        });
-      }
-    };
-
-    window.addEventListener("error", handleConnectionError);
-
-    return () => {
-      window.removeEventListener("error", handleConnectionError);
-    };
-  }, []);
 
   return (
     <header className="fixed top-0 left-0 w-full px-4 md:px-8 flex items-center justify-between p-4 bg-black text-white shadow-md z-50 border-b border-[#494848]">
@@ -99,9 +76,7 @@ export default function Header() {
             {connecting
               ? "Connecting..."
               : connected && publicKey
-              ? `${publicKey.toBase58().slice(0, 4)}...${publicKey
-                  .toBase58()
-                  .slice(-4)}`
+              ? `${publicKey.toBase58().slice(0, 4)}...${publicKey.toBase58().slice(-4)}`
               : "Connect Wallet"}
           </button>
           {connected && publicKey && isWalletMenuOpen && (
@@ -126,7 +101,7 @@ export default function Header() {
       {isMenuOpen && (
         <div className="absolute top-16 right-0 w-64 bg-[#6894f3] text-white mr-3 shadow-xl lg:hidden z-50">
           <div className="flex flex-col gap-2 p-4">
-            <span className="font-light ml-2">Terminal</span>
+            <span className="font-light ml-2">Terminals</span>
             <a
               href="/"
               className="flex items-center gap-3 p-2 hover:bg-[#8faef0] rounded-lg transition-all duration-400 ease-in-out"
@@ -148,6 +123,15 @@ export default function Header() {
               <UserPlus className="text-xl" />
               <span>Create Agents</span>
             </a>
+            {currentUser && (
+              <a
+                href="/update-profile"
+                className="flex items-center gap-3 p-2 hover:bg-[#8faef0] rounded-lg transition-all duration-400 ease-in-out"
+              >
+                <UserPlus className="text-xl" />
+                <span>Update Profile</span>
+              </a>
+            )}
             <a
               target="_blank"
               href="https://x.com/home"
