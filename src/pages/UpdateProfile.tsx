@@ -1,7 +1,6 @@
 import { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faDiscord, faTelegram, faXTwitter } from "@fortawesome/free-brands-svg-icons";
-import { faCopy } from "@fortawesome/free-solid-svg-icons"; // Correct import for faCopy
+import { faCopy } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "sonner";
 import { getUser, updateUser } from "../api/userApi";
 import { User } from "../interfaces/user";
@@ -40,7 +39,6 @@ export default function UpdateProfile({ userId }: UpdateProfileProps) {
     telegramId: "",
   });
   const [error, setError] = useState<string>("");
-  const [connected, setConnected] = useState<boolean>(false);
 
   const { connected: walletConnected, publicKey } = useWallet();
   const navigate = useNavigate();
@@ -358,45 +356,6 @@ export default function UpdateProfile({ userId }: UpdateProfileProps) {
               </div>
 
               {error && <p className="text-red-500 text-center mt-2">{error}</p>}
-
-              <div className="w-full flex items-center justify-between mb-6">
-                {!connected ? (
-                  <button
-                    type="button"
-                    className="w-full py-2 rounded-4xl flex items-center justify-center gap-2 cursor-pointer text-nowrap transition-all duration-400 ease-in-out backdrop-blur-lg border border-[#6a94f0] hover:bg-white/15"
-                    onClick={() => setConnected(true)}
-                  >
-                    Connect With <FontAwesomeIcon icon={faXTwitter} />
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="w-full py-2 rounded-4xl flex items-center justify-center gap-2 text-black cursor-pointer bg-[#6a94f0] transition-all duration-400 ease-in-out backdrop-blur-lg border border-white/10 hover:bg-white/10"
-                    onClick={() => setConnected(false)}
-                  >
-                    Disconnect <FontAwesomeIcon icon={faXTwitter} />
-                  </button>
-                )}
-              </div>
-
-              <div className="w-full md:w-1/2 flex items-center justify-center mb-4 px-4 mx-auto">
-                <div className="flex-grow border-t border-gray-500 mx-2"></div>
-                <p className="text-gray-400">Coming Soon</p>
-                <div className="flex-grow border-t border-gray-500 mx-2"></div>
-              </div>
-
-              <div className="flex items-center justify-center space-x-4 mb-6">
-                <FontAwesomeIcon
-                  icon={faDiscord}
-                  size="2x"
-                  className="text-[#5a65ee]"
-                />
-                <FontAwesomeIcon
-                  icon={faTelegram}
-                  size="2x"
-                  className="text-[#2da8e7]"
-                />
-              </div>
 
               <div className="text-center w-full">
                 <button

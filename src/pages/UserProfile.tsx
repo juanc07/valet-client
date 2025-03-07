@@ -165,7 +165,7 @@ export default function UserProfile({ userId }: UserProfileProps) {
             </div>
           </div>
 
-          {/* Social Info */}
+          {/* Social Info - Modified to only show existing values */}
           <div className="mt-8">
             <h2 className="text-xl font-semibold mb-4">Social Connections</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
