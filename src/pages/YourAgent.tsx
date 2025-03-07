@@ -12,12 +12,14 @@ import { useUser } from "../context/UserContext";
 function YourAgent() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [agentToDelete, setAgentToDelete] = useState<string | null>(null);
   const { connected: walletConnected } = useWallet();
   const { currentUser, viewMode, setViewMode } = useUser();
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log("YourAgent - viewMode from context:", viewMode); // Log viewMode on mount/update
+    console.log("YourAgent - viewMode from context:", viewMode);
 
     if (!walletConnected || !currentUser?.userId) {
       navigate("/");
@@ -51,14 +53,24 @@ function YourAgent() {
     fetchAgents();
   }, [walletConnected, currentUser, navigate, viewMode]);
 
-  const handleDelete = async (agentId: string) => {
-    if (!confirm(`Are you sure you want to delete agent with ID: ${agentId}?`)) return;
+  const openDeleteDialog = (agentId: string) => {
+    setAgentToDelete(agentId);
+    setIsDialogOpen(true);
+  };
+
+  const closeDeleteDialog = () => {
+    setIsDialogOpen(false);
+    setAgentToDelete(null);
+  };
+
+  const handleDelete = async () => {
+    if (!agentToDelete) return;
 
     try {
-      await deleteAgent(agentId);
-      setAgents(agents.filter(agent => agent.agentId !== agentId));
+      await deleteAgent(agentToDelete);
+      setAgents(agents.filter(agent => agent.agentId !== agentToDelete));
       toast.success("Agent Deleted", {
-        description: `Agent with ID: ${agentId} has been deleted.`,
+        description: `Agent with ID: ${agentToDelete} has been deleted.`,
         duration: 3000,
       });
     } catch (error) {
@@ -67,6 +79,8 @@ function YourAgent() {
         description: "Failed to delete the agent.",
         duration: 3000,
       });
+    } finally {
+      closeDeleteDialog();
     }
   };
 
@@ -85,107 +99,131 @@ function YourAgent() {
     });
   };
 
-  if (loading) {
-    return (
-      <div className="h-full bg-black text-white flex items-center justify-center p-0 lg:p-4">
-        <div className="text-center">Loading agents...</div>
-      </div>
-    );
-  }
-
   return (
-    <div className="h-full bg-black text-white flex items-center justify-center p-0 lg:p-4">
-      <div className="w-full p-0 lg:p-6 rounded-none lg:rounded-lg shadow-lg overflow-x-auto max-w-full pt-10 pb-10">
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-          <h2 className="text-4xl font-bold text-center sm:text-left">
-            {viewMode === "myAgents" ? "Your Agents" : "Other People's Agents"}
-          </h2>
-          <select
-            value={viewMode}
-            onChange={(e) => setViewMode(e.target.value as "myAgents" | "othersAgents")}
-            className="mt-4 sm:mt-0 bg-[#222128] text-white p-2 rounded-lg border border-[#494848] focus:outline-none focus:ring-1 focus:ring-gray-500"
-          >
-            <option value="myAgents">My Agents</option>
-            <option value="othersAgents">Other People's Agents</option>
-          </select>
-        </div>
-        {agents.length === 0 ? (
-          <div className="text-center text-3xl text-white pt-40">
-            {viewMode === "myAgents"
-              ? "You have not created any agents."
-              : "No agents found from other users."}
+    <div className="h-full bg-black text-white flex items-center justify-center p-0 lg:p-4 relative">
+      {/* Main Content */}
+      {loading ? (
+        <div className="text-center">Loading agents...</div>
+      ) : (
+        <div className="w-full p-0 lg:p-6 rounded-none lg:rounded-lg shadow-lg overflow-x-auto max-w-full pt-10 pb-10">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+            <h2 className="text-4xl font-bold text-center sm:text-left">
+              {viewMode === "myAgents" ? "Your Agents" : "Other People's Agents"}
+            </h2>
+            <select
+              value={viewMode}
+              onChange={(e) => setViewMode(e.target.value as "myAgents" | "othersAgents")}
+              className="mt-4 sm:mt-0 bg-[#222128] text-white p-2 rounded-lg border border-[#494848] focus:outline-none focus:ring-1 focus:ring-gray-500"
+            >
+              <option value="myAgents">My Agents</option>
+              <option value="othersAgents">Other People's Agents</option>
+            </select>
           </div>
-        ) : (
-          <div className="overflow-x-auto w-full">
-            <table className="w-full text-left border-collapse text-sm md:text-base">
-              <thead className="overflow-hidden">
-                <tr className="bg-[#222128]">
-                  <th className="py-2 px-2 md:px-4 text-left rounded-l-lg font-medium">Name</th>
-                  <th className="py-2 px-2 md:px-4 text-center font-medium">Agent ID</th>
-                  <th className="py-2 px-2 md:px-4 text-center font-medium">Active</th>
-                  <th className="py-2 px-2 md:px-4 text-right rounded-r-lg font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {agents.map((agent) => {
-                  const isOwnAgent = agent.createdBy === currentUser?.userId;
-                  return (
-                    <tr key={agent.agentId} className="border-b border-[#494848]">
-                      <td className="py-2 px-2 md:px-4 text-left text-nowrap">{agent.name}</td>
-                      <td className="py-2 px-2 md:px-4 text-center">
-                        <div className="flex items-center justify-center space-x-2">
-                          <span className="truncate max-w-[150px]">{agent.agentId}</span>
-                          <button
-                            onClick={() => handleCopy(agent.agentId)}
-                            className="text-white hover:text-gray-300 transition duration-200"
-                            title="Copy Agent ID"
-                          >
-                            <FontAwesomeIcon icon={faCopy} className="text-sm" />
-                          </button>
-                        </div>
-                      </td>
-                      <td className="py-2 px-2 md:px-4 text-center">
-                        <div
-                          className={`w-3 h-3 rounded-full inline-block ${
-                            agent.isActive ? "bg-green-500" : "bg-red-500"
-                          }`}
-                        ></div>
-                      </td>
-                      <td className="py-4 px-2 md:px-4 text-right flex justify-end space-x-2">
-                        {isOwnAgent && (
+          {agents.length === 0 ? (
+            <div className="text-center text-3xl text-white pt-40">
+              {viewMode === "myAgents"
+                ? "You have not created any agents."
+                : "No agents found from other users."}
+            </div>
+          ) : (
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-left border-collapse text-sm md:text-base">
+                <thead className="overflow-hidden">
+                  <tr className="bg-[#222128]">
+                    <th className="py-2 px-2 md:px-4 text-left rounded-l-lg font-medium">Name</th>
+                    <th className="py-2 px-2 md:px-4 text-center font-medium">Agent ID</th>
+                    <th className="py-2 px-2 md:px-4 text-center font-medium">Active</th>
+                    <th className="py-2 px-2 md:px-4 text-right rounded-r-lg font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {agents.map((agent) => {
+                    const isOwnAgent = agent.createdBy === currentUser?.userId;
+                    return (
+                      <tr key={agent.agentId} className="border-b border-[#494848]">
+                        <td className="py-2 px-2 md:px-4 text-left text-nowrap">{agent.name}</td>
+                        <td className="py-2 px-2 md:px-4 text-center">
+                          <div className="flex items-center justify-center space-x-2">
+                            <span className="truncate max-w-[150px]">{agent.agentId}</span>
+                            <button
+                              onClick={() => handleCopy(agent.agentId)}
+                              className="text-white hover:text-gray-300 transition duration-200"
+                              title="Copy Agent ID"
+                            >
+                              <FontAwesomeIcon icon={faCopy} className="text-sm" />
+                            </button>
+                          </div>
+                        </td>
+                        <td className="py-2 px-2 md:px-4 text-center">
+                          <div
+                            className={`w-3 h-3 rounded-full inline-block ${
+                              agent.isActive ? "bg-green-500" : "bg-red-500"
+                            }`}
+                          ></div>
+                        </td>
+                        <td className="py-4 px-2 md:px-4 text-right flex justify-end space-x-2">
+                          {isOwnAgent && (
+                            <Link
+                              to={`/agent/edit/${agent.agentId}`}
+                              className="px-2 py-1 text-white rounded-lg transition duration-200 backdrop-blur-lg bg-white/8 hover:bg-white/30"
+                              title="Edit Agent"
+                            >
+                              <FontAwesomeIcon icon={faEdit} />
+                            </Link>
+                          )}
                           <Link
-                            to={`/agent/edit/${agent.agentId}`}
+                            to={`/agent/view/${agent.agentId}`}
                             className="px-2 py-1 text-white rounded-lg transition duration-200 backdrop-blur-lg bg-white/8 hover:bg-white/30"
-                            title="Edit Agent"
+                            title="View Agent"
                           >
-                            <FontAwesomeIcon icon={faEdit} />
+                            <FontAwesomeIcon icon={faEye} />
                           </Link>
-                        )}
-                        <Link
-                          to={`/agent/view/${agent.agentId}`}
-                          className="px-2 py-1 text-white rounded-lg transition duration-200 backdrop-blur-lg bg-white/8 hover:bg-white/30"
-                          title="View Agent"
-                        >
-                          <FontAwesomeIcon icon={faEye} />
-                        </Link>
-                        {isOwnAgent && (
-                          <button
-                            onClick={() => handleDelete(agent.agentId)}
-                            className="px-2 py-1 text-white rounded-lg transition duration-200 backdrop-blur-lg bg-red-500/80 hover:bg-red-600"
-                            title="Delete Agent"
-                          >
-                            <FontAwesomeIcon icon={faTrash} />
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                          {isOwnAgent && (
+                            <button
+                              onClick={() => openDeleteDialog(agent.agentId)}
+                              className="px-2 py-1 text-white rounded-lg transition duration-200 backdrop-blur-lg bg-red-500/80 hover:bg-red-600"
+                              title="Delete Agent"
+                            >
+                              <FontAwesomeIcon icon={faTrash} />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog with Transparent Background */}
+      {isDialogOpen && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="bg-[#222128] p-6 rounded-lg shadow-lg border border-[#494848] w-full max-w-md">
+            <h3 className="text-xl font-bold mb-4">Confirm Deletion</h3>
+            <p className="text-gray-300 mb-6">
+              Are you sure you want to delete the agent with ID:{" "}
+              <span className="font-mono text-white">{agentToDelete}</span>?
+            </p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={closeDeleteDialog}
+                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-200"
+              >
+                Delete
+              </button>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

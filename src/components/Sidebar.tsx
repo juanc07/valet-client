@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { House, Users, UserPlus, FileText, User, MessageSquare } from "lucide-react"; // Added MessageSquare for Chat
+import { House, Users, UserPlus, FileText, User, MessageSquare, Edit } from "lucide-react"; // Added Edit for Update Profile
 import { useUser } from "../context/UserContext";
 
 const Sidebar = () => {
@@ -9,40 +9,40 @@ const Sidebar = () => {
   const { currentUser } = useUser();
 
   const menuItems = [
-    { name: "Home", path: "/", icon: <House className="text-2xl" /> },
+    { name: "Home", path: "/", icon: <House className="text-2xl" /> }, // Home icon
     {
       name: "My Agents",
       path: "/youragent",
-      icon: <Users className="text-2xl" />,
+      icon: <Users className="text-2xl" />, // Group of users for agents
     },
     {
       name: "Create Agents",
       path: "/createagent",
-      icon: <UserPlus className="text-2xl" />,
+      icon: <UserPlus className="text-2xl" />, // Plus sign with user for creation
     },
     {
       name: "Chat",
-      path: "/chat", // New Chat route
-      icon: <MessageSquare className="text-2xl" />, // Chat icon
+      path: "/chat",
+      icon: <MessageSquare className="text-2xl" />, // Chat bubble for chat
     },
     ...(currentUser
       ? [
           {
             name: "Update Profile",
             path: "/update-profile",
-            icon: <UserPlus className="text-2xl" />,
+            icon: <Edit className="text-2xl" />, // Pencil for editing profile
           },
           {
             name: "My Profile",
             path: "/profile",
-            icon: <User className="text-2xl" />,
+            icon: <User className="text-2xl" />, // Single user for profile
           },
         ]
       : []),
     {
       name: "Documentation",
       path: "",
-      icon: <FileText className="text-2xl" />,
+      icon: <FileText className="text-2xl" />, // Document for documentation
       isAnchor: true,
     },
   ];
