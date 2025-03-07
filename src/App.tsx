@@ -13,6 +13,7 @@ import Start from "./pages/Start.tsx";
 import Manage from "./pages/Manage.tsx";
 import UpdateProfile from "./pages/UpdateProfile.tsx";
 import UpdateAgent from "./pages/UpdateAgent";
+import AgentProfile from "./pages/AgentProfile";
 import {
   ConnectionProvider,
   WalletProvider,
@@ -174,6 +175,10 @@ function MainContent() {
               <Route
                 path="/agent/edit/:agentId"
                 element={<UpdateAgent />}
+              />
+              <Route
+                path="/agent/view/:agentId"
+                element={<AgentProfile />}
               />
             </Routes>
           </Layout>
