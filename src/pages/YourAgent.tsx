@@ -5,12 +5,14 @@ import { faEdit, faEye, faTrash, faCopy } from "@fortawesome/free-solid-svg-icon
 import { toast } from "sonner";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Agent } from "../interfaces/agent"; // Your full Agent interface
-import { getAllAgents, deleteAgent } from "../api/agentApi"; // Assuming these API functions exist
+import { getAllAgents, deleteAgent } from "../api/agentApi"; // For all agents and delete
+import { getAgentsByUserId } from "../api/userApi"; // For current user's agents
 import { useUser } from "../context/UserContext"; // Assuming you have a UserContext to get the current user
 
 function YourAgent() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [viewMode, setViewMode] = useState<"myAgents" | "othersAgents">("myAgents"); // Dropdown state
   const { connected: walletConnected } = useWallet();
   const { currentUser } = useUser(); // Get the current user from context
   const navigate = useNavigate();
@@ -24,10 +26,16 @@ function YourAgent() {
     const fetchAgents = async () => {
       try {
         setLoading(true);
-        const allAgents = await getAllAgents(); // Fetch all agents from API
-        // Filter agents by the current user's ID
-        const userAgents = allAgents.filter(agent => agent.createdBy === currentUser.userId);
-        setAgents(userAgents);
+        if (viewMode === "myAgents") {
+          // Fetch only current user's agents
+          const userAgents = await getAgentsByUserId(currentUser.userId);
+          setAgents(userAgents);
+        } else {
+          // Fetch all agents and filter out current user's agents
+          const allAgents = await getAllAgents();
+          const othersAgents = allAgents.filter(agent => agent.createdBy !== currentUser.userId);
+          setAgents(othersAgents);
+        }
       } catch (error) {
         console.error("Error fetching agents:", error);
         toast.error("Failed to load agents", {
@@ -40,7 +48,7 @@ function YourAgent() {
     };
 
     fetchAgents();
-  }, [walletConnected, currentUser, navigate]);
+  }, [walletConnected, currentUser, navigate, viewMode]); // Re-fetch when viewMode changes
 
   const handleDelete = async (agentId: string) => {
     if (!confirm(`Are you sure you want to delete agent with ID: ${agentId}?`)) return;
@@ -87,10 +95,24 @@ function YourAgent() {
   return (
     <div className="h-full bg-black text-white flex items-center justify-center p-0 lg:p-4">
       <div className="w-full p-0 lg:p-6 rounded-none lg:rounded-lg shadow-lg overflow-x-auto max-w-full pt-10 pb-10">
-        <h2 className="text-4xl font-bold mb-6 text-center">Your Agents</h2>
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+          <h2 className="text-4xl font-bold text-center sm:text-left">
+            {viewMode === "myAgents" ? "Your Agents" : "Other People's Agents"}
+          </h2>
+          <select
+            value={viewMode}
+            onChange={(e) => setViewMode(e.target.value as "myAgents" | "othersAgents")}
+            className="mt-4 sm:mt-0 bg-[#222128] text-white p-2 rounded-lg border border-[#494848] focus:outline-none focus:ring-1 focus:ring-gray-500"
+          >
+            <option value="myAgents">My Agents</option>
+            <option value="othersAgents">Other People's Agents</option>
+          </select>
+        </div>
         {agents.length === 0 ? (
           <div className="text-center text-3xl text-white pt-40">
-            You have not created any agents.
+            {viewMode === "myAgents"
+              ? "You have not created any agents."
+              : "No agents found from other users."}
           </div>
         ) : (
           <div className="overflow-x-auto w-full">
@@ -104,53 +126,60 @@ function YourAgent() {
                 </tr>
               </thead>
               <tbody>
-                {agents.map((agent) => (
-                  <tr key={agent.agentId} className="border-b border-[#494848]">
-                    <td className="py-2 px-2 md:px-4 text-left text-nowrap">{agent.name}</td>
-                    <td className="py-2 px-2 md:px-4 text-center">
-                      <div className="flex items-center justify-center space-x-2">
-                        <span className="truncate max-w-[150px]">{agent.agentId}</span>
-                        <button
-                          onClick={() => handleCopy(agent.agentId)}
-                          className="text-white hover:text-gray-300 transition duration-200"
-                          title="Copy Agent ID"
+                {agents.map((agent) => {
+                  const isOwnAgent = agent.createdBy === currentUser?.userId;
+                  return (
+                    <tr key={agent.agentId} className="border-b border-[#494848]">
+                      <td className="py-2 px-2 md:px-4 text-left text-nowrap">{agent.name}</td>
+                      <td className="py-2 px-2 md:px-4 text-center">
+                        <div className="flex items-center justify-center space-x-2">
+                          <span className="truncate max-w-[150px]">{agent.agentId}</span>
+                          <button
+                            onClick={() => handleCopy(agent.agentId)}
+                            className="text-white hover:text-gray-300 transition duration-200"
+                            title="Copy Agent ID"
+                          >
+                            <FontAwesomeIcon icon={faCopy} className="text-sm" />
+                          </button>
+                        </div>
+                      </td>
+                      <td className="py-2 px-2 md:px-4 text-center">
+                        <div
+                          className={`w-3 h-3 rounded-full inline-block ${
+                            agent.isActive ? "bg-green-500" : "bg-red-500"
+                          }`}
+                        ></div>
+                      </td>
+                      <td className="py-4 px-2 md:px-4 text-right flex justify-end space-x-2">
+                        {isOwnAgent && (
+                          <Link
+                            to={`/agent/edit/${agent.agentId}`}
+                            className="px-2 py-1 text-white rounded-lg transition duration-200 backdrop-blur-lg bg-white/8 hover:bg-white/30"
+                            title="Edit Agent"
+                          >
+                            <FontAwesomeIcon icon={faEdit} />
+                          </Link>
+                        )}
+                        <Link
+                          to={`/agent/view/${agent.agentId}`}
+                          className="px-2 py-1 text-white rounded-lg transition duration-200 backdrop-blur-lg bg-white/8 hover:bg-white/30"
+                          title="View Agent"
                         >
-                          <FontAwesomeIcon icon={faCopy} className="text-sm" />
-                        </button>
-                      </div>
-                    </td>
-                    <td className="py-2 px-2 md:px-4 text-center">
-                      <div
-                        className={`w-3 h-3 rounded-full inline-block ${
-                          agent.isActive ? "bg-green-500" : "bg-red-500"
-                        }`}
-                      ></div>
-                    </td>
-                    <td className="py-4 px-2 md:px-4 text-right flex justify-end space-x-2">
-                      <Link
-                        to={`/agent/edit/${agent.agentId}`}
-                        className="px-2 py-1 text-white rounded-lg transition duration-200 backdrop-blur-lg bg-white/8 hover:bg-white/30"
-                        title="Edit Agent"
-                      >
-                        <FontAwesomeIcon icon={faEdit} />
-                      </Link>
-                      <Link
-                        to={`/agent/view/${agent.agentId}`}
-                        className="px-2 py-1 text-white rounded-lg transition duration-200 backdrop-blur-lg bg-white/8 hover:bg-white/30"
-                        title="View Agent"
-                      >
-                        <FontAwesomeIcon icon={faEye} />
-                      </Link>
-                      <button
-                        onClick={() => handleDelete(agent.agentId)}
-                        className="px-2 py-1 text-white rounded-lg transition duration-200 backdrop-blur-lg bg-red-500/80 hover:bg-red-600"
-                        title="Delete Agent"
-                      >
-                        <FontAwesomeIcon icon={faTrash} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                          <FontAwesomeIcon icon={faEye} />
+                        </Link>
+                        {isOwnAgent && (
+                          <button
+                            onClick={() => handleDelete(agent.agentId)}
+                            className="px-2 py-1 text-white rounded-lg transition duration-200 backdrop-blur-lg bg-red-500/80 hover:bg-red-600"
+                            title="Delete Agent"
+                          >
+                            <FontAwesomeIcon icon={faTrash} />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
