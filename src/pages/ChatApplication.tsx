@@ -16,6 +16,7 @@ export default function ChatApplication() {
   const [inputMessage, setInputMessage] = useState("");
   const [loading, setLoading] = useState<boolean>(true);
   const [isStreamChat, setIsStreamChat] = useState<boolean>(false);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null); // Track which message was copied
 
   const { connected: walletConnected } = useWallet();
   const { currentUser } = useUser();
@@ -38,7 +39,6 @@ export default function ChatApplication() {
         const othersAgents = allAgents.filter(agent => agent.createdBy !== currentUser.userId);
         setOtherAgents(othersAgents);
 
-        // Set the first agent from "myAgents" as default if available
         if (userAgents.length > 0 && !selectedAgent) {
           setSelectedAgent(userAgents[0]);
         }
@@ -61,7 +61,7 @@ export default function ChatApplication() {
     const category = e.target.value as "myAgents" | "othersAgents";
     setSelectedCategory(category);
     const agentList = category === "myAgents" ? myAgents : otherAgents;
-    setSelectedAgent(agentList.length > 0 ? agentList[0] : null); // Default to first agent in new category
+    setSelectedAgent(agentList.length > 0 ? agentList[0] : null);
     setMessages([]);
   };
 
@@ -80,6 +80,19 @@ export default function ChatApplication() {
     setMessages([]);
   };
 
+  // Copy text to clipboard with feedback
+  const handleCopy = async (text: string, index: number) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedIndex(index); // Set the copied index for feedback
+      toast.success("Copied to clipboard!", { duration: 2000 });
+      setTimeout(() => setCopiedIndex(null), 2000); // Reset after 2 seconds
+    } catch (error) {
+      console.error("Failed to copy text:", error);
+      toast.error("Failed to copy", { duration: 2000 });
+    }
+  };
+
   // Send message handler
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,7 +104,7 @@ export default function ChatApplication() {
 
     if (isStreamChat) {
       try {
-        setMessages(prev => [...prev, { sender: "agent", text: "" }]); // Initialize empty agent message
+        setMessages(prev => [...prev, { sender: "agent", text: "" }]);
         await chatWithAgentStream(
           selectedAgent.agentId,
           inputMessage,
@@ -118,7 +131,7 @@ export default function ChatApplication() {
           duration: 3000,
         });
         setMessages(prev => [
-          ...prev.filter(m => m.sender !== "agent" || m.text !== ""), // Remove empty agent message
+          ...prev.filter(m => m.sender !== "agent" || m.text !== ""),
           { sender: "agent", text: "Streaming failed. Try again!" },
         ]);
       }
@@ -201,13 +214,50 @@ export default function ChatApplication() {
                   className={`mb-4 flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`max-w-[70%] p-3 rounded-lg ${
+                    className={`max-w-[70%] p-3 rounded-lg flex items-center gap-2 ${
                       msg.sender === "user"
                         ? "bg-[#6a94f0] text-black"
                         : "bg-[#333] text-white"
                     }`}
                   >
-                    {msg.text}
+                    <span className="flex-1">{msg.text}</span>
+                    <button
+                      onClick={() => handleCopy(msg.text, index)}
+                      className="p-1 rounded hover:bg-gray-500/20 transition-colors duration-200"
+                      title="Copy text"
+                    >
+                      {copiedIndex === index ? (
+                        <svg
+                          className="w-4 h-4 text-green-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                          />
+                        </svg>
+                      )}
+                    </button>
                   </div>
                 </div>
               ))
