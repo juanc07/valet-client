@@ -4,8 +4,9 @@ import { faDiscord, faTelegram, faXTwitter } from "@fortawesome/free-brands-svg-
 import { toast } from "sonner";
 import { getUser, updateUser } from "../api/userApi";
 import { User } from "../interfaces/user";
-import { useWallet } from "@solana/wallet-adapter-react"; // Import useWallet
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useNavigate } from "react-router-dom";
+import { countryOptions } from "../data/countries";
 
 interface FormData {
   username: string;
@@ -13,7 +14,7 @@ interface FormData {
   firstName: string;
   lastName: string;
   age: number | string;
-  country: number | string;
+  country: string;
   mobileNumber: string;
   twitterHandle: string;
   discordId: string;
@@ -40,20 +41,21 @@ export default function UpdateProfile({ userId }: UpdateProfileProps) {
   const [error, setError] = useState<string>("");
   const [connected, setConnected] = useState<boolean>(false);
 
-  const { connected: walletConnected } = useWallet(); // Get wallet connection status
+  const { connected: walletConnected } = useWallet();
   const navigate = useNavigate();
 
-  // Navigate to Start if wallet is not connected
   useEffect(() => {
     if (!walletConnected) {
-      navigate("/"); // Redirect to Start page
+      navigate("/");
     }
   }, [walletConnected, navigate]);
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        console.log("Fetching user with ID:", userId);
         const user = await getUser(userId);
+        console.log("Fetched user data:", user);
         setFormData({
           username: user.username || "",
           email: user.email || "",
@@ -66,7 +68,12 @@ export default function UpdateProfile({ userId }: UpdateProfileProps) {
           discordId: user.discordId || "",
           telegramId: user.telegramId || "",
         });
+        toast.success("Profile loaded", {
+          description: "Your profile data has been fetched successfully.",
+          duration: 3000,
+        });
       } catch (error) {
+        console.error("Fetch user error:", error);
         setError("Failed to load profile data.");
         toast.error("Failed to load profile", {
           description: "Please try again later.",
@@ -75,21 +82,18 @@ export default function UpdateProfile({ userId }: UpdateProfileProps) {
       }
     };
 
-    if (userId && walletConnected) { // Only fetch if wallet is connected
+    if (userId && walletConnected) {
       fetchUserData();
     }
   }, [userId, walletConnected]);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement> // Updated for select
+  ) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
-      [name]:
-        name === "age" || name === "country"
-          ? isNaN(Number(value))
-            ? value
-            : Number(value)
-          : value,
+      [name]: name === "age" ? (isNaN(Number(value)) ? value : Number(value)) : value,
     }));
   };
 
@@ -111,7 +115,7 @@ export default function UpdateProfile({ userId }: UpdateProfileProps) {
       firstName: formData.firstName,
       lastName: formData.lastName,
       age: typeof formData.age === "string" ? parseInt(formData.age) || 0 : formData.age,
-      country: typeof formData.country === "string" ? parseInt(formData.country) || 0 : formData.country,
+      country: formData.country,
       mobileNumber: formData.mobileNumber,
       twitterHandle: formData.twitterHandle,
       discordId: formData.discordId,
@@ -119,13 +123,16 @@ export default function UpdateProfile({ userId }: UpdateProfileProps) {
     };
 
     try {
+      console.log("Submitting update for userId:", userId, "with data:", updateData);
       await updateUser(userId, updateData);
+      console.log("Update successful");
       setError("");
       toast.success("Profile Updated", {
         description: `Successfully updated profile for ${formData.username}`,
         duration: 3000,
       });
     } catch (error) {
+      console.error("Update user error:", error);
       setError("Failed to update profile.");
       toast.error("Update Failed", {
         description: "Please try again.",
@@ -229,19 +236,21 @@ export default function UpdateProfile({ userId }: UpdateProfileProps) {
                   </div>
                   <div className="flex flex-col">
                     <label htmlFor="country" className="mb-1 text-white">
-                      Country Code
+                      Country
                     </label>
-                    <input
+                    <select
                       id="country"
                       name="country"
-                      type="number"
-                      value={formData.country || ""}
+                      value={formData.country}
                       onChange={handleChange}
-                      placeholder="Country code (e.g., 1 for USA)"
-                      className="w-full border border-[#494848] text-white p-2 md:p-3 rounded-lg outline-none focus:ring-1 focus:ring-gray-500"
-                      min={1}
-                      max={999}
-                    />
+                      className="w-full border border-[#494848] text-white p-2 md:p-3 rounded-lg outline-none focus:ring-1 focus:ring-gray-500 bg-black"
+                    >
+                      {countryOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
                 <div className="flex flex-col mb-2">
