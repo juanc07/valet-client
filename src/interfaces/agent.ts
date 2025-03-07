@@ -1,50 +1,50 @@
 export interface Agent {
-    name: string;
-    id: string;
-    description: string;
-    bio: string;
-    mission: string;
-    vision: string;
+    name: string; // required in creation
+    id: string; // server will auto generate this
+    description: string; // required in creation
+    bio: string; // required in creation
+    mission: string; // required in creation
+    vision: string; // required in creation
     contact: {
-      email: string;
-      website: string;
+      email: string; // optional
+      website: string; // optional
       socials: {
-        twitter: string;
-        github: string;
-        linkedin: string;
+        twitter: string; // optional
+        github: string; // optional
+        linkedin: string; // optional
       };
     };
     wallets: {
-      solana: string;
-      ethereum: string;
-      bitcoin: string;
+      solana: string; // own solana wallet of agent and optional
+      ethereum: string; // own etherium wallet of agent and optional
+      bitcoin: string; // own btc wallet of agent and optional
     };
     knowledge: {
-      type: string;
-      data: string[];
+      type: string; // optional
+      data: string[]; // optional
     };
     personality: {
-      tone: string;
-      humor: boolean;
-      formality: string;
-      catchphrase: string;
+      tone: string; // required in creation
+      humor: boolean; // required in creation
+      formality: string; // required in creation
+      catchphrase: string; // required in creation
       preferences: {
-        topics: string[];
-        languages: string[];
+        topics: string[]; // optional
+        languages: string[]; // optional
       };
     };
     settings: {
-      max_memory_context: number;
-      platforms: string[];
+      max_memory_context: number; // optional
+      platforms: string[]; // value can be web, twitter, discord and telegram can have one or more optional
     };
-    ruleIds: string[];
-    isActive?: boolean;
-    openaiApiKey?: string;
-    twitterAppKey?: string;
-    twitterAppSecret?: string;
-    twitterAccessToken?: string;
-    twitterAccessSecret?: string;
-    twitterHandle?: string;
-    agentType: "basic" | "puppetos" | "thirdparty";
-    userId: string;  
+    ruleIds: string[]; // optional
+    isActive?: boolean; // used by sytem
+    openaiApiKey?: string; // required if platform contains web
+    twitterAppKey?: string; // required if platform contains twitter
+    twitterAppSecret?: string; // required if platform contains twitter
+    twitterAccessToken?: string; // required if platform contains twitter
+    twitterAccessSecret?: string; // required if platform contains twitter
+    twitterHandle?: string; // optional
+    agentType: "basic" | "puppetos" | "thirdparty"; // required in creation default to basic
+    userId: string;  // use current userId
   }
