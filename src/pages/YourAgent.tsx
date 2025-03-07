@@ -198,9 +198,12 @@ function YourAgent() {
         </div>
       )}
 
-      {/* Delete Confirmation Dialog with Transparent Background */}
+      {/* Delete Confirmation Dialog with 50% Transparent Background */}
       {isDialogOpen && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
+        <div
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.65)" }} // 50% transparent black
+          className="fixed inset-0 flex items-center justify-center z-50"
+        >
           <div className="bg-[#222128] p-6 rounded-lg shadow-lg border border-[#494848] w-full max-w-md">
             <h3 className="text-xl font-bold mb-4">Confirm Deletion</h3>
             <p className="text-gray-300 mb-6">
