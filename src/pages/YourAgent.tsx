@@ -47,7 +47,7 @@ function YourAgent() {
 
     try {
       await deleteAgent(agentId);
-      setAgents(agents.filter(agent => agent.id !== agentId));
+      setAgents(agents.filter(agent => agent.agentId !== agentId));
       toast.success("Agent Deleted", {
         description: `Agent with ID: ${agentId} has been deleted.`,
         duration: 3000,
@@ -90,7 +90,7 @@ function YourAgent() {
               </thead>
               <tbody>
                 {agents.map((agent) => (
-                  <tr key={agent.id} className="border-b border-[#494848]">
+                  <tr key={agent.agentId} className="border-b border-[#494848]">
                     <td className="py-2 px-2 md:px-4 text-left text-nowrap">{agent.name}</td>
                     <td className="py-2 px-2 md:px-4 text-center">{agent.createdBy}</td>
                     <td className="py-2 px-2 md:px-4 text-center">
@@ -102,21 +102,21 @@ function YourAgent() {
                     </td>
                     <td className="py-4 px-2 md:px-4 text-right flex justify-end space-x-2">
                       <Link
-                        to={`/agent/edit/${agent.id}`} // Assuming you have an EditAgent route
+                        to={`/agent/edit/${agent.agentId}`} // Assuming you have an EditAgent route
                         className="px-2 py-1 text-white rounded-lg transition duration-200 backdrop-blur-lg bg-white/8 hover:bg-white/30"
                         title="Edit Agent"
                       >
                         <FontAwesomeIcon icon={faEdit} />
                       </Link>
                       <Link
-                        to={`/agent/view/${agent.id}`} // Assuming you have a ViewAgent route
+                        to={`/agent/view/${agent.agentId}`} // Assuming you have a ViewAgent route
                         className="px-2 py-1 text-white rounded-lg transition duration-200 backdrop-blur-lg bg-white/8 hover:bg-white/30"
                         title="View Agent"
                       >
                         <FontAwesomeIcon icon={faEye} />
                       </Link>
                       <button
-                        onClick={() => handleDelete(agent.id)}
+                        onClick={() => handleDelete(agent.agentId)}
                         className="px-2 py-1 text-white rounded-lg transition duration-200 backdrop-blur-lg bg-red-500/80 hover:bg-red-600"
                         title="Delete Agent"
                       >

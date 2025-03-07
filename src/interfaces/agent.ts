@@ -1,6 +1,6 @@
 export interface Agent {
     name: string; // required in creation
-    id: string; // server will auto generate this
+    agentId: string; // server will auto generate this
     description: string; // required in creation
     bio: string; // required in creation
     mission: string; // required in creation

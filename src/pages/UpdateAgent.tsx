@@ -1,7 +1,7 @@
 import { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { Agent } from "../interfaces/agent";
+import { Agent } from "../interfaces/agent"; // Updated interface with agentId
 import { getAgentById, updateAgent } from "../api/agentApi";
 import { toast } from "sonner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -11,7 +11,7 @@ export default function UpdateAgent() {
   const { agentId } = useParams<{ agentId: string }>();
   const [formData, setFormData] = useState<Agent>({
     name: "",
-    id: "",
+    agentId: "", // Changed from id to agentId
     description: "",
     bio: "",
     mission: "",
@@ -218,9 +218,12 @@ export default function UpdateAgent() {
       return;
     }
 
+    // Only exclude _id since agentId is part of the interface and allowed in payload
+    const { _id, ...updatePayload } = formData as Agent & { _id?: string };
+
     try {
-      console.log("Submitting formData:", formData);
-      await updateAgent(agentId, formData);
+      console.log("Submitting formData:", updatePayload);
+      await updateAgent(agentId, updatePayload);
       toast.success("Agent Updated", {
         description: `Successfully updated agent: ${formData.name}`,
         duration: 3000,
