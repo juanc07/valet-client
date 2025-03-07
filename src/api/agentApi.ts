@@ -57,35 +57,67 @@ export const chatWithAgent = async (agentId: string, message: string): Promise<{
 };
 
 // Chat with Agent (Streaming)
-export const chatWithAgentStream = (agentId: string, message: string, onMessage: (content: string) => void, onDone: () => void) => {
-  const eventSource = new EventSource(`${BASE_URL}/chat/stream/${agentId}`, {
-    withCredentials: true, // If you add auth later
-  });
+export const chatWithAgentStream = async (
+  agentId: string,
+  message: string,
+  onMessage: (content: string) => void,
+  onDone: () => void
+) => {
+  try {
+    const response = await fetch(`${BASE_URL}/chat/stream/${agentId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "text/event-stream",
+      },
+      body: JSON.stringify({ message }),      
+    });
 
-  eventSource.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    if (data === '[DONE]') {
-      onDone();
-      eventSource.close();
-    } else {
-      onMessage(data.content);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-  };
 
-  eventSource.onerror = (error) => {
-    console.error('Streaming error:', error);
-    eventSource.close();
-  };
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error("Response body not readable");
+    }
 
-  // Send the message in a separate POST request (since your endpoint expects POST)
-  fetchWrapper(`${BASE_URL}/chat/stream/${agentId}`, {
-    method: 'POST',
-    body: JSON.stringify({ message }),
-    headers: { 'Content-Type': 'application/json' },
-  }).catch((error) => {
-    console.error('Error initiating stream:', error);
-    eventSource.close();
-  });
+    const decoder = new TextDecoder();
+    let buffer = "";
 
-  return () => eventSource.close(); // Cleanup function
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        onDone();
+        break;
+      }
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+
+      for (let i = 0; i < lines.length - 1; i++) {
+        const line = lines[i].trim();
+        if (line.startsWith("data:")) {
+          const dataStr = line.slice(5).trim();
+          if (dataStr === "[DONE]") {
+            onDone();
+            reader.cancel();
+            return;
+          }
+          try {
+            const data = JSON.parse(dataStr);
+            if (data.content) {
+              onMessage(data.content);
+            }
+          } catch (e) {
+            console.error("Error parsing stream data:", e);
+          }
+        }
+      }
+      buffer = lines[lines.length - 1]; // Keep incomplete line in buffer
+    }
+  } catch (error) {
+    console.error("Streaming error:", error);
+    throw error; // Let the caller handle it
+  }
 };

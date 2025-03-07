@@ -2,7 +2,7 @@ import { useState, useEffect, ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Agent } from "../interfaces/agent";
-import { getAllAgents, chatWithAgent } from "../api/agentApi";
+import { getAllAgents, chatWithAgent, chatWithAgentStream } from "../api/agentApi";
 import { getAgentsByUserId } from "../api/userApi";
 import { useUser } from "../context/UserContext";
 import { toast } from "sonner";
@@ -15,11 +15,13 @@ export default function ChatApplication() {
   const [messages, setMessages] = useState<{ sender: "user" | "agent"; text: string }[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [loading, setLoading] = useState<boolean>(true);
+  const [isStreamChat, setIsStreamChat] = useState<boolean>(false);
 
   const { connected: walletConnected } = useWallet();
   const { currentUser } = useUser();
   const navigate = useNavigate();
 
+  // Fetch agents on component mount
   useEffect(() => {
     if (!walletConnected || !currentUser?.userId) {
       navigate("/");
@@ -36,7 +38,8 @@ export default function ChatApplication() {
         const othersAgents = allAgents.filter(agent => agent.createdBy !== currentUser.userId);
         setOtherAgents(othersAgents);
 
-        if (userAgents.length > 0) {
+        // Set the first agent from "myAgents" as default if available
+        if (userAgents.length > 0 && !selectedAgent) {
           setSelectedAgent(userAgents[0]);
         }
       } catch (error) {
@@ -53,13 +56,16 @@ export default function ChatApplication() {
     fetchAgents();
   }, [walletConnected, currentUser, navigate]);
 
+  // Handle category change and reset selected agent
   const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const category = e.target.value as "myAgents" | "othersAgents";
     setSelectedCategory(category);
-    setSelectedAgent(null);
+    const agentList = category === "myAgents" ? myAgents : otherAgents;
+    setSelectedAgent(agentList.length > 0 ? agentList[0] : null); // Default to first agent in new category
     setMessages([]);
   };
 
+  // Handle agent selection
   const handleAgentChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const agentId = e.target.value;
     const agentList = selectedCategory === "myAgents" ? myAgents : otherAgents;
@@ -68,27 +74,67 @@ export default function ChatApplication() {
     setMessages([]);
   };
 
+  // Toggle between streaming and non-streaming chat
+  const handleToggleChatType = (e: ChangeEvent<HTMLInputElement>) => {
+    setIsStreamChat(e.target.checked);
+    setMessages([]);
+  };
+
+  // Send message handler
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputMessage.trim() || !selectedAgent) return;
 
-    // Add user message
-    setMessages(prev => [...prev, { sender: "user", text: inputMessage }]);
-
-    try {
-      // Call the chatWithAgent endpoint
-      const response = await chatWithAgent(selectedAgent.agentId, inputMessage);
-      setMessages(prev => [...prev, { sender: "agent", text: response.reply }]);
-    } catch (error) {
-      console.error("Error chatting with agent:", error);
-      toast.error("Chat Failed", {
-        description: "Unable to get a response from the agent.",
-        duration: 3000,
-      });
-      setMessages(prev => [...prev, { sender: "agent", text: "Sorry, I couldn’t respond. Try again!" }]);
-    }
-
+    const userMessage = { sender: "user" as const, text: inputMessage };
+    setMessages(prev => [...prev, userMessage]);
     setInputMessage("");
+
+    if (isStreamChat) {
+      try {
+        setMessages(prev => [...prev, { sender: "agent", text: "" }]); // Initialize empty agent message
+        await chatWithAgentStream(
+          selectedAgent.agentId,
+          inputMessage,
+          (content) => {
+            setMessages(prev => {
+              const lastMsg = prev[prev.length - 1];
+              if (lastMsg.sender === "agent") {
+                return [
+                  ...prev.slice(0, -1),
+                  { sender: "agent", text: lastMsg.text + content },
+                ];
+              }
+              return [...prev, { sender: "agent", text: content }];
+            });
+          },
+          () => {
+            console.log("Stream complete");
+          }
+        );
+      } catch (error) {
+        console.error("Streaming chat error:", error);
+        toast.error("Stream Chat Failed", {
+          description: "Unable to stream response from the agent.",
+          duration: 3000,
+        });
+        setMessages(prev => [
+          ...prev.filter(m => m.sender !== "agent" || m.text !== ""), // Remove empty agent message
+          { sender: "agent", text: "Streaming failed. Try again!" },
+        ]);
+      }
+    } else {
+      try {
+        const response = await chatWithAgent(selectedAgent.agentId, inputMessage);
+        setMessages(prev => [...prev, { sender: "agent", text: response.reply }]);
+      } catch (error) {
+        console.error("Error chatting with agent:", error);
+        toast.error("Chat Failed", {
+          description: "Unable to get a response from the agent.",
+          duration: 3000,
+        });
+        setMessages(prev => [...prev, { sender: "agent", text: "Sorry, I couldn’t respond. Try again!" }]);
+      }
+    }
   };
 
   const currentAgents = selectedCategory === "myAgents" ? myAgents : otherAgents;
@@ -107,7 +153,19 @@ export default function ChatApplication() {
         {/* Header */}
         <div className="p-4 border-b border-[#494848] flex justify-between items-center">
           <h1 className="text-2xl font-bold">Chat with Agents</h1>
-          <div className="flex gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="streamChatToggle"
+                checked={isStreamChat}
+                onChange={handleToggleChatType}
+                className="w-5 h-5 text-[#6a94f0] bg-[#222128] border-[#494848] rounded focus:ring-[#6a94f0]"
+              />
+              <label htmlFor="streamChatToggle" className="text-sm">
+                Stream Chat
+              </label>
+            </div>
             <select
               value={selectedCategory}
               onChange={handleCategoryChange}
