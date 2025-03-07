@@ -20,6 +20,13 @@ export const getActiveAgents = async (): Promise<Agent[]> => {
   return fetchWrapper(`${BASE_URL}/agents/active`);
 };
 
+export const getAgentById = async (id: string): Promise<Agent> => {
+  return fetchWrapper(`${BASE_URL}/agents/${id}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
 export const updateAgent = async (id: string, agentData: Partial<Agent>): Promise<{ message: string }> => {
   return fetchWrapper(`${BASE_URL}/agents/${id}`, {
     method: 'PUT',

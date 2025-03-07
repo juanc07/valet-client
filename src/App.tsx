@@ -12,6 +12,7 @@ import UserProfile from "./pages/UserProfile";
 import Start from "./pages/Start.tsx";
 import Manage from "./pages/Manage.tsx";
 import UpdateProfile from "./pages/UpdateProfile.tsx";
+import UpdateAgent from "./pages/UpdateAgent";
 import {
   ConnectionProvider,
   WalletProvider,
@@ -132,7 +133,6 @@ function MainContent() {
     handleWalletConnection();
   }, [connected, publicKey, setCurrentUser, navigate, hasNavigated]);
 
-  // Debug currentUser state
   useEffect(() => {
     console.log("MainContent currentUser:", currentUser);
   }, [currentUser]);
@@ -170,6 +170,10 @@ function MainContent() {
                     <div>Please connect your wallet</div>
                   )
                 }
+              />
+              <Route
+                path="/agent/edit/:agentId"
+                element={<UpdateAgent />}
               />
             </Routes>
           </Layout>
