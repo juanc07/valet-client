@@ -1,6 +1,7 @@
 import { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faDiscord, faTelegram, faXTwitter } from "@fortawesome/free-brands-svg-icons";
+import { faCopy } from "@fortawesome/free-solid-svg-icons"; // Correct import for faCopy
 import { toast } from "sonner";
 import { getUser, updateUser } from "../api/userApi";
 import { User } from "../interfaces/user";
@@ -41,7 +42,7 @@ export default function UpdateProfile({ userId }: UpdateProfileProps) {
   const [error, setError] = useState<string>("");
   const [connected, setConnected] = useState<boolean>(false);
 
-  const { connected: walletConnected } = useWallet();
+  const { connected: walletConnected, publicKey } = useWallet();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -68,10 +69,6 @@ export default function UpdateProfile({ userId }: UpdateProfileProps) {
           discordId: user.discordId || "",
           telegramId: user.telegramId || "",
         });
-        toast.success("Profile loaded", {
-          description: "Your profile data has been fetched successfully.",
-          duration: 3000,
-        });
       } catch (error) {
         console.error("Fetch user error:", error);
         setError("Failed to load profile data.");
@@ -88,13 +85,30 @@ export default function UpdateProfile({ userId }: UpdateProfileProps) {
   }, [userId, walletConnected]);
 
   const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement> // Updated for select
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
       [name]: name === "age" ? (isNaN(Number(value)) ? value : Number(value)) : value,
     }));
+  };
+
+  const handleCopyWalletAddress = () => {
+    if (publicKey) {
+      navigator.clipboard.writeText(publicKey.toBase58()).then(() => {
+        toast.success("Wallet Address Copied", {
+          description: "The Solana wallet address has been copied to your clipboard.",
+          duration: 3000,
+        });
+      }).catch((err) => {
+        console.error("Failed to copy wallet address:", err);
+        toast.error("Copy Failed", {
+          description: "Failed to copy the wallet address.",
+          duration: 3000,
+        });
+      });
+    }
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -187,6 +201,30 @@ export default function UpdateProfile({ userId }: UpdateProfileProps) {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
                   <div className="flex flex-col">
+                    <label htmlFor="walletAddress" className="mb-1 text-white">
+                      Solana Wallet Address
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="walletAddress"
+                        type="text"
+                        value={publicKey ? publicKey.toBase58() : "Not connected"}
+                        readOnly
+                        className="w-full border border-[#494848] text-white p-2 md:p-3 pr-10 rounded-lg outline-none bg-gray-900"
+                      />
+                      {publicKey && (
+                        <button
+                          type="button"
+                          onClick={handleCopyWalletAddress}
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[#6894f3] hover:text-[#8faef0]"
+                          title="Copy wallet address"
+                        >
+                          <FontAwesomeIcon icon={faCopy} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-col">
                     <label htmlFor="firstName" className="mb-1 text-white">
                       First Name
                     </label>
@@ -201,6 +239,8 @@ export default function UpdateProfile({ userId }: UpdateProfileProps) {
                       maxLength={50}
                     />
                   </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
                   <div className="flex flex-col">
                     <label htmlFor="lastName" className="mb-1 text-white">
                       Last Name
@@ -216,8 +256,6 @@ export default function UpdateProfile({ userId }: UpdateProfileProps) {
                       maxLength={50}
                     />
                   </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
                   <div className="flex flex-col">
                     <label htmlFor="age" className="mb-1 text-white">
                       Age
@@ -234,6 +272,8 @@ export default function UpdateProfile({ userId }: UpdateProfileProps) {
                       max={120}
                     />
                   </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
                   <div className="flex flex-col">
                     <label htmlFor="country" className="mb-1 text-white">
                       Country
@@ -252,21 +292,21 @@ export default function UpdateProfile({ userId }: UpdateProfileProps) {
                       ))}
                     </select>
                   </div>
-                </div>
-                <div className="flex flex-col mb-2">
-                  <label htmlFor="mobileNumber" className="mb-1 text-white">
-                    Mobile Number
-                  </label>
-                  <input
-                    id="mobileNumber"
-                    name="mobileNumber"
-                    type="text"
-                    value={formData.mobileNumber}
-                    onChange={handleChange}
-                    placeholder="Your mobile number"
-                    className="w-full border border-[#494848] text-white p-2 md:p-3 rounded-lg outline-none focus:ring-1 focus:ring-gray-500"
-                    maxLength={15}
-                  />
+                  <div className="flex flex-col">
+                    <label htmlFor="mobileNumber" className="mb-1 text-white">
+                      Mobile Number
+                    </label>
+                    <input
+                      id="mobileNumber"
+                      name="mobileNumber"
+                      type="text"
+                      value={formData.mobileNumber}
+                      onChange={handleChange}
+                      placeholder="Your mobile number"
+                      className="w-full border border-[#494848] text-white p-2 md:p-3 rounded-lg outline-none focus:ring-1 focus:ring-gray-500"
+                      maxLength={15}
+                    />
+                  </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
                   <div className="flex flex-col">

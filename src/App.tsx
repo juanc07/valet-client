@@ -8,7 +8,7 @@ import {
 import Layout from "./components/Layout.tsx";
 import CreateAgent from "./pages/CreateAgent";
 import YourAgent from "./pages/YourAgent";
-import Profile from "./pages/Profile";
+import UserProfile from "./pages/UserProfile";
 import Start from "./pages/Start.tsx";
 import Manage from "./pages/Manage.tsx";
 import UpdateProfile from "./pages/UpdateProfile.tsx";
@@ -92,7 +92,7 @@ function MainContent() {
               firstName: "",
               lastName: "",
               age: 0,
-              country: 0,
+              country: "",
               mobileNumber: "",
               twitterHandle: "",
               discordId: "",
@@ -151,7 +151,16 @@ function MainContent() {
               <Route path="/createagent" element={<CreateAgent />} />
               <Route path="/youragent" element={<YourAgent />} />
               <Route path="/manage" element={<Manage />} />
-              <Route path="/profile" element={<Profile />} />
+              <Route
+                path="/profile"
+                element={
+                  currentUser ? (
+                    <UserProfile userId={currentUser.userId} />
+                  ) : (
+                    <div>Please connect your wallet</div>
+                  )
+                }
+              />
               <Route
                 path="/update-profile"
                 element={
