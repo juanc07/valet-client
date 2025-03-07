@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEdit, faEye, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faEdit, faEye, faTrash, faCopy } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "sonner";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Agent } from "../interfaces/agent"; // Your full Agent interface
@@ -61,6 +61,21 @@ function YourAgent() {
     }
   };
 
+  const handleCopy = (agentId: string) => {
+    navigator.clipboard.writeText(agentId).then(() => {
+      toast.success("Agent ID Copied", {
+        description: `Copied ${agentId} to clipboard.`,
+        duration: 2000,
+      });
+    }).catch((error) => {
+      console.error("Error copying agent ID:", error);
+      toast.error("Copy Failed", {
+        description: "Failed to copy Agent ID.",
+        duration: 2000,
+      });
+    });
+  };
+
   if (loading) {
     return (
       <div className="h-full bg-black text-white flex items-center justify-center p-0 lg:p-4">
@@ -83,7 +98,7 @@ function YourAgent() {
               <thead className="overflow-hidden">
                 <tr className="bg-[#222128]">
                   <th className="py-2 px-2 md:px-4 text-left rounded-l-lg font-medium">Name</th>
-                  <th className="py-2 px-2 md:px-4 text-center font-medium">Created By</th>
+                  <th className="py-2 px-2 md:px-4 text-center font-medium">Agent ID</th>
                   <th className="py-2 px-2 md:px-4 text-center font-medium">Active</th>
                   <th className="py-2 px-2 md:px-4 text-right rounded-r-lg font-medium">Actions</th>
                 </tr>
@@ -92,7 +107,18 @@ function YourAgent() {
                 {agents.map((agent) => (
                   <tr key={agent.agentId} className="border-b border-[#494848]">
                     <td className="py-2 px-2 md:px-4 text-left text-nowrap">{agent.name}</td>
-                    <td className="py-2 px-2 md:px-4 text-center">{agent.createdBy}</td>
+                    <td className="py-2 px-2 md:px-4 text-center">
+                      <div className="flex items-center justify-center space-x-2">
+                        <span className="truncate max-w-[150px]">{agent.agentId}</span>
+                        <button
+                          onClick={() => handleCopy(agent.agentId)}
+                          className="text-white hover:text-gray-300 transition duration-200"
+                          title="Copy Agent ID"
+                        >
+                          <FontAwesomeIcon icon={faCopy} className="text-sm" />
+                        </button>
+                      </div>
+                    </td>
                     <td className="py-2 px-2 md:px-4 text-center">
                       <div
                         className={`w-3 h-3 rounded-full inline-block ${
@@ -102,14 +128,14 @@ function YourAgent() {
                     </td>
                     <td className="py-4 px-2 md:px-4 text-right flex justify-end space-x-2">
                       <Link
-                        to={`/agent/edit/${agent.agentId}`} // Assuming you have an EditAgent route
+                        to={`/agent/edit/${agent.agentId}`}
                         className="px-2 py-1 text-white rounded-lg transition duration-200 backdrop-blur-lg bg-white/8 hover:bg-white/30"
                         title="Edit Agent"
                       >
                         <FontAwesomeIcon icon={faEdit} />
                       </Link>
                       <Link
-                        to={`/agent/view/${agent.agentId}`} // Assuming you have a ViewAgent route
+                        to={`/agent/view/${agent.agentId}`}
                         className="px-2 py-1 text-white rounded-lg transition duration-200 backdrop-blur-lg bg-white/8 hover:bg-white/30"
                         title="View Agent"
                       >

@@ -45,6 +45,8 @@ export interface Agent {
     twitterAccessToken?: string; // required if platform contains twitter
     twitterAccessSecret?: string; // required if platform contains twitter
     twitterHandle?: string; // optional
+    enablePostTweet?: boolean;
+    postTweetInterval?: number;
     agentType: "basic" | "puppetos" | "thirdparty"; // required in creation default to basic
     createdBy: string;  // userId who created the agent
   }

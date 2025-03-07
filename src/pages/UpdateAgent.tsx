@@ -1,7 +1,7 @@
 import { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { Agent } from "../interfaces/agent"; // Updated interface with agentId
+import { Agent } from "../interfaces/agent";
 import { getAgentById, updateAgent } from "../api/agentApi";
 import { toast } from "sonner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -11,7 +11,7 @@ export default function UpdateAgent() {
   const { agentId } = useParams<{ agentId: string }>();
   const [formData, setFormData] = useState<Agent>({
     name: "",
-    agentId: "", // Changed from id to agentId
+    agentId: "",
     description: "",
     bio: "",
     mission: "",
@@ -107,21 +107,27 @@ export default function UpdateAgent() {
     const checked = type === "checkbox" ? (e.target as HTMLInputElement).checked : undefined;
 
     if (name.includes(".")) {
-      const [parent, child] = name.split(".") as [keyof Agent, string];
+      const parts = name.split("."); // Split into array: e.g., ["contact", "socials", "twitter"]
       setFormData((prevData) => {
-        const parentValue = prevData[parent];
-        if (typeof parentValue === "object" && parentValue !== null) {
-          const newValue = type === "checkbox" ? checked : value;
-          if (newValue === undefined) return prevData;
-          return {
-            ...prevData,
-            [parent]: {
-              ...parentValue,
-              [child]: newValue,
-            },
-          };
+        let current = { ...prevData };
+
+        // Navigate and update nested structure
+        let ref: any = current;
+        for (let i = 0; i < parts.length - 1; i++) {
+          const key = parts[i] as keyof Agent;
+          if (!ref[key] || typeof ref[key] !== "object") {
+            ref[key] = {};
+          }
+          ref = ref[key];
         }
-        return prevData;
+
+        const finalKey = parts[parts.length - 1];
+        const newValue = type === "checkbox" ? checked : value;
+        if (newValue !== undefined) {
+          ref[finalKey] = newValue;
+        }
+
+        return current;
       });
     } else {
       setFormData((prevData) => {
@@ -140,7 +146,7 @@ export default function UpdateAgent() {
     field: keyof Agent,
     subField?: "data" | "topics" | "languages" | "platforms"
   ) => {
-    const value = e.target.value.split(",").map(item => item.trim());
+    const value = e.target.value.split(",").map((item) => item.trim());
     setFormData((prev) => {
       if (subField) {
         if (field === "knowledge" && subField === "data") {
@@ -196,8 +202,14 @@ export default function UpdateAgent() {
     if (!agentId) return;
 
     const requiredFields: (keyof Agent | string)[] = [
-      "name", "description", "bio", "mission", "vision",
-      "personality.tone", "personality.formality", "personality.catchphrase",
+      "name",
+      "description",
+      "bio",
+      "mission",
+      "vision",
+      "personality.tone",
+      "personality.formality",
+      "personality.catchphrase",
       "agentType",
     ];
 
@@ -242,16 +254,16 @@ export default function UpdateAgent() {
     <div className="h-full bg-black text-white flex items-center justify-center p-0 lg:p-0 mt-5">
       <div className="w-full px-2 py-2 lg:px-0 lg:py-0 rounded-4xl md:rounded-lg shadow-lg flex justify-center items-center">
         <div className="w-full lg:w-4/5 pt-10 pb-10 text-center">
-          <h1 className="text-2xl md:text-3xl font-bold mb-10">
-            Update Agent
-          </h1>
+          <h1 className="text-2xl md:text-3xl font-bold mb-10">Update Agent</h1>
           <p className="text-lg mb-4">Agent ID: {agentId || "Not provided"}</p>
           <form onSubmit={handleSubmit}>
             <div className="space-y-6">
               {/* Basic Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="name" className="block text-lg mb-2">Name *</label>
+                  <label htmlFor="name" className="block text-lg mb-2">
+                    Name *
+                  </label>
                   <input
                     id="name"
                     name="name"
@@ -263,7 +275,9 @@ export default function UpdateAgent() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="agentType" className="block text-lg mb-2">Agent Type *</label>
+                  <label htmlFor="agentType" className="block text-lg mb-2">
+                    Agent Type *
+                  </label>
                   <select
                     id="agentType"
                     name="agentType"
@@ -282,7 +296,9 @@ export default function UpdateAgent() {
               {/* Description Fields */}
               <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <label htmlFor="description" className="block text-lg mb-2">Description *</label>
+                  <label htmlFor="description" className="block text-lg mb-2">
+                    Description *
+                  </label>
                   <textarea
                     id="description"
                     name="description"
@@ -293,7 +309,9 @@ export default function UpdateAgent() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="bio" className="block text-lg mb-2">Bio *</label>
+                  <label htmlFor="bio" className="block text-lg mb-2">
+                    Bio *
+                  </label>
                   <textarea
                     id="bio"
                     name="bio"
@@ -304,7 +322,9 @@ export default function UpdateAgent() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="mission" className="block text-lg mb-2">Mission *</label>
+                  <label htmlFor="mission" className="block text-lg mb-2">
+                    Mission *
+                  </label>
                   <textarea
                     id="mission"
                     name="mission"
@@ -315,7 +335,9 @@ export default function UpdateAgent() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="vision" className="block text-lg mb-2">Vision *</label>
+                  <label htmlFor="vision" className="block text-lg mb-2">
+                    Vision *
+                  </label>
                   <textarea
                     id="vision"
                     name="vision"
@@ -330,7 +352,9 @@ export default function UpdateAgent() {
               {/* Contact Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="contact.email" className="block text-lg mb-2">Contact Email</label>
+                  <label htmlFor="contact.email" className="block text-lg mb-2">
+                    Contact Email
+                  </label>
                   <input
                     id="contact.email"
                     name="contact.email"
@@ -341,7 +365,9 @@ export default function UpdateAgent() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="contact.website" className="block text-lg mb-2">Website</label>
+                  <label htmlFor="contact.website" className="block text-lg mb-2">
+                    Website
+                  </label>
                   <input
                     id="contact.website"
                     name="contact.website"
@@ -356,7 +382,12 @@ export default function UpdateAgent() {
               {/* Socials */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label htmlFor="contact.socials.twitter" className="block text-lg mb-2">Twitter</label>
+                  <label
+                    htmlFor="contact.socials.twitter"
+                    className="block text-lg mb-2"
+                  >
+                    Twitter
+                  </label>
                   <input
                     id="contact.socials.twitter"
                     name="contact.socials.twitter"
@@ -367,7 +398,12 @@ export default function UpdateAgent() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="contact.socials.github" className="block text-lg mb-2">GitHub</label>
+                  <label
+                    htmlFor="contact.socials.github"
+                    className="block text-lg mb-2"
+                  >
+                    GitHub
+                  </label>
                   <input
                     id="contact.socials.github"
                     name="contact.socials.github"
@@ -378,7 +414,12 @@ export default function UpdateAgent() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="contact.socials.linkedin" className="block text-lg mb-2">LinkedIn</label>
+                  <label
+                    htmlFor="contact.socials.linkedin"
+                    className="block text-lg mb-2"
+                  >
+                    LinkedIn
+                  </label>
                   <input
                     id="contact.socials.linkedin"
                     name="contact.socials.linkedin"
@@ -393,7 +434,9 @@ export default function UpdateAgent() {
               {/* Wallets */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label htmlFor="wallets.solana" className="block text-lg mb-2">Solana Wallet</label>
+                  <label htmlFor="wallets.solana" className="block text-lg mb-2">
+                    Solana Wallet
+                  </label>
                   <div className="relative">
                     <input
                       id="wallets.solana"
@@ -415,7 +458,12 @@ export default function UpdateAgent() {
                   </div>
                 </div>
                 <div>
-                  <label htmlFor="wallets.ethereum" className="block text-lg mb-2">Ethereum Wallet</label>
+                  <label
+                    htmlFor="wallets.ethereum"
+                    className="block text-lg mb-2"
+                  >
+                    Ethereum Wallet
+                  </label>
                   <div className="relative">
                     <input
                       id="wallets.ethereum"
@@ -437,7 +485,9 @@ export default function UpdateAgent() {
                   </div>
                 </div>
                 <div>
-                  <label htmlFor="wallets.bitcoin" className="block text-lg mb-2">Bitcoin Wallet</label>
+                  <label htmlFor="wallets.bitcoin" className="block text-lg mb-2">
+                    Bitcoin Wallet
+                  </label>
                   <div className="relative">
                     <input
                       id="wallets.bitcoin"
@@ -463,7 +513,9 @@ export default function UpdateAgent() {
               {/* Knowledge */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="knowledge.type" className="block text-lg mb-2">Knowledge Type</label>
+                  <label htmlFor="knowledge.type" className="block text-lg mb-2">
+                    Knowledge Type
+                  </label>
                   <input
                     id="knowledge.type"
                     name="knowledge.type"
@@ -474,7 +526,9 @@ export default function UpdateAgent() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="knowledge.data" className="block text-lg mb-2">Knowledge Data (comma-separated)</label>
+                  <label htmlFor="knowledge.data" className="block text-lg mb-2">
+                    Knowledge Data (comma-separated)
+                  </label>
                   <input
                     id="knowledge.data"
                     name="knowledge.data"
@@ -489,7 +543,12 @@ export default function UpdateAgent() {
               {/* Personality */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="personality.tone" className="block text-lg mb-2">Tone *</label>
+                  <label
+                    htmlFor="personality.tone"
+                    className="block text-lg mb-2"
+                  >
+                    Tone *
+                  </label>
                   <input
                     id="personality.tone"
                     name="personality.tone"
@@ -501,7 +560,12 @@ export default function UpdateAgent() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="personality.formality" className="block text-lg mb-2">Formality *</label>
+                  <label
+                    htmlFor="personality.formality"
+                    className="block text-lg mb-2"
+                  >
+                    Formality *
+                  </label>
                   <input
                     id="personality.formality"
                     name="personality.formality"
@@ -513,7 +577,12 @@ export default function UpdateAgent() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="personality.catchphrase" className="block text-lg mb-2">Catchphrase *</label>
+                  <label
+                    htmlFor="personality.catchphrase"
+                    className="block text-lg mb-2"
+                  >
+                    Catchphrase *
+                  </label>
                   <input
                     id="personality.catchphrase"
                     name="personality.catchphrase"
@@ -533,12 +602,22 @@ export default function UpdateAgent() {
                     onChange={handleChange}
                     className="mr-2"
                   />
-                  <label htmlFor="personality.humor" className="text-lg">Humor</label>
+                  <label
+                    htmlFor="personality.humor"
+                    className="text-lg"
+                  >
+                    Humor
+                  </label>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="personality.preferences.topics" className="block text-lg mb-2">Preferred Topics (comma-separated)</label>
+                  <label
+                    htmlFor="personality.preferences.topics"
+                    className="block text-lg mb-2"
+                  >
+                    Preferred Topics (comma-separated)
+                  </label>
                   <input
                     id="personality.preferences.topics"
                     name="personality.preferences.topics"
@@ -549,7 +628,12 @@ export default function UpdateAgent() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="personality.preferences.languages" className="block text-lg mb-2">Languages (comma-separated)</label>
+                  <label
+                    htmlFor="personality.preferences.languages"
+                    className="block text-lg mb-2"
+                  >
+                    Languages (comma-separated)
+                  </label>
                   <input
                     id="personality.preferences.languages"
                     name="personality.preferences.languages"
@@ -564,7 +648,12 @@ export default function UpdateAgent() {
               {/* Settings */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="settings.max_memory_context" className="block text-lg mb-2">Max Memory Context</label>
+                  <label
+                    htmlFor="settings.max_memory_context"
+                    className="block text-lg mb-2"
+                  >
+                    Max Memory Context
+                  </label>
                   <input
                     id="settings.max_memory_context"
                     name="settings.max_memory_context"
@@ -575,7 +664,12 @@ export default function UpdateAgent() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="settings.platforms" className="block text-lg mb-2">Platforms (comma-separated)</label>
+                  <label
+                    htmlFor="settings.platforms"
+                    className="block text-lg mb-2"
+                  >
+                    Platforms (comma-separated)
+                  </label>
                   <input
                     id="settings.platforms"
                     name="settings.platforms"
@@ -590,7 +684,9 @@ export default function UpdateAgent() {
               {/* API Keys and Twitter */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="openaiApiKey" className="block text-lg mb-2">OpenAI API Key</label>
+                  <label htmlFor="openaiApiKey" className="block text-lg mb-2">
+                    OpenAI API Key
+                  </label>
                   <input
                     id="openaiApiKey"
                     name="openaiApiKey"
@@ -601,7 +697,9 @@ export default function UpdateAgent() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="twitterHandle" className="block text-lg mb-2">Twitter Handle</label>
+                  <label htmlFor="twitterHandle" className="block text-lg mb-2">
+                    Twitter Handle
+                  </label>
                   <input
                     id="twitterHandle"
                     name="twitterHandle"
@@ -614,7 +712,9 @@ export default function UpdateAgent() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="twitterAppKey" className="block text-lg mb-2">Twitter App Key</label>
+                  <label htmlFor="twitterAppKey" className="block text-lg mb-2">
+                    Twitter App Key
+                  </label>
                   <input
                     id="twitterAppKey"
                     name="twitterAppKey"
@@ -625,7 +725,12 @@ export default function UpdateAgent() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="twitterAppSecret" className="block text-lg mb-2">Twitter App Secret</label>
+                  <label
+                    htmlFor="twitterAppSecret"
+                    className="block text-lg mb-2"
+                  >
+                    Twitter App Secret
+                  </label>
                   <input
                     id="twitterAppSecret"
                     name="twitterAppSecret"
@@ -638,7 +743,12 @@ export default function UpdateAgent() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="twitterAccessToken" className="block text-lg mb-2">Twitter Access Token</label>
+                  <label
+                    htmlFor="twitterAccessToken"
+                    className="block text-lg mb-2"
+                  >
+                    Twitter Access Token
+                  </label>
                   <input
                     id="twitterAccessToken"
                     name="twitterAccessToken"
@@ -649,7 +759,12 @@ export default function UpdateAgent() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="twitterAccessSecret" className="block text-lg mb-2">Twitter Access Secret</label>
+                  <label
+                    htmlFor="twitterAccessSecret"
+                    className="block text-lg mb-2"
+                  >
+                    Twitter Access Secret
+                  </label>
                   <input
                     id="twitterAccessSecret"
                     name="twitterAccessSecret"
@@ -664,7 +779,9 @@ export default function UpdateAgent() {
               {/* Other Fields */}
               <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <label htmlFor="ruleIds" className="block text-lg mb-2">Rule IDs (comma-separated)</label>
+                  <label htmlFor="ruleIds" className="block text-lg mb-2">
+                    Rule IDs (comma-separated)
+                  </label>
                   <input
                     id="ruleIds"
                     name="ruleIds"
@@ -683,7 +800,9 @@ export default function UpdateAgent() {
                     onChange={handleChange}
                     className="mr-2"
                   />
-                  <label htmlFor="isActive" className="text-lg">Is Active</label>
+                  <label htmlFor="isActive" className="text-lg">
+                    Is Active
+                  </label>
                 </div>
               </div>
             </div>
