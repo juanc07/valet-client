@@ -14,6 +14,7 @@ import Manage from "./pages/Manage.tsx";
 import UpdateProfile from "./pages/UpdateProfile.tsx";
 import UpdateAgent from "./pages/UpdateAgent";
 import AgentProfile from "./pages/AgentProfile";
+import ChatApplication from "./pages/ChatApplication";
 import {
   ConnectionProvider,
   WalletProvider,
@@ -159,6 +160,7 @@ function MainContent() {
               <Route path="/createagent" element={<CreateAgent />} />
               <Route path="/youragent" element={<YourAgent />} />
               <Route path="/manage" element={<Manage />} />
+              <Route path="/chat" element={<ChatApplication />} />
               <Route
                 path="/profile"
                 element={

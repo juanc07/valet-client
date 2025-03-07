@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { House, Users, UserPlus, FileText, User } from "lucide-react"; // Added User icon
+import { House, Users, UserPlus, FileText, User, MessageSquare } from "lucide-react"; // Added MessageSquare for Chat
 import { useUser } from "../context/UserContext";
 
 const Sidebar = () => {
@@ -20,17 +20,22 @@ const Sidebar = () => {
       path: "/createagent",
       icon: <UserPlus className="text-2xl" />,
     },
+    {
+      name: "Chat",
+      path: "/chat", // New Chat route
+      icon: <MessageSquare className="text-2xl" />, // Chat icon
+    },
     ...(currentUser
       ? [
           {
             name: "Update Profile",
             path: "/update-profile",
-            icon: <UserPlus className="text-2xl" />, // Kept as UserPlus
+            icon: <UserPlus className="text-2xl" />,
           },
           {
             name: "My Profile",
             path: "/profile",
-            icon: <User className="text-2xl" />, // New User icon for profile
+            icon: <User className="text-2xl" />,
           },
         ]
       : []),
