@@ -6,8 +6,18 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { fetchWrapper } from "../utils/fetchWrapper";
+import {
+  Connection,
+  PublicKey,
+  Transaction,
+  SystemProgram,
+  LAMPORTS_PER_SOL,
+} from "@solana/web3.js";
 
-const BASE_URL = "http://localhost:3000"; // Adjust to your backend URL
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+const RECEIVER_PUBLIC_KEY = import.meta.env.VITE_SOLANA_PAYMENT_WALLET;
+const SOLANA_ENDPOINT = import.meta.env.VITE_SOLANA_ENDPOINT || "https://api.devnet.solana.com";
+const SOL_AMOUNT = 0.01 * LAMPORTS_PER_SOL; // 0.01 SOL in lamports
 
 interface FormData {
   name: string;
@@ -30,16 +40,18 @@ export default function CreateAgent() {
     openaiApiKey: "",
   });
   const [error, setError] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { connected: walletConnected } = useWallet();
+  const { connected: walletConnected, publicKey, signTransaction, sendTransaction } = useWallet();
   const { currentUser } = useUser();
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("Wallet connected:", walletConnected, "PublicKey:", publicKey?.toString());
     if (!walletConnected) {
       navigate("/");
     }
-  }, [walletConnected, navigate]);
+  }, [walletConnected, publicKey, navigate]);
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -54,14 +66,13 @@ export default function CreateAgent() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const requiredFields = [
-      "name",
-      "bio",
-      "tone",
-      "formality",
-      "catchphrase",
-      "openaiApiKey",
-    ];
+    if (!publicKey || !signTransaction || !sendTransaction) {
+      setError("Wallet not connected properly.");
+      toast.error("Wallet Error", { description: "Please connect your wallet.", duration: 3000 });
+      return;
+    }
+
+    const requiredFields = ["name", "bio", "tone", "formality", "catchphrase", "openaiApiKey"];
     const missingFields = requiredFields.filter((field) => !formData[field as keyof FormData]);
     if (missingFields.length > 0) {
       setError(`Missing required fields: ${missingFields.join(", ")}`);
@@ -81,31 +92,67 @@ export default function CreateAgent() {
       return;
     }
 
-    const agentData = {
-      name: formData.name,
-      bio: formData.bio,
-      personality: {
-        tone: formData.tone,
-        formality: formData.formality,
-        catchphrase: formData.catchphrase,
-      },
-      agentType: formData.agentType,
-      createdBy: currentUser.userId,
-      openaiApiKey: formData.openaiApiKey,
-    };
-
-    console.log("Submitting agentData:", JSON.stringify(agentData, null, 2));
+    setIsSubmitting(true);
+    const connection = new Connection(SOLANA_ENDPOINT, "confirmed");
 
     try {
+      // Validate RECEIVER_PUBLIC_KEY
+      console.log("RECEIVER_PUBLIC_KEY:", RECEIVER_PUBLIC_KEY);
+      if (!RECEIVER_PUBLIC_KEY || typeof RECEIVER_PUBLIC_KEY !== "string") {
+        throw new Error("RECEIVER_PUBLIC_KEY is invalid or undefined. Check your .env file.");
+      }
+
+      const receiverPublicKey = new PublicKey(RECEIVER_PUBLIC_KEY);
+      console.log("receiverPublicKey:", receiverPublicKey.toString());
+
+      // Debug publicKey from wallet
+      console.log("publicKey:", publicKey.toString());
+
+      // Create SOL transfer transaction
+      const transferTx = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: publicKey,
+          toPubkey: receiverPublicKey,
+          lamports: SOL_AMOUNT,
+        })
+      );
+
+      const { blockhash } = await connection.getLatestBlockhash();
+      transferTx.recentBlockhash = blockhash;
+      transferTx.feePayer = publicKey;
+
+      const signedTransferTx = await signTransaction(transferTx);
+      const txSignature = await sendTransaction(signedTransferTx, connection);
+      await connection.confirmTransaction(txSignature, "confirmed");
+
+      // Prepare agent data without txSignature
+      const agentData = {
+        name: formData.name,
+        bio: formData.bio,
+        personality: {
+          tone: formData.tone,
+          formality: formData.formality,
+          catchphrase: formData.catchphrase,
+          humor: false,
+        },
+        agentType: formData.agentType,
+        createdBy: currentUser.userId,
+        openaiApiKey: formData.openaiApiKey,
+        description: "A new AI agent",
+        mission: "To assist users",
+        vision: "A helpful future",
+      };
+
+      // Send to backend with txSignature as a separate field
       const response = await fetchWrapper<{ message: string; agentId: string }>(
         `${BASE_URL}/agents`,
         {
           method: "POST",
-          body: JSON.stringify(agentData),
+          body: JSON.stringify({ txSignature, ...agentData }),
           headers: { "Content-Type": "application/json" },
         }
       );
-      console.log("Response from server:", response);
+
       setError("");
       toast.success("Agent Created", {
         description: `Successfully created agent: ${formData.name} (ID: ${response.agentId})`,
@@ -121,12 +168,14 @@ export default function CreateAgent() {
         openaiApiKey: "",
       });
     } catch (err: any) {
-      console.error("Error creating agent:", err.message, err.stack);
-      setError("Failed to create agent.");
+      console.error("Error creating agent:", err);
+      setError("Failed to create agent: " + (err.message || "Unknown error"));
       toast.error("Agent Creation Failed", {
         description: err.message || "Please try again later.",
         duration: 3000,
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -135,7 +184,7 @@ export default function CreateAgent() {
       <div className="w-full px-2 py-2 lg:px-0 lg:py- rounded-4xl md:rounded-lg shadow-lg flex justify-center items-center">
         <div className="w-full lg:w-4/5 pt-10 pb-10">
           <h1 className="text-2xl md:text-3xl font-bold text-center mb-10">
-            Create Your AI Agent
+            Create Your AI Agent (0.01 SOL)
           </h1>
           <form onSubmit={handleSubmit}>
             {/* Agent Type Selection */}
@@ -329,9 +378,12 @@ export default function CreateAgent() {
             <div className="text-center w-full">
               <button
                 type="submit"
-                className="w-full py-2 rounded-4xl text-lg text-black cursor-pointer bg-[#6a94f0] transition-all duration-400 ease-in-out backdrop-blur-lg border border-white/10 hover:bg-white/10 hover:text-white"
+                disabled={isSubmitting}
+                className={`w-full py-2 rounded-4xl text-lg text-black cursor-pointer bg-[#6a94f0] transition-all duration-400 ease-in-out backdrop-blur-lg border border-white/10 hover:bg-white/10 hover:text-white ${
+                  isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
-                Create
+                {isSubmitting ? "Processing..." : "Create (Pay 0.01 SOL)"}
               </button>
             </div>
           </form>
