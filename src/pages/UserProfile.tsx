@@ -71,6 +71,10 @@ export default function UserProfile({ userId }: UserProfileProps) {
     });
   };
 
+  const handleUpdateProfile = () => {
+    navigate("/update-profile");
+  };
+
   if (loading) {
     return (
       <div className="h-full bg-black text-white flex items-center justify-center p-0 lg:p-4">
@@ -189,7 +193,7 @@ export default function UserProfile({ userId }: UserProfileProps) {
 
         {/* Stats Section */}
         <h2 className="text-xl font-semibold mb-4">Your Stats</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="flex flex-col bg-[#222128] p-4 rounded-lg">
             <label className="mb-1 text-white">Agents Created</label>
             <p className="text-3xl font-bold">{agentCount}</p>
@@ -202,6 +206,16 @@ export default function UserProfile({ userId }: UserProfileProps) {
             <label className="mb-1 text-white">Total Transactions</label>
             <p className="text-3xl font-bold">0</p> {/* Placeholder */}
           </div>
+        </div>
+
+        {/* Update Profile Button */}
+        <div className="text-center w-full">
+          <button
+            onClick={handleUpdateProfile}
+            className="w-full py-2 rounded-4xl text-lg text-black cursor-pointer bg-[#6a94f0] transition-all duration-400 ease-in-out backdrop-blur-lg border border-white/10 hover:bg-white/10 hover:text-white"
+          >
+            Update Profile
+          </button>
         </div>
       </div>
     </div>

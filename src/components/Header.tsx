@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Image1 from "../assets/logo.png";
-import { Logs, House, Users, UserPlus, FileText } from "lucide-react";
+import { Logs, House, Users, UserPlus, FileText, User, MessageSquare, Edit } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
@@ -16,8 +16,6 @@ export default function Header() {
   const { setVisible } = useWalletModal();
   const navigate = useNavigate();
 
-  console.log("Header currentUser:", currentUser); // Debug log
-
   const handleWalletClick = async () => {
     try {
       if (connected && publicKey) {
@@ -25,7 +23,6 @@ export default function Header() {
       } else {
         setIsWalletMenuOpen(false);
         setVisible(true);
-
         toast("Please select a wallet to connect", {
           description: "Wallet Connection",
           duration: 3000,
@@ -47,22 +44,32 @@ export default function Header() {
         description: "Your wallet has been successfully disconnected",
         duration: 3000,
       });
-      navigate("/"); // Redirect to Start page on disconnect
+      navigate("/");
     } catch (error) {
       console.error("Disconnect error:", error);
     }
   };
+
+  const menuItems = [
+    { name: "Home", path: "/", icon: <House className="text-2xl" /> },
+    { name: "My Agents", path: "/youragent", icon: <Users className="text-2xl" /> },
+    { name: "Create Agents", path: "/createagent", icon: <UserPlus className="text-2xl" /> },
+    { name: "Chat", path: "/chat", icon: <MessageSquare className="text-2xl" /> },
+    ...(currentUser
+      ? [
+          { name: "Update Profile", path: "/update-profile", icon: <Edit className="text-2xl" /> },
+          { name: "My Profile", path: "/profile", icon: <User className="text-2xl" /> },
+        ]
+      : []),
+    { name: "Documentation", path: "https://x.com/home", icon: <FileText className="text-2xl" />, isExternal: true },
+  ];
 
   return (
     <header className="fixed top-0 left-0 w-full px-4 md:px-8 flex items-center justify-between p-4 bg-black text-white shadow-md z-50 border-b border-[#494848]">
       <div>
         <Link to="/">
           <div className="w-9 h-9 lg:w-12 lg:h-12 max-w-[150px]">
-            <img
-              src={Image1}
-              className="w-full h-full object-contain"
-              alt="Logo"
-            />
+            <img src={Image1} className="w-full h-full object-contain" alt="Logo" />
           </div>
         </Link>
       </div>
@@ -80,10 +87,10 @@ export default function Header() {
               : "Connect Wallet"}
           </button>
           {connected && publicKey && isWalletMenuOpen && (
-            <div className="absolute cursor-pointer top-full right-0 mt-2 w-48 bg-[#6894f3] text-black rounded-lg shadow-xl z-50">
+            <div className="absolute cursor-pointer top-full right-0 mt-2 w-48 bg-black text-white border border-[#494848] rounded-lg shadow-xl z-50">
               <button
                 onClick={handleDisconnect}
-                className="w-full text-left cursor-pointer px-4 py-2 rounded-lg hover:bg-[#8faef0] hover:px-4 hover:py-2 transition-colors duration-200"
+                className="w-full text-left cursor-pointer px-4 py-2 rounded-lg hover:bg-[#222128] transition-colors duration-200"
               >
                 Disconnect
               </button>
@@ -99,47 +106,33 @@ export default function Header() {
       </div>
 
       {isMenuOpen && (
-        <div className="absolute top-16 right-0 w-64 bg-[#6894f3] text-white mr-3 shadow-xl lg:hidden z-50">
+        <div className="absolute top-16 right-0 w-64 bg-black text-white mr-3 shadow-xl border border-[#494848] lg:hidden z-50">
           <div className="flex flex-col gap-2 p-4">
-            <span className="font-light ml-2">Terminals</span>
-            <a
-              href="/"
-              className="flex items-center gap-3 p-2 hover:bg-[#8faef0] rounded-lg transition-all duration-400 ease-in-out"
-            >
-              <House className="text-xl" />
-              <span>Home</span>
-            </a>
-            <a
-              href="/youragent"
-              className="flex items-center gap-3 p-2 hover:bg-[#8faef0] rounded-lg transition-all duration-400 ease-in-out"
-            >
-              <Users className="text-xl" />
-              <span>Your Agents</span>
-            </a>
-            <a
-              href="/createagent"
-              className="flex items-center gap-3 p-2 hover:bg-[#8faef0] rounded-lg transition-all duration-400 ease-in-out"
-            >
-              <UserPlus className="text-xl" />
-              <span>Create Agents</span>
-            </a>
-            {currentUser && (
-              <a
-                href="/update-profile"
-                className="flex items-center gap-3 p-2 hover:bg-[#8faef0] rounded-lg transition-all duration-400 ease-in-out"
-              >
-                <UserPlus className="text-xl" />
-                <span>Update Profile</span>
-              </a>
+            <span className="font-light ml-2 text-gray-400">Terminal</span>
+            {menuItems.map((item) =>
+              item.isExternal ? (
+                <a
+                  key={item.path}
+                  href={item.path}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-2 hover:bg-[#222128] rounded-lg transition-all duration-400 ease-in-out text-gray-400"
+                >
+                  {item.icon}
+                  <span>{item.name}</span>
+                </a>
+              ) : (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className="flex items-center gap-3 p-2 hover:bg-[#222128] rounded-lg transition-all duration-400 ease-in-out text-gray-400"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {item.icon}
+                  <span>{item.name}</span>
+                </Link>
+              )
             )}
-            <a
-              target="_blank"
-              href="https://x.com/home"
-              className="flex items-center gap-3 p-2 hover:bg-[#8faef0] rounded-lg transition-all duration-400 ease-in-out"
-            >
-              <FileText className="text-xl" />
-              <span>Documentation</span>
-            </a>
           </div>
         </div>
       )}

@@ -109,7 +109,6 @@ export default function UpdateProfile({ userId }: UpdateProfileProps) {
     }
   };
 
-  // Function to compute age from birthdate
   const calculateAge = (birthdate: string): number => {
     if (!birthdate) return 0;
     const today = new Date();
@@ -139,8 +138,8 @@ export default function UpdateProfile({ userId }: UpdateProfileProps) {
       email: formData.email,
       firstName: formData.firstName,
       lastName: formData.lastName,
-      birthdate: formData.birthdate || undefined, // Only include if non-empty
-      age: calculateAge(formData.birthdate), // Compute age from birthdate
+      birthdate: formData.birthdate || undefined,
+      age: calculateAge(formData.birthdate),
       country: formData.country || undefined,
       mobileNumber: formData.mobileNumber || undefined,
       twitterHandle: formData.twitterHandle || undefined,
@@ -165,6 +164,10 @@ export default function UpdateProfile({ userId }: UpdateProfileProps) {
         duration: 3000,
       });
     }
+  };
+
+  const handleBack = () => {
+    navigate("/profile");
   };
 
   return (
@@ -370,7 +373,14 @@ export default function UpdateProfile({ userId }: UpdateProfileProps) {
 
               {error && <p className="text-red-500 text-center mt-2">{error}</p>}
 
-              <div className="text-center w-full">
+              <div className="text-center w-full flex justify-between gap-4">
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  className="w-full py-2 rounded-4xl text-lg text-black cursor-pointer bg-[#6a94f0] transition-all duration-400 ease-in-out backdrop-blur-lg border border-white/10 hover:bg-white/10 hover:text-white"
+                >
+                  Back
+                </button>
                 <button
                   type="submit"
                   className="w-full py-2 rounded-4xl text-lg text-black cursor-pointer bg-[#6a94f0] transition-all duration-400 ease-in-out backdrop-blur-lg border border-white/10 hover:bg-white/10 hover:text-white"
