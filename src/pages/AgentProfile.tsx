@@ -19,7 +19,7 @@ export default function AgentProfile() {
     vision: "",
     contact: { email: "", website: "", socials: { twitter: "", github: "", linkedin: "" } },
     wallets: { solana: "", ethereum: "", bitcoin: "" },
-    knowledge: { type: "", data: [] },
+    knowledge: {},
     personality: { tone: "", humor: false, formality: "", catchphrase: "", preferences: { topics: [], languages: [] } },
     settings: { max_memory_context: 0, platforms: [] },
     ruleIds: [],
@@ -73,11 +73,7 @@ export default function AgentProfile() {
             ...prevData.wallets,
             ...(agent.wallets || {}),
           },
-          knowledge: {
-            ...prevData.knowledge,
-            ...(agent.knowledge || {}),
-            data: agent.knowledge?.data || [],
-          },
+          knowledge: agent.knowledge || {},
           personality: {
             ...prevData.personality,
             ...(agent.personality || {}),
@@ -342,15 +338,23 @@ export default function AgentProfile() {
             )}
 
             {activeTab === "knowledge" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-lg mb-2">Knowledge Type</label>
-                  <div className="w-full border border-[#494848] text-white p-2 rounded-lg bg-[#222128]">{agentData.knowledge?.type || "Not set"}</div>
-                </div>
-                <div>
-                  <label className="block text-lg mb-2">Knowledge Data</label>
-                  <div className="w-full border border-[#494848] text-white p-2 rounded-lg bg-[#222128] whitespace-pre-wrap break-words">{agentData.knowledge?.data?.join(", ") || "Not set"}</div>
-                </div>
+              <div className="space-y-4">
+                {Object.entries(agentData.knowledge).length > 0 ? (
+                  Object.entries(agentData.knowledge).map(([key, value]) => (
+                    <div key={key} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-lg mb-2">Key</label>
+                        <div className="w-full border border-[#494848] text-white p-2 rounded-lg bg-[#222128] whitespace-pre-wrap break-words">{key}</div>
+                      </div>
+                      <div>
+                        <label className="block text-lg mb-2">Value</label>
+                        <div className="w-full border border-[#494848] text-white p-2 rounded-lg bg-[#222128] whitespace-pre-wrap break-words">{value}</div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center text-gray-400">No knowledge data available.</div>
+                )}
               </div>
             )}
 

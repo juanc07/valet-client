@@ -20,8 +20,7 @@ export interface Agent {
       bitcoin: string; // own btc wallet of agent and optional
     };
     knowledge: {
-      type: string; // optional
-      data: string[]; // optional
+      [key: string]: string; // Changed to key-value pair
     };
     personality: {
       tone: string; // required in creation

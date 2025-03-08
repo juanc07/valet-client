@@ -5,7 +5,7 @@ import { Agent } from "../interfaces/agent";
 import { getAgentById, updateAgent } from "../api/agentApi";
 import { toast } from "sonner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCopy, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import { faCopy, faArrowLeft, faPlus, faMinus } from "@fortawesome/free-solid-svg-icons";
 
 export default function UpdateAgent() {
   const { agentId } = useParams<{ agentId: string }>();
@@ -18,7 +18,7 @@ export default function UpdateAgent() {
     vision: "",
     contact: { email: "", website: "", socials: { twitter: "", github: "", linkedin: "" } },
     wallets: { solana: "", ethereum: "", bitcoin: "" },
-    knowledge: { type: "", data: [] },
+    knowledge: {},
     personality: { tone: "", humor: false, formality: "", catchphrase: "", preferences: { topics: [], languages: [] } },
     settings: { max_memory_context: 0, platforms: [] },
     ruleIds: [],
@@ -35,6 +35,8 @@ export default function UpdateAgent() {
     createdBy: "",
   });
   const [activeTab, setActiveTab] = useState("basic");
+  const [newKnowledgeKey, setNewKnowledgeKey] = useState("");
+  const [newKnowledgeValue, setNewKnowledgeValue] = useState("");
 
   const { connected: walletConnected } = useWallet();
   const navigate = useNavigate();
@@ -53,7 +55,7 @@ export default function UpdateAgent() {
           ...agentData,
           contact: { ...prevData.contact, ...(agentData.contact || {}), socials: { ...prevData.contact.socials, ...(agentData.contact?.socials || {}) } },
           wallets: { ...prevData.wallets, ...(agentData.wallets || {}) },
-          knowledge: { ...prevData.knowledge, ...(agentData.knowledge || {}), data: agentData.knowledge?.data || [] },
+          knowledge: agentData.knowledge || {},
           personality: {
             ...prevData.personality,
             ...(agentData.personality || {}),
@@ -93,16 +95,44 @@ export default function UpdateAgent() {
     }
   };
 
-  const handleArrayChange = (e: ChangeEvent<HTMLInputElement>, field: keyof Agent, subField?: "data" | "topics" | "languages" | "platforms") => {
+  const handleArrayChange = (e: ChangeEvent<HTMLInputElement>, field: keyof Agent, subField?: "topics" | "languages" | "platforms") => {
     const value = e.target.value.split(",").map((item) => item.trim());
     setFormData((prev) => {
       if (subField) {
-        if (field === "knowledge" && subField === "data") return { ...prev, knowledge: { ...prev.knowledge, data: value } };
         if (field === "personality" && (subField === "topics" || subField === "languages")) return { ...prev, personality: { ...prev.personality, preferences: { ...prev.personality.preferences, [subField]: value } } };
         if (field === "settings" && subField === "platforms") return { ...prev, settings: { ...prev.settings, platforms: value } };
       }
       if (field === "ruleIds") return { ...prev, ruleIds: value };
       return prev;
+    });
+  };
+
+  const handleKnowledgeChange = (key: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      knowledge: { ...prev.knowledge, [key]: value },
+    }));
+  };
+
+  const handleAddKnowledge = () => {
+    if (newKnowledgeKey && newKnowledgeValue && !formData.knowledge[newKnowledgeKey]) {
+      setFormData((prev) => ({
+        ...prev,
+        knowledge: { ...prev.knowledge, [newKnowledgeKey]: newKnowledgeValue },
+      }));
+      setNewKnowledgeKey("");
+      setNewKnowledgeValue("");
+    } else if (!newKnowledgeKey || !newKnowledgeValue) {
+      toast.error("Missing Knowledge Fields", { description: "Both key and value are required.", duration: 2000 });
+    } else {
+      toast.error("Duplicate Key", { description: "This knowledge key already exists.", duration: 2000 });
+    }
+  };
+
+  const handleRemoveKnowledge = (key: string) => {
+    setFormData((prev) => {
+      const { [key]: _, ...rest } = prev.knowledge;
+      return { ...prev, knowledge: rest };
     });
   };
 
@@ -319,14 +349,72 @@ export default function UpdateAgent() {
               )}
 
               {activeTab === "knowledge" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="knowledge.type" className="block text-lg mb-2">Knowledge Type</label>
-                    <input id="knowledge.type" name="knowledge.type" type="text" value={formData.knowledge.type} onChange={handleChange} className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" />
+                <div className="space-y-4">
+                  <div className="space-y-4">
+                    {Object.entries(formData.knowledge).map(([key, value]) => (
+                      <div key={key} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                        <div>
+                          <label className="block text-lg mb-2">Key</label>
+                          <input
+                            type="text"
+                            value={key}
+                            disabled
+                            className="w-full border border-[#494848] text-white p-2 rounded-lg bg-[#333] outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-lg mb-2">Value</label>
+                          <input
+                            type="text"
+                            value={value}
+                            onChange={(e) => handleKnowledgeChange(key, e.target.value)}
+                            className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                          />
+                        </div>
+                        <div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveKnowledge(key)}
+                            className="w-full py-2 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-400 flex items-center justify-center gap-2"
+                          >
+                            <FontAwesomeIcon icon={faMinus} />
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div>
-                    <label htmlFor="knowledge.data" className="block text-lg mb-2">Knowledge Data (comma-separated)</label>
-                    <input id="knowledge.data" name="knowledge.data" type="text" value={formData.knowledge.data.join(", ")} onChange={(e) => handleArrayChange(e, "knowledge", "data")} className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label htmlFor="newKnowledgeKey" className="block text-lg mb-2">New Knowledge Key</label>
+                      <input
+                        id="newKnowledgeKey"
+                        type="text"
+                        value={newKnowledgeKey}
+                        onChange={(e) => setNewKnowledgeKey(e.target.value)}
+                        className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="newKnowledgeValue" className="block text-lg mb-2">New Knowledge Value</label>
+                      <input
+                        id="newKnowledgeValue"
+                        type="text"
+                        value={newKnowledgeValue}
+                        onChange={(e) => setNewKnowledgeValue(e.target.value)}
+                        className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <button
+                        type="button"
+                        onClick={handleAddKnowledge}
+                        className="w-full py-2 px-4 bg-[#6a94f0] text-black rounded-lg hover:bg-[#8faef0] transition-all duration-400 flex items-center justify-center gap-2"
+                      >
+                        <FontAwesomeIcon icon={faPlus} />
+                        Add
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}

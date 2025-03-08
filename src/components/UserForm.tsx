@@ -11,6 +11,7 @@ export const UserForm = () => {
     firstName: '',
     lastName: '',
     age: 0,
+    birthdate: '',
     country: '',
     mobileNumber: '',
     twitterHandle: '',
