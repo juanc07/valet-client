@@ -1,0 +1,26 @@
+Valet front End
+
+Current features:
+
+1. create user account
+2. update user account
+3. create agent
+4. update agent configuration via agent dashboard
+5. delete agent via agent dashboard
+6. chat with agent via chat app page
+7. chat with other agent via chat app dropdown
+8. view other agent configruation via agent dashboard
+
+
+Current Integrations:
+1. Server have complete CRUD method for user  management 
+2. Server have complete CRUD method for agent management
+3. simple chat with agent via openai endpoint , basic chat and streaming chat is working
+4. twitter integration in progress nothing is working yet
+
+
+Server Repo
+https://github.com/juanc07/valet-server
+
+Client Repo
+https://github.com/juanc07/valet-client
