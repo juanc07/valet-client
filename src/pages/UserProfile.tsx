@@ -77,7 +77,7 @@ export default function UserProfile({ userId }: UserProfileProps) {
 
   if (loading) {
     return (
-      <div className="h-full bg-black text-white flex items-center justify-center p-0 lg:p-4">
+      <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
         <div className="text-center">Loading your profile...</div>
       </div>
     );
@@ -85,134 +85,132 @@ export default function UserProfile({ userId }: UserProfileProps) {
 
   if (error || !user) {
     return (
-      <div className="h-full bg-black text-white flex items-center justify-center p-0 lg:p-4">
+      <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
         <div className="text-center text-red-500">{error || "User not found"}</div>
       </div>
     );
   }
 
   return (
-    <div className="h-full bg-black text-white flex items-center justify-center p-0 lg:p-4">
-      <div className="w-full p-0 lg:p-6 rounded-none lg:rounded-lg shadow-lg overflow-x-auto max-w-full pt-10 pb-10">
-        <h1 className="text-2xl md:text-3xl font-bold text-center mb-10">
-          {user.username}'s Profile
-        </h1>
-
-        {/* Profile Info */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div className="flex flex-col">
-            <label className="mb-1 text-white">User ID</label>
-            <div className="relative flex items-center">
-              <p className="w-full border border-[#494848] p-2 md:p-3 rounded-lg truncate flex-1">
-                {user.userId}
-              </p>
-              <button
-                type="button"
-                onClick={() => handleCopy(user.userId, "User ID")}
-                className="absolute right-2 text-[#6894f3] hover:text-[#8faef0]"
-                title="Copy User ID"
-              >
-                <FontAwesomeIcon icon={faCopy} />
-              </button>
-            </div>
-          </div>
-          <div className="flex flex-col">
-            <label className="mb-1 text-white">Solana Wallet Address</label>
-            <div className="relative flex items-center">
-              <p className="w-full border border-[#494848] p-2 md:p-3 rounded-lg truncate flex-1">
-                {publicKey ? publicKey.toBase58() : "Not connected"}
-              </p>
-              {publicKey && (
-                <button
-                  type="button"
-                  onClick={() => handleCopy(publicKey.toBase58(), "Wallet Address")}
-                  className="absolute right-2 text-[#6894f3] hover:text-[#8faef0]"
-                  title="Copy wallet address"
-                >
-                  <FontAwesomeIcon icon={faCopy} />
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="flex flex-col">
-            <label className="mb-1 text-white">Email</label>
-            <p className="w-full border border-[#494848] p-2 md:p-3 rounded-lg">
-              {user.email}
-            </p>
-          </div>
-          <div className="flex flex-col">
-            <label className="mb-1 text-white">Full Name</label>
-            <p className="w-full border border-[#494848] p-2 md:p-3 rounded-lg">
-              {user.firstName || user.lastName
-                ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
-                : "Not set"}
-            </p>
-          </div>
-          <div className="flex flex-col">
-            <label className="mb-1 text-white">Birthdate</label>
-            <p className="w-full border border-[#494848] p-2 md:p-3 rounded-lg">
-              {user.birthdate || "Not set"}
-            </p>
-          </div>
-          <div className="flex flex-col">
-            <label className="mb-1 text-white">Country</label>
-            <p className="w-full border border-[#494848] p-2 md:p-3 rounded-lg">
-              {countryOptions.find((opt) => opt.value === user.country)?.label || user.country || "Not set"}
-            </p>
-          </div>
-          <div className="flex flex-col">
-            <label className="mb-1 text-white">Mobile Number</label>
-            <p className="w-full border border-[#494848] p-2 md:p-3 rounded-lg">
-              {user.mobileNumber || "Not set"}
-            </p>
-          </div>
+    <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+      <div className="w-full max-w-4xl bg-[#1a1a1a] rounded-lg shadow-lg p-6">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-[#6a94f0]">{user.username}'s Profile</h1>
+          <p className="text-gray-400 mt-2">Your personal overview</p>
         </div>
 
-        {/* Social Info */}
-        <h2 className="text-xl font-semibold mb-4">Social Connections</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="flex flex-col">
-            <label className="mb-1 text-white">Twitter Handle</label>
-            <p className="w-full border border-[#494848] p-2 md:p-3 rounded-lg">
-              {user.twitterHandle || "Not set"}
-            </p>
+        {/* Top Row: Personal Details and Social Connections */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          {/* Personal Details */}
+          <div className="bg-[#222128] rounded-lg p-4">
+            <h2 className="text-xl font-semibold text-white mb-4">Personal Details</h2>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400 text-sm">User ID:</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-white truncate max-w-[150px] md:max-w-[200px] text-sm">
+                    {user.userId}
+                  </span>
+                  <button
+                    onClick={() => handleCopy(user.userId, "User ID")}
+                    className="text-[#6a94f0] hover:text-[#8faef0]"
+                    title="Copy User ID"
+                  >
+                    <FontAwesomeIcon icon={faCopy} size="sm" />
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400 text-sm">Wallet:</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-white truncate max-w-[150px] md:max-w-[200px] text-sm">
+                    {publicKey ? publicKey.toBase58() : "Not connected"}
+                  </span>
+                  {publicKey && (
+                    <button
+                      onClick={() => handleCopy(publicKey.toBase58(), "Wallet Address")}
+                      className="text-[#6a94f0] hover:text-[#8faef0]"
+                      title="Copy Wallet Address"
+                    >
+                      <FontAwesomeIcon icon={faCopy} size="sm" />
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400 text-sm">Email:</span>
+                <span className="text-white text-sm">{user.email || "Not set"}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400 text-sm">Full Name:</span>
+                <span className="text-white text-sm">
+                  {user.firstName || user.lastName
+                    ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
+                    : "Not set"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400 text-sm">Birthdate:</span>
+                <span className="text-white text-sm">{user.birthdate || "Not set"}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400 text-sm">Country:</span>
+                <span className="text-white text-sm">
+                  {countryOptions.find((opt) => opt.value === user.country)?.label || user.country || "Not set"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400 text-sm">Mobile:</span>
+                <span className="text-white text-sm">{user.mobileNumber || "Not set"}</span>
+              </div>
+            </div>
           </div>
-          <div className="flex flex-col">
-            <label className="mb-1 text-white">Discord ID</label>
-            <p className="w-full border border-[#494848] p-2 md:p-3 rounded-lg">
-              {user.discordId || "Not set"}
-            </p>
-          </div>
-          <div className="flex flex-col">
-            <label className="mb-1 text-white">Telegram ID</label>
-            <p className="w-full border border-[#494848] p-2 md:p-3 rounded-lg">
-              {user.telegramId || "Not set"}
-            </p>
+
+          {/* Social Connections */}
+          <div className="bg-[#222128] rounded-lg p-4">
+            <h2 className="text-xl font-semibold text-white mb-4">Social Connections</h2>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400 text-sm">Twitter:</span>
+                <span className="text-white text-sm">{user.twitterHandle || "Not set"}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400 text-sm">Discord:</span>
+                <span className="text-white text-sm">{user.discordId || "Not set"}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400 text-sm">Telegram:</span>
+                <span className="text-white text-sm">{user.telegramId || "Not set"}</span>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Stats Section */}
-        <h2 className="text-xl font-semibold mb-4">Your Stats</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="flex flex-col bg-[#222128] p-4 rounded-lg">
-            <label className="mb-1 text-white">Agents Created</label>
-            <p className="text-3xl font-bold">{agentCount}</p>
-          </div>
-          <div className="flex flex-col bg-[#222128] p-4 rounded-lg">
-            <label className="mb-1 text-white">Active Agents</label>
-            <p className="text-3xl font-bold">{activeAgentCount}</p>
-          </div>
-          <div className="flex flex-col bg-[#222128] p-4 rounded-lg">
-            <label className="mb-1 text-white">Total Transactions</label>
-            <p className="text-3xl font-bold">0</p> {/* Placeholder */}
+        <div className="bg-[#222128] rounded-lg p-4 mb-6">
+          <h2 className="text-xl font-semibold text-white mb-4">Your Stats</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="text-center">
+              <p className="text-gray-400 text-sm">Agents Created</p>
+              <p className="text-2xl font-bold text-[#6a94f0]">{agentCount}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-gray-400 text-sm">Active Agents</p>
+              <p className="text-2xl font-bold text-[#6a94f0]">{activeAgentCount}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-gray-400 text-sm">Total Transactions</p>
+              <p className="text-2xl font-bold text-[#6a94f0]">0</p> {/* Placeholder */}
+            </div>
           </div>
         </div>
 
         {/* Update Profile Button */}
-        <div className="text-center w-full">
+        <div className="text-center">
           <button
             onClick={handleUpdateProfile}
-            className="w-full py-2 rounded-4xl text-lg text-black cursor-pointer bg-[#6a94f0] transition-all duration-400 ease-in-out backdrop-blur-lg border border-white/10 hover:bg-white/10 hover:text-white"
+            className="py-2 px-6 bg-[#6a94f0] text-black rounded-lg hover:bg-[#8faef0] transition-all duration-300"
           >
             Update Profile
           </button>
