@@ -74,7 +74,8 @@ export const chatWithAgentStream = async (
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorData = await response.json(); // Parse the response body
+      throw new Error(JSON.stringify({ status: response.status, ...errorData }));
     }
 
     const reader = response.body?.getReader();
@@ -118,6 +119,6 @@ export const chatWithAgentStream = async (
     }
   } catch (error) {
     console.error("Streaming error:", error);
-    throw error; // Let the caller handle it
+    throw error; // Propagate the error to the caller
   }
 };

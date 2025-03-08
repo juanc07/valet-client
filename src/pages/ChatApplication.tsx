@@ -120,13 +120,35 @@ export default function ChatApplication() {
         );
       } catch (error) {
         console.error("Streaming chat error:", error);
+        let errorMessage = "Unable to stream response from the agent.";
+        if (error instanceof Error && error.message) {
+          try {
+            const errorData = JSON.parse(error.message);
+            if (errorData.status === 403) {
+              errorMessage = errorData.reply || "This agent is currently inactive.";
+              setMessages(prev => [
+                ...prev.filter(m => m.sender !== "agent" || m.text !== ""),
+                { sender: "agent", text: errorMessage },
+              ]);
+              return;
+            } else if (errorData.status === 404) {
+              errorMessage = "Agent not found.";
+            } else if (errorData.status === 400) {
+              errorMessage = errorData.reply || "Bad request. Check agent configuration.";
+            } else {
+              errorMessage = errorData.reply || "Streaming failed or the agent configuration isn't set up yet.";
+            }
+          } catch (parseError) {
+            // If parsing fails, use the generic message
+          }
+        }
         toast.error("Stream Chat Failed", {
-          description: "Unable to stream response from the agent.",
+          description: errorMessage,
           duration: 3000,
         });
         setMessages(prev => [
           ...prev.filter(m => m.sender !== "agent" || m.text !== ""),
-          { sender: "agent", text: "Streaming failed or the agent configuration aren't setup yet" },
+          { sender: "agent", text: errorMessage },
         ]);
       }
     } else {
@@ -135,11 +157,30 @@ export default function ChatApplication() {
         setMessages(prev => [...prev, { sender: "agent", text: response.reply }]);
       } catch (error) {
         console.error("Error chatting with agent:", error);
+        let errorMessage = "Unable to get a response from the agent.";
+        if (error instanceof Error && error.message) {
+          try {
+            const errorData = JSON.parse(error.message);
+            if (errorData.status === 403) {
+              errorMessage = errorData.reply || "This agent is currently inactive.";
+              setMessages(prev => [...prev, { sender: "agent", text: errorMessage }]);
+              return;
+            } else if (errorData.status === 404) {
+              errorMessage = "Agent not found.";
+            } else if (errorData.status === 400) {
+              errorMessage = errorData.reply || "Bad request. Check agent configuration.";
+            } else {
+              errorMessage = errorData.reply || "Chat failed or the agent configuration isn't set up yet.";
+            }
+          } catch (parseError) {
+            // If parsing fails, use the generic message
+          }
+        }
         toast.error("Chat Failed", {
-          description: "Unable to get a response from the agent.",
+          description: errorMessage,
           duration: 3000,
         });
-        setMessages(prev => [...prev, { sender: "agent", text: "chat failed or the agent configuration aren't setup yet" }]);
+        setMessages(prev => [...prev, { sender: "agent", text: errorMessage }]);
       }
     }
   };
