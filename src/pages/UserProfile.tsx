@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCopy } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "sonner";
-import { getUser, getAgentCount, getActiveAgentCount } from "../api/userApi"; // Updated imports
+import { getUser, getAgentCount, getActiveAgentCount } from "../api/userApi";
 import { User } from "../interfaces/user";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useNavigate } from "react-router-dom";
@@ -33,8 +33,8 @@ export default function UserProfile({ userId }: UserProfileProps) {
       try {
         setLoading(true);
         const userData = await getUser(userId);
-        const totalAgents = await getAgentCount(userId); // Optimized: Server-side count of all agents
-        const activeAgentsCount = await getActiveAgentCount(userId, true); // Optimized: Server-side count of active agents
+        const totalAgents = await getAgentCount(userId);
+        const activeAgentsCount = await getActiveAgentCount(userId, true);
 
         setUser(userData);
         setAgentCount(totalAgents);
@@ -145,9 +145,9 @@ export default function UserProfile({ userId }: UserProfileProps) {
             </p>
           </div>
           <div className="flex flex-col">
-            <label className="mb-1 text-white">Age</label>
+            <label className="mb-1 text-white">Birthdate</label>
             <p className="w-full border border-[#494848] p-2 md:p-3 rounded-lg">
-              {user.age || "Not set"}
+              {user.birthdate || "Not set"}
             </p>
           </div>
           <div className="flex flex-col">

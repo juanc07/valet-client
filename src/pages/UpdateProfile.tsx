@@ -13,7 +13,7 @@ interface FormData {
   email: string;
   firstName: string;
   lastName: string;
-  age: number | string;
+  birthdate: string; // Matches User interface, "YYYY-MM-DD" format
   country: string;
   mobileNumber: string;
   twitterHandle: string;
@@ -31,7 +31,7 @@ export default function UpdateProfile({ userId }: UpdateProfileProps) {
     email: "",
     firstName: "",
     lastName: "",
-    age: "",
+    birthdate: "", // Initialize as empty string for date input
     country: "",
     mobileNumber: "",
     twitterHandle: "",
@@ -53,14 +53,14 @@ export default function UpdateProfile({ userId }: UpdateProfileProps) {
     const fetchUserData = async () => {
       try {
         console.log("Fetching user with ID:", userId);
-        const user = await getUser(userId);
+        const user: User = await getUser(userId);
         console.log("Fetched user data:", user);
         setFormData({
           username: user.username || "",
           email: user.email || "",
           firstName: user.firstName || "",
           lastName: user.lastName || "",
-          age: user.age || "",
+          birthdate: user.birthdate || "",
           country: user.country || "",
           mobileNumber: user.mobileNumber || "",
           twitterHandle: user.twitterHandle || "",
@@ -88,7 +88,7 @@ export default function UpdateProfile({ userId }: UpdateProfileProps) {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
-      [name]: name === "age" ? (isNaN(Number(value)) ? value : Number(value)) : value,
+      [name]: value,
     }));
   };
 
@@ -109,6 +109,19 @@ export default function UpdateProfile({ userId }: UpdateProfileProps) {
     }
   };
 
+  // Function to compute age from birthdate
+  const calculateAge = (birthdate: string): number => {
+    if (!birthdate) return 0;
+    const today = new Date();
+    const birthDate = new Date(birthdate);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -126,12 +139,13 @@ export default function UpdateProfile({ userId }: UpdateProfileProps) {
       email: formData.email,
       firstName: formData.firstName,
       lastName: formData.lastName,
-      age: typeof formData.age === "string" ? parseInt(formData.age) || 0 : formData.age,
-      country: formData.country,
-      mobileNumber: formData.mobileNumber,
-      twitterHandle: formData.twitterHandle,
-      discordId: formData.discordId,
-      telegramId: formData.telegramId,
+      birthdate: formData.birthdate || undefined, // Only include if non-empty
+      age: calculateAge(formData.birthdate), // Compute age from birthdate
+      country: formData.country || undefined,
+      mobileNumber: formData.mobileNumber || undefined,
+      twitterHandle: formData.twitterHandle || undefined,
+      discordId: formData.discordId || undefined,
+      telegramId: formData.telegramId || undefined,
     };
 
     try {
@@ -255,19 +269,18 @@ export default function UpdateProfile({ userId }: UpdateProfileProps) {
                     />
                   </div>
                   <div className="flex flex-col">
-                    <label htmlFor="age" className="mb-1 text-white">
-                      Age
+                    <label htmlFor="birthdate" className="mb-1 text-white">
+                      Birthdate
                     </label>
                     <input
-                      id="age"
-                      name="age"
-                      type="number"
-                      value={formData.age || ""}
+                      id="birthdate"
+                      name="birthdate"
+                      type="date"
+                      value={formData.birthdate}
                       onChange={handleChange}
-                      placeholder="Your age"
-                      className="w-full border border-[#494848] text-white p-2 md:p-3 rounded-lg outline-none focus:ring-1 focus:ring-gray-500"
-                      min={18}
-                      max={120}
+                      placeholder="Your birthdate"
+                      className="w-full border border-[#494848] text-white p-2 md:p-3 rounded-lg outline-none focus:ring-1 focus:ring-gray-500 bg-black"
+                      max={new Date().toISOString().split("T")[0]} // Prevents future dates
                     />
                   </div>
                 </div>

@@ -13,12 +13,8 @@ const BASE_URL = "http://localhost:3000"; // Adjust to your backend URL
 
 interface FormData {
   name: string;
-  description: string;
   bio: string;
-  mission: string;
-  vision: string;
   tone: string;
-  humor: boolean;
   formality: string;
   catchphrase: string;
   agentType: "puppetos" | "basic";
@@ -28,12 +24,8 @@ interface FormData {
 export default function CreateAgent() {
   const [formData, setFormData] = useState<FormData>({
     name: "",
-    description: "",
     bio: "",
-    mission: "",
-    vision: "",
     tone: "",
-    humor: false,
     formality: "",
     catchphrase: "",
     agentType: "basic",
@@ -55,11 +47,10 @@ export default function CreateAgent() {
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
-    const { name, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked;
+    const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
     }));
   };
 
@@ -68,10 +59,7 @@ export default function CreateAgent() {
 
     const requiredFields = [
       "name",
-      "description",
       "bio",
-      "mission",
-      "vision",
       "tone",
       "formality",
       "catchphrase",
@@ -98,13 +86,9 @@ export default function CreateAgent() {
 
     const agentData = {
       name: formData.name,
-      description: formData.description,
       bio: formData.bio,
-      mission: formData.mission,
-      vision: formData.vision,
       personality: {
         tone: formData.tone,
-        humor: formData.humor,
         formality: formData.formality,
         catchphrase: formData.catchphrase,
       },
@@ -132,12 +116,8 @@ export default function CreateAgent() {
       });
       setFormData({
         name: "",
-        description: "",
         bio: "",
-        mission: "",
-        vision: "",
         tone: "",
-        humor: false,
         formality: "",
         catchphrase: "",
         agentType: "basic",
@@ -203,10 +183,7 @@ export default function CreateAgent() {
                   />
                 </div>
                 <div
-                  className="flex flex-col lg:flex-row items-center border border-[#494848] px-2 py-4 xl:px-4 xl:py-4 rounded-lg text-center duration-700 lg:text-left cursor-pointer hover:bg-gray-900"
-                  onClick={() =>
-                    setFormData((prev) => ({ ...prev, agentType: "puppetos" }))
-                  }
+                  className="flex flex-col lg:flex-row items-center border border-[#494848] px-2 py-4 xl:px-4 xl:py-4 rounded-lg text-center lg:text-left opacity-50 cursor-not-allowed"
                 >
                   <img
                     src={puppet}
@@ -237,6 +214,7 @@ export default function CreateAgent() {
                     checked={formData.agentType === "puppetos"}
                     onChange={handleChange}
                     className="mt-5 lg:mt-3 p-2"
+                    disabled
                   />
                 </div>
               </div>
@@ -317,22 +295,6 @@ export default function CreateAgent() {
                 </div>
               </div>
               <div className="flex flex-col mb-2">
-                <label htmlFor="description" className="mb-1 text-white">
-                  Description *
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  required
-                  placeholder="Description of your agent"
-                  className="w-full border border-[#494848] text-white px-2 py-5 rounded-lg outline-none focus:ring-1 focus:ring-gray-500 resize-none"
-                  minLength={10}
-                  maxLength={900}
-                />
-              </div>
-              <div className="flex flex-col mb-2">
                 <label htmlFor="bio" className="mb-1 text-white">
                   Bio *
                 </label>
@@ -347,51 +309,6 @@ export default function CreateAgent() {
                   minLength={10}
                   maxLength={500}
                 />
-              </div>
-              <div className="flex flex-col mb-2">
-                <label htmlFor="mission" className="mb-1 text-white">
-                  Mission *
-                </label>
-                <textarea
-                  id="mission"
-                  name="mission"
-                  value={formData.mission}
-                  onChange={handleChange}
-                  required
-                  placeholder="Agent's mission"
-                  className="w-full border border-[#494848] text-white px-2 py-5 rounded-lg outline-none focus:ring-1 focus:ring-gray-500 resize-none"
-                  minLength={10}
-                  maxLength={500}
-                />
-              </div>
-              <div className="flex flex-col mb-2">
-                <label htmlFor="vision" className="mb-1 text-white">
-                  Vision *
-                </label>
-                <textarea
-                  id="vision"
-                  name="vision"
-                  value={formData.vision}
-                  onChange={handleChange}
-                  required
-                  placeholder="Agent's vision"
-                  className="w-full border border-[#494848] text-white px-2 py-5 rounded-lg outline-none focus:ring-1 focus:ring-gray-500 resize-none"
-                  minLength={10}
-                  maxLength={500}
-                />
-              </div>
-              <div className="flex items-center mb-2">
-                <input
-                  id="humor"
-                  name="humor"
-                  type="checkbox"
-                  checked={formData.humor}
-                  onChange={handleChange}
-                  className="mr-2"
-                />
-                <label htmlFor="humor" className="text-white">
-                  Humor *
-                </label>
               </div>
               <div className="flex flex-col mb-2">
                 <label htmlFor="openaiApiKey" className="mb-1 text-white">

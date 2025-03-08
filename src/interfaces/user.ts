@@ -6,6 +6,7 @@ export interface User {
     email: string;
     firstName: string;
     lastName: string;
+    birthdate: string;
     age: number;
     country: string;
     mobileNumber: string;
