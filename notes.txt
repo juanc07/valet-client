@@ -10,6 +10,8 @@ Current features:
 6. chat with agent via chat app page
 7. chat with other agent via chat app dropdown
 8. view other agent configruation via agent dashboard
+9. agent prompting template is introduce before hitting the openai end point to apply agent personalities and character
+10. creation of agent using sol as payment
 
 
 Current Integrations:
@@ -17,7 +19,8 @@ Current Integrations:
 2. Server have complete CRUD method for agent management
 3. simple chat with agent via openai endpoint , basic chat and streaming chat is working
 4. twitter integration in progress nothing is working yet
-
+5. agent prompting template
+6. creation of agent using sol as payment
 
 Server Repo
 https://github.com/juanc07/valet-server
