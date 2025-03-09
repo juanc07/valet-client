@@ -12,6 +12,8 @@ Current features:
 8. view other agent configruation via agent dashboard
 9. agent prompting template is introduce before hitting the openai end point to apply agent personalities and character
 10. creation of agent using sol as payment
+11. auto post tweet using free api but limited post only per month
+12. manual post tweet in front end using free api but limited post only per month
 
 
 Current Integrations:
@@ -21,6 +23,7 @@ Current Integrations:
 4. twitter integration in progress nothing is working yet
 5. agent prompting template
 6. creation of agent using sol as payment
+7. twitter integration for free and paid api approach
 
 Server Repo
 https://github.com/juanc07/valet-server
