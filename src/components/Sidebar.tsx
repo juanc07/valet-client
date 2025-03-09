@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { House, Users, UserPlus, FileText, User, MessageSquare, Edit } from "lucide-react"; // Added Edit for Update Profile
+import { House, Users, UserPlus, FileText, User, MessageSquare, Edit, Twitter } from "lucide-react"; // Added Twitter icon
 import { useUser } from "../context/UserContext";
 
 const Sidebar = () => {
@@ -9,40 +9,45 @@ const Sidebar = () => {
   const { currentUser } = useUser();
 
   const menuItems = [
-    { name: "Home", path: "/", icon: <House className="text-2xl" /> }, // Home icon
+    { name: "Home", path: "/", icon: <House className="text-2xl" /> },
     {
       name: "My Agents",
       path: "/youragent",
-      icon: <Users className="text-2xl" />, // Group of users for agents
+      icon: <Users className="text-2xl" />,
     },
     {
       name: "Create Agents",
       path: "/createagent",
-      icon: <UserPlus className="text-2xl" />, // Plus sign with user for creation
+      icon: <UserPlus className="text-2xl" />,
     },
     {
       name: "Chat",
       path: "/chat",
-      icon: <MessageSquare className="text-2xl" />, // Chat bubble for chat
+      icon: <MessageSquare className="text-2xl" />,
+    },
+    {
+      name: "Twitter Test",
+      path: "/twitter-test",
+      icon: <Twitter className="text-2xl" />, // New Twitter Test item
     },
     ...(currentUser
       ? [
           {
             name: "Update Profile",
             path: "/update-profile",
-            icon: <Edit className="text-2xl" />, // Pencil for editing profile
+            icon: <Edit className="text-2xl" />,
           },
           {
             name: "My Profile",
             path: "/profile",
-            icon: <User className="text-2xl" />, // Single user for profile
+            icon: <User className="text-2xl" />,
           },
         ]
       : []),
     {
       name: "Documentation",
       path: "",
-      icon: <FileText className="text-2xl" />, // Document for documentation
+      icon: <FileText className="text-2xl" />,
       isAnchor: true,
     },
   ];

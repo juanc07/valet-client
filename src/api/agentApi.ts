@@ -74,7 +74,7 @@ export const chatWithAgentStream = async (
     });
 
     if (!response.ok) {
-      const errorData = await response.json(); // Parse the response body
+      const errorData = await response.json();
       throw new Error(JSON.stringify({ status: response.status, ...errorData }));
     }
 
@@ -115,10 +115,19 @@ export const chatWithAgentStream = async (
           }
         }
       }
-      buffer = lines[lines.length - 1]; // Keep incomplete line in buffer
+      buffer = lines[lines.length - 1];
     }
   } catch (error) {
     console.error("Streaming error:", error);
-    throw error; // Propagate the error to the caller
+    throw error;
   }
+};
+
+// New: Post a manual tweet
+export const postTweetManually = async (agentId: string, message?: string): Promise<{ message: string; tweetedMessage: string }> => {
+  return fetchWrapper(`${BASE_URL}/agents/${agentId}/tweet`, {
+    method: 'POST',
+    body: JSON.stringify({ message }), // Optional message
+    headers: { 'Content-Type': 'application/json' },
+  });
 };

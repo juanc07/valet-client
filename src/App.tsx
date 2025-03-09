@@ -15,6 +15,7 @@ import UpdateProfile from "./pages/UpdateProfile.tsx";
 import UpdateAgent from "./pages/UpdateAgent";
 import AgentProfile from "./pages/AgentProfile";
 import ChatApplication from "./pages/ChatApplication";
+import TwitterTestPage from "./pages/TwitterTestPage.tsx";
 import {
   ConnectionProvider,
   WalletProvider,
@@ -99,6 +100,7 @@ function MainContent() {
             firstName: "",
             lastName: "",
             age: 0,
+            birthdate: "",
             country: "",
             mobileNumber: "",
             twitterHandle: "",
@@ -161,6 +163,7 @@ function MainContent() {
               <Route path="/youragent" element={<YourAgent />} />
               <Route path="/manage" element={<Manage />} />
               <Route path="/chat" element={<ChatApplication />} />
+              <Route path="/twitter-test" element={<TwitterTestPage />} />
               <Route
                 path="/profile"
                 element={
