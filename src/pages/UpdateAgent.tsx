@@ -7,6 +7,7 @@ import { requestTwitterOAuth } from "../api/twitterApi";
 import { toast } from "sonner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCopy, faArrowLeft, faPlus, faMinus } from "@fortawesome/free-solid-svg-icons";
+import { useUser } from "../context/UserContext";
 
 export default function UpdateAgent() {
   const { agentId } = useParams<{ agentId: string }>();
@@ -35,32 +36,37 @@ export default function UpdateAgent() {
     agentType: "basic",
     createdBy: "",
   });
-  const [activeTab, setActiveTab] = useState("basic"); // Default to "basic", no sessionStorage init
+  const [activeTab, setActiveTab] = useState("basic");
   const [newKnowledgeKey, setNewKnowledgeKey] = useState("");
   const [newKnowledgeValue, setNewKnowledgeValue] = useState("");
   const [isAdvancedTwitterSetup, setIsAdvancedTwitterSetup] = useState(false);
 
   const { connected: walletConnected } = useWallet();
+  const { currentUser, setCurrentUser } = useUser();
   const navigate = useNavigate();
 
   useEffect(() => {
     const isOAuthCallback = window.location.search.includes("oauth_callback");
-    console.log("UpdateAgent walletConnected:", walletConnected, "Is OAuth callback:", isOAuthCallback);
-    
-    if (!walletConnected && !isOAuthCallback) {
-      console.log("Redirecting to / due to no wallet connection");
+    console.log("UpdateAgent walletConnected:", walletConnected, "Is OAuth callback:", isOAuthCallback, "Current user:", currentUser);
+
+    if (!walletConnected && !isOAuthCallback && !currentUser) {
+      console.log("Redirecting to / due to no wallet connection and no current user");
       navigate("/");
     } else if (isOAuthCallback) {
       const savedTab = sessionStorage.getItem("activeTab");
+      const savedUser = sessionStorage.getItem("currentUser");
       if (savedTab === "twitter") {
         setActiveTab("twitter");
-        sessionStorage.removeItem("activeTab"); // Clear after use
+        sessionStorage.removeItem("activeTab");
         console.log("Restored tab to twitter and cleared sessionStorage");
       }
-      // Clean up URL
+      if (savedUser) {
+        setCurrentUser(JSON.parse(savedUser));
+        console.log("Restored currentUser from sessionStorage:", JSON.parse(savedUser));
+      }
       window.history.replaceState({}, document.title, `/agent/edit/${agentId}`);
     }
-  }, [walletConnected, navigate, agentId]);
+  }, [walletConnected, navigate, agentId, currentUser, setCurrentUser]);
 
   useEffect(() => {
     const fetchAgentData = async () => {
@@ -87,8 +93,8 @@ export default function UpdateAgent() {
         console.error("Fetch agent error:", error);
       }
     };
-    if (agentId && walletConnected) fetchAgentData();
-  }, [agentId, walletConnected]);
+    if (agentId && (walletConnected || currentUser)) fetchAgentData();
+  }, [agentId, walletConnected, currentUser]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -164,8 +170,11 @@ export default function UpdateAgent() {
     try {
       if (!agentId) throw new Error("Agent ID is required");
       sessionStorage.removeItem("hasCheckedWallet"); // Reset wallet check
-      sessionStorage.setItem("activeTab", "twitter"); // Save tab state only on button click
-      console.log("Cleared hasCheckedWallet and set activeTab to twitter for OAuth");
+      sessionStorage.setItem("activeTab", "twitter"); // Save tab state
+      if (currentUser) {
+        sessionStorage.setItem("currentUser", JSON.stringify(currentUser)); // Save currentUser
+      }
+      console.log("Cleared hasCheckedWallet, set activeTab to twitter, saved currentUser:", currentUser);
       const { redirectUrl } = await requestTwitterOAuth(agentId);
       if (redirectUrl) {
         window.location.href = redirectUrl;
@@ -177,7 +186,7 @@ export default function UpdateAgent() {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       toast.error("Twitter Connection Failed", {
         description: `Unable to start Twitter authentication: ${errorMessage}`,
-        duration: 3000
+        duration: 3000,
       });
     }
   };
@@ -239,10 +248,9 @@ export default function UpdateAgent() {
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveTab(tab.id)}
-                    className={`py-2 px-4 text-lg font-medium rounded-t-lg transition-all duration-200 relative z-10 ${activeTab === tab.id
-                      ? "bg-[#6a94f0] text-black"
-                      : "bg-[#494848] text-white hover:bg-[#6a94f0] hover:text-black"
-                      }`}
+                    className={`py-2 px-4 text-lg font-medium rounded-t-lg transition-all duration-200 relative z-10 ${
+                      activeTab === tab.id ? "bg-[#6a94f0] text-black" : "bg-[#494848] text-white hover:bg-[#6a94f0] hover:text-black"
+                    }`}
                   >
                     {tab.label}
                   </button>
@@ -256,36 +264,104 @@ export default function UpdateAgent() {
               {activeTab === "basic" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="name" className="block text-lg mb-2">Name *</label>
-                    <input id="name" name="name" type="text" value={formData.name} onChange={handleChange} required className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" />
+                    <label htmlFor="name" className="block text-lg mb-2">
+                      Name *
+                    </label>
+                    <input
+                      id="name"
+                      name="name"
+                      type="text"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                    />
                   </div>
                   <div>
-                    <label htmlFor="agentType" className="block text-lg mb-2">Agent Type *</label>
-                    <select id="agentType" name="agentType" value={formData.agentType} onChange={handleChange} required className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black">
+                    <label htmlFor="agentType" className="block text-lg mb-2">
+                      Agent Type *
+                    </label>
+                    <select
+                      id="agentType"
+                      name="agentType"
+                      value={formData.agentType}
+                      onChange={handleChange}
+                      required
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                    >
                       <option value="basic">Basic</option>
                       <option value="puppetos">PuppetOS</option>
                       <option value="thirdparty">Third Party</option>
                     </select>
                   </div>
                   <div>
-                    <label htmlFor="description" className="block text-lg mb-2">Description *</label>
-                    <textarea id="description" name="description" value={formData.description} onChange={handleChange} required className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" rows={3} />
+                    <label htmlFor="description" className="block text-lg mb-2">
+                      Description *
+                    </label>
+                    <textarea
+                      id="description"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      required
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                      rows={3}
+                    />
                   </div>
                   <div>
-                    <label htmlFor="bio" className="block text-lg mb-2">Bio *</label>
-                    <textarea id="bio" name="bio" value={formData.bio} onChange={handleChange} required className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" rows={3} />
+                    <label htmlFor="bio" className="block text-lg mb-2">
+                      Bio *
+                    </label>
+                    <textarea
+                      id="bio"
+                      name="bio"
+                      value={formData.bio}
+                      onChange={handleChange}
+                      required
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                      rows={3}
+                    />
                   </div>
                   <div>
-                    <label htmlFor="mission" className="block text-lg mb-2">Mission *</label>
-                    <textarea id="mission" name="mission" value={formData.mission} onChange={handleChange} required className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" rows={3} />
+                    <label htmlFor="mission" className="block text-lg mb-2">
+                      Mission *
+                    </label>
+                    <textarea
+                      id="mission"
+                      name="mission"
+                      value={formData.mission}
+                      onChange={handleChange}
+                      required
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                      rows={3}
+                    />
                   </div>
                   <div>
-                    <label htmlFor="vision" className="block text-lg mb-2">Vision *</label>
-                    <textarea id="vision" name="vision" value={formData.vision} onChange={handleChange} required className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" rows={3} />
+                    <label htmlFor="vision" className="block text-lg mb-2">
+                      Vision *
+                    </label>
+                    <textarea
+                      id="vision"
+                      name="vision"
+                      value={formData.vision}
+                      onChange={handleChange}
+                      required
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                      rows={3}
+                    />
                   </div>
                   <div className="flex items-center justify-center">
-                    <input id="isActive" name="isActive" type="checkbox" checked={formData.isActive || false} onChange={handleChange} className="mr-2 text-[#6a94f0] border-[#494848] bg-black focus:ring-[#6a94f0]" />
-                    <label htmlFor="isActive" className="text-lg">Is Active</label>
+                    <input
+                      id="isActive"
+                      name="isActive"
+                      type="checkbox"
+                      checked={formData.isActive || false}
+                      onChange={handleChange}
+                      className="mr-2 text-[#6a94f0] border-[#494848] bg-black focus:ring-[#6a94f0]"
+                    />
+                    <label htmlFor="isActive" className="text-lg">
+                      Is Active
+                    </label>
                   </div>
                 </div>
               )}
@@ -293,24 +369,69 @@ export default function UpdateAgent() {
               {activeTab === "contact" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="contact.email" className="block text-lg mb-2">Contact Email</label>
-                    <input id="contact.email" name="contact.email" type="email" value={formData.contact.email} onChange={handleChange} className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" />
+                    <label htmlFor="contact.email" className="block text-lg mb-2">
+                      Contact Email
+                    </label>
+                    <input
+                      id="contact.email"
+                      name="contact.email"
+                      type="email"
+                      value={formData.contact.email}
+                      onChange={handleChange}
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                    />
                   </div>
                   <div>
-                    <label htmlFor="contact.website" className="block text-lg mb-2">Website</label>
-                    <input id="contact.website" name="contact.website" type="url" value={formData.contact.website} onChange={handleChange} className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" />
+                    <label htmlFor="contact.website" className="block text-lg mb-2">
+                      Website
+                    </label>
+                    <input
+                      id="contact.website"
+                      name="contact.website"
+                      type="url"
+                      value={formData.contact.website}
+                      onChange={handleChange}
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                    />
                   </div>
                   <div>
-                    <label htmlFor="contact.socials.twitter" className="block text-lg mb-2">Twitter</label>
-                    <input id="contact.socials.twitter" name="contact.socials.twitter" type="text" value={formData.contact.socials.twitter} onChange={handleChange} className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" />
+                    <label htmlFor="contact.socials.twitter" className="block text-lg mb-2">
+                      Twitter
+                    </label>
+                    <input
+                      id="contact.socials.twitter"
+                      name="contact.socials.twitter"
+                      type="text"
+                      value={formData.contact.socials.twitter}
+                      onChange={handleChange}
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                    />
                   </div>
                   <div>
-                    <label htmlFor="contact.socials.github" className="block text-lg mb-2">GitHub</label>
-                    <input id="contact.socials.github" name="contact.socials.github" type="text" value={formData.contact.socials.github} onChange={handleChange} className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" />
+                    <label htmlFor="contact.socials.github" className="block text-lg mb-2">
+                      GitHub
+                    </label>
+                    <input
+                      id="contact.socials.github"
+                      name="contact.socials.github"
+                      type="text"
+                      value={formData.contact.socials.github}
+                      onChange={handleChange}
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                    />
                   </div>
                   <div>
-                    <label htmlFor="contact.socials.linkedin" className="block text-lg mb-2">LinkedIn</label>
-                    <input id="contact.socials.linkedin" name="contact.socials.linkedin" type="text" value={formData.contact.socials.linkedin} onChange={handleChange} className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" />
+                    <label htmlFor="contact.socials.linkedin" className="block text-lg mb-2">
+                      LinkedIn
+                    </label>
+                    <input
+                      id="contact.socials.linkedin"
+                      name="contact.socials.linkedin"
+                      type="text"
+                      value={formData.contact.socials.linkedin}
+                      onChange={handleChange}
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                    />
                   </div>
                 </div>
               )}
@@ -318,33 +439,72 @@ export default function UpdateAgent() {
               {activeTab === "wallets" && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label htmlFor="wallets.solana" className="block text-lg mb-2">Solana Wallet</label>
+                    <label htmlFor="wallets.solana" className="block text-lg mb-2">
+                      Solana Wallet
+                    </label>
                     <div className="relative">
-                      <input id="wallets.solana" name="wallets.solana" type="text" value={formData.wallets.solana} onChange={handleChange} className="w-full border border-[#494848] text-white p-2 pr-10 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" />
+                      <input
+                        id="wallets.solana"
+                        name="wallets.solana"
+                        type="text"
+                        value={formData.wallets.solana}
+                        onChange={handleChange}
+                        className="w-full border border-[#494848] text-white p-2 pr-10 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                      />
                       {formData.wallets.solana && (
-                        <button type="button" onClick={() => handleCopyWalletAddress("solana")} className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[#6a94f0] hover:text-[#8faef0]">
+                        <button
+                          type="button"
+                          onClick={() => handleCopyWalletAddress("solana")}
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[#6a94f0] hover:text-[#8faef0]"
+                        >
                           <FontAwesomeIcon icon={faCopy} />
                         </button>
                       )}
                     </div>
                   </div>
                   <div>
-                    <label htmlFor="wallets.ethereum" className="block text-lg mb-2">Ethereum Wallet</label>
+                    <label htmlFor="wallets.ethereum" className="block text-lg mb-2">
+                      Ethereum Wallet
+                    </label>
                     <div className="relative">
-                      <input id="wallets.ethereum" name="wallets.ethereum" type="text" value={formData.wallets.ethereum} onChange={handleChange} className="w-full border border-[#494848] text-white p-2 pr-10 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" />
+                      <input
+                        id="wallets.ethereum"
+                        name="wallets.ethereum"
+                        type="text"
+                        value={formData.wallets.ethereum}
+                        onChange={handleChange}
+                        className="w-full border border-[#494848] text-white p-2 pr-10 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                      />
                       {formData.wallets.ethereum && (
-                        <button type="button" onClick={() => handleCopyWalletAddress("ethereum")} className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[#6a94f0] hover:text-[#8faef0]">
+                        <button
+                          type="button"
+                          onClick={() => handleCopyWalletAddress("ethereum")}
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[#6a94f0] hover:text-[#8faef0]"
+                        >
                           <FontAwesomeIcon icon={faCopy} />
                         </button>
                       )}
                     </div>
                   </div>
                   <div>
-                    <label htmlFor="wallets.bitcoin" className="block text-lg mb-2">Bitcoin Wallet</label>
+                    <label htmlFor="wallets.bitcoin" className="block text-lg mb-2">
+                      Bitcoin Wallet
+                    </label>
                     <div className="relative">
-                      <input id="wallets.bitcoin" name="wallets.bitcoin" type="text" value={formData.wallets.bitcoin} onChange={handleChange} className="w-full border border-[#494848] text-white p-2 pr-10 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" />
+                      <input
+                        id="wallets.bitcoin"
+                        name="wallets.bitcoin"
+                        type="text"
+                        value={formData.wallets.bitcoin}
+                        onChange={handleChange}
+                        className="w-full border border-[#494848] text-white p-2 pr-10 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                      />
                       {formData.wallets.bitcoin && (
-                        <button type="button" onClick={() => handleCopyWalletAddress("bitcoin")} className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[#6a94f0] hover:text-[#8faef0]">
+                        <button
+                          type="button"
+                          onClick={() => handleCopyWalletAddress("bitcoin")}
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[#6a94f0] hover:text-[#8faef0]"
+                        >
                           <FontAwesomeIcon icon={faCopy} />
                         </button>
                       )}
@@ -357,30 +517,87 @@ export default function UpdateAgent() {
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="personality.tone" className="block text-lg mb-2">Tone *</label>
-                      <input id="personality.tone" name="personality.tone" type="text" value={formData.personality.tone} onChange={handleChange} required className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" />
+                      <label htmlFor="personality.tone" className="block text-lg mb-2">
+                        Tone *
+                      </label>
+                      <input
+                        id="personality.tone"
+                        name="personality.tone"
+                        type="text"
+                        value={formData.personality.tone}
+                        onChange={handleChange}
+                        required
+                        className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                      />
                     </div>
                     <div>
-                      <label htmlFor="personality.formality" className="block text-lg mb-2">Formality *</label>
-                      <input id="personality.formality" name="personality.formality" type="text" value={formData.personality.formality} onChange={handleChange} required className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" />
+                      <label htmlFor="personality.formality" className="block text-lg mb-2">
+                        Formality *
+                      </label>
+                      <input
+                        id="personality.formality"
+                        name="personality.formality"
+                        type="text"
+                        value={formData.personality.formality}
+                        onChange={handleChange}
+                        required
+                        className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                      />
                     </div>
                     <div>
-                      <label htmlFor="personality.catchphrase" className="block text-lg mb-2">Catchphrase *</label>
-                      <input id="personality.catchphrase" name="personality.catchphrase" type="text" value={formData.personality.catchphrase} onChange={handleChange} required className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" />
+                      <label htmlFor="personality.catchphrase" className="block text-lg mb-2">
+                        Catchphrase *
+                      </label>
+                      <input
+                        id="personality.catchphrase"
+                        name="personality.catchphrase"
+                        type="text"
+                        value={formData.personality.catchphrase}
+                        onChange={handleChange}
+                        required
+                        className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                      />
                     </div>
                     <div className="flex items-center justify-center">
-                      <input id="personality.humor" name="personality.humor" type="checkbox" checked={formData.personality.humor} onChange={handleChange} className="mr-2 text-[#6a94f0] border-[#494848] bg-black focus:ring-[#6a94f0]" />
-                      <label htmlFor="personality.humor" className="text-lg">Humor</label>
+                      <input
+                        id="personality.humor"
+                        name="personality.humor"
+                        type="checkbox"
+                        checked={formData.personality.humor}
+                        onChange={handleChange}
+                        className="mr-2 text-[#6a94f0] border-[#494848] bg-black focus:ring-[#6a94f0]"
+                      />
+                      <label htmlFor="personality.humor" className="text-lg">
+                        Humor
+                      </label>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="personality.preferences.topics" className="block text-lg mb-2">Preferred Topics (comma-separated)</label>
-                      <input id="personality.preferences.topics" name="personality.preferences.topics" type="text" value={formData.personality.preferences.topics.join(", ")} onChange={(e) => handleArrayChange(e, "personality", "topics")} className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" />
+                      <label htmlFor="personality.preferences.topics" className="block text-lg mb-2">
+                        Preferred Topics (comma-separated)
+                      </label>
+                      <input
+                        id="personality.preferences.topics"
+                        name="personality.preferences.topics"
+                        type="text"
+                        value={formData.personality.preferences.topics.join(", ")}
+                        onChange={(e) => handleArrayChange(e, "personality", "topics")}
+                        className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                      />
                     </div>
                     <div>
-                      <label htmlFor="personality.preferences.languages" className="block text-lg mb-2">Languages (comma-separated)</label>
-                      <input id="personality.preferences.languages" name="personality.preferences.languages" type="text" value={formData.personality.preferences.languages.join(", ")} onChange={(e) => handleArrayChange(e, "personality", "languages")} className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" />
+                      <label htmlFor="personality.preferences.languages" className="block text-lg mb-2">
+                        Languages (comma-separated)
+                      </label>
+                      <input
+                        id="personality.preferences.languages"
+                        name="personality.preferences.languages"
+                        type="text"
+                        value={formData.personality.preferences.languages.join(", ")}
+                        onChange={(e) => handleArrayChange(e, "personality", "languages")}
+                        className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                      />
                     </div>
                   </div>
                 </>
@@ -424,7 +641,9 @@ export default function UpdateAgent() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label htmlFor="newKnowledgeKey" className="block text-lg mb-2">New Knowledge Key</label>
+                      <label htmlFor="newKnowledgeKey" className="block text-lg mb-2">
+                        New Knowledge Key
+                      </label>
                       <input
                         id="newKnowledgeKey"
                         type="text"
@@ -434,7 +653,9 @@ export default function UpdateAgent() {
                       />
                     </div>
                     <div>
-                      <label htmlFor="newKnowledgeValue" className="block text-lg mb-2">New Knowledge Value</label>
+                      <label htmlFor="newKnowledgeValue" className="block text-lg mb-2">
+                        New Knowledge Value
+                      </label>
                       <input
                         id="newKnowledgeValue"
                         type="text"
@@ -460,16 +681,43 @@ export default function UpdateAgent() {
               {activeTab === "settings" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="settings.max_memory_context" className="block text-lg mb-2">Max Memory Context</label>
-                    <input id="settings.max_memory_context" name="settings.max_memory_context" type="number" value={formData.settings.max_memory_context} onChange={handleChange} className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" />
+                    <label htmlFor="settings.max_memory_context" className="block text-lg mb-2">
+                      Max Memory Context
+                    </label>
+                    <input
+                      id="settings.max_memory_context"
+                      name="settings.max_memory_context"
+                      type="number"
+                      value={formData.settings.max_memory_context}
+                      onChange={handleChange}
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                    />
                   </div>
                   <div>
-                    <label htmlFor="settings.platforms" className="block text-lg mb-2">Platforms (comma-separated)</label>
-                    <input id="settings.platforms" name="settings.platforms" type="text" value={formData.settings.platforms.join(", ")} onChange={(e) => handleArrayChange(e, "settings", "platforms")} className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" />
+                    <label htmlFor="settings.platforms" className="block text-lg mb-2">
+                      Platforms (comma-separated)
+                    </label>
+                    <input
+                      id="settings.platforms"
+                      name="settings.platforms"
+                      type="text"
+                      value={formData.settings.platforms.join(", ")}
+                      onChange={(e) => handleArrayChange(e, "settings", "platforms")}
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                    />
                   </div>
                   <div>
-                    <label htmlFor="ruleIds" className="block text-lg mb-2">Rule IDs (comma-separated)</label>
-                    <input id="ruleIds" name="ruleIds" type="text" value={formData.ruleIds.join(", ")} onChange={(e) => handleArrayChange(e, "ruleIds")} className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" />
+                    <label htmlFor="ruleIds" className="block text-lg mb-2">
+                      Rule IDs (comma-separated)
+                    </label>
+                    <input
+                      id="ruleIds"
+                      name="ruleIds"
+                      type="text"
+                      value={formData.ruleIds.join(", ")}
+                      onChange={(e) => handleArrayChange(e, "ruleIds")}
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                    />
                   </div>
                 </div>
               )}
@@ -477,7 +725,9 @@ export default function UpdateAgent() {
               {activeTab === "twitter" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="twitterHandle" className="block text-lg mb-2">Twitter Handle</label>
+                    <label htmlFor="twitterHandle" className="block text-lg mb-2">
+                      Twitter Handle
+                    </label>
                     <input
                       id="twitterHandle"
                       name="twitterHandle"
@@ -490,7 +740,9 @@ export default function UpdateAgent() {
                   </div>
                   {!isAdvancedTwitterSetup && (
                     <div>
-                      <label htmlFor="twitterAppKey" className="block text-lg mb-2">Twitter App Key</label>
+                      <label htmlFor="twitterAppKey" className="block text-lg mb-2">
+                        Twitter App Key
+                      </label>
                       <input
                         id="twitterAppKey"
                         name="twitterAppKey"
@@ -503,7 +755,9 @@ export default function UpdateAgent() {
                   )}
                   {!isAdvancedTwitterSetup && (
                     <div>
-                      <label htmlFor="twitterAppSecret" className="block text-lg mb-2">Twitter App Secret</label>
+                      <label htmlFor="twitterAppSecret" className="block text-lg mb-2">
+                        Twitter App Secret
+                      </label>
                       <input
                         id="twitterAppSecret"
                         name="twitterAppSecret"
@@ -515,7 +769,9 @@ export default function UpdateAgent() {
                     </div>
                   )}
                   <div>
-                    <label htmlFor="twitterAccessToken" className="block text-lg mb-2">Twitter Access Token</label>
+                    <label htmlFor="twitterAccessToken" className="block text-lg mb-2">
+                      Twitter Access Token
+                    </label>
                     <input
                       id="twitterAccessToken"
                       name="twitterAccessToken"
@@ -527,7 +783,9 @@ export default function UpdateAgent() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="twitterAccessSecret" className="block text-lg mb-2">Twitter Access Secret</label>
+                    <label htmlFor="twitterAccessSecret" className="block text-lg mb-2">
+                      Twitter Access Secret
+                    </label>
                     <input
                       id="twitterAccessSecret"
                       name="twitterAccessSecret"
@@ -547,10 +805,14 @@ export default function UpdateAgent() {
                       onChange={handleChange}
                       className="mr-2 text-[#6a94f0] border-[#494848] bg-black focus:ring-[#6a94f0]"
                     />
-                    <label htmlFor="enablePostTweet" className="text-lg">Enable Tweet Posting</label>
+                    <label htmlFor="enablePostTweet" className="text-lg">
+                      Enable Tweet Posting
+                    </label>
                   </div>
                   <div>
-                    <label htmlFor="postTweetInterval" className="block text-lg mb-2">Tweet Post Interval (seconds)</label>
+                    <label htmlFor="postTweetInterval" className="block text-lg mb-2">
+                      Tweet Post Interval (seconds)
+                    </label>
                     <input
                       id="postTweetInterval"
                       name="postTweetInterval"
@@ -568,7 +830,9 @@ export default function UpdateAgent() {
                       onChange={(e) => setIsAdvancedTwitterSetup(e.target.checked)}
                       className="mr-2 text-[#6a94f0] border-[#494848] bg-black focus:ring-[#6a94f0]"
                     />
-                    <label htmlFor="advancedTwitterSetup" className="text-lg">Advanced Setup</label>
+                    <label htmlFor="advancedTwitterSetup" className="text-lg">
+                      Advanced Setup
+                    </label>
                   </div>
                   {isAdvancedTwitterSetup && (
                     <div className="col-span-1 md:col-span-2">
@@ -587,8 +851,17 @@ export default function UpdateAgent() {
               {activeTab === "api" && (
                 <div className="grid grid-cols-1 gap-4">
                   <div>
-                    <label htmlFor="openaiApiKey" className="block text-lg mb-2">OpenAI API Key</label>
-                    <input id="openaiApiKey" name="openaiApiKey" type="text" value={formData.openaiApiKey} onChange={handleChange} className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" />
+                    <label htmlFor="openaiApiKey" className="block text-lg mb-2">
+                      OpenAI API Key
+                    </label>
+                    <input
+                      id="openaiApiKey"
+                      name="openaiApiKey"
+                      type="text"
+                      value={formData.openaiApiKey}
+                      onChange={handleChange}
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                    />
                   </div>
                 </div>
               )}
@@ -599,7 +872,11 @@ export default function UpdateAgent() {
               <button type="submit" className="py-2 px-4 bg-[#6a94f0] text-black rounded-lg hover:bg-[#8faef0] transition-all duration-400 font-semibold">
                 Save
               </button>
-              <button type="button" onClick={handleBack} className="py-2 px-4 bg-[#6a94f0] text-black rounded-lg hover:bg-[#8faef0] transition-all duration-400 font-semibold flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleBack}
+                className="py-2 px-4 bg-[#6a94f0] text-black rounded-lg hover:bg-[#8faef0] transition-all duration-400 font-semibold flex items-center gap-2"
+              >
                 <FontAwesomeIcon icon={faArrowLeft} />
                 Back
               </button>

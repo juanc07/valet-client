@@ -34,7 +34,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { createUser, getUserByWallet } from "./api/userApi";
 import { User } from "./interfaces/user";
 import { toast } from "sonner";
-import { useNavigate, useSearchParams } from "react-router-dom"; // Added useSearchParams
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 type Network = "mainnet-beta" | "testnet" | "devnet";
 
@@ -65,7 +65,7 @@ function App() {
 
 function MainContent() {
   const location = useLocation();
-  const [searchParams] = useSearchParams(); // Get query params
+  const [searchParams] = useSearchParams();
   const isStartPage = location.pathname === "/";
   const { currentUser, setCurrentUser } = useUser();
   const wallet = useWallet();
@@ -75,6 +75,7 @@ function MainContent() {
 
   useEffect(() => {
     const handleWalletConnection = async () => {
+      // Skip if already checked or no wallet connection
       if (!connected || !publicKey || hasCheckedWallet) return;
 
       const walletAddress = publicKey.toBase58();
@@ -119,23 +120,18 @@ function MainContent() {
         setTimeout(() => {
           const currentPath = location.pathname;
           const isOAuthCallback = searchParams.get("oauth_callback") === "true";
-          const intendedRoute = sessionStorage.getItem("oauthRedirect");
-          console.log(
-            "Current path:", currentPath,
-            "Is OAuth callback:", isOAuthCallback,
-            "Intended route:", intendedRoute
-          );
+          console.log("Current path:", currentPath, "Is OAuth callback:", isOAuthCallback);
 
-          if (isOAuthCallback && intendedRoute && currentPath === intendedRoute.split("?")[0]) {
+          if (isOAuthCallback && currentPath.startsWith("/agent/edit/")) {
             console.log("Preserving OAuth redirect route:", currentPath);
-            sessionStorage.removeItem("oauthRedirect");
-          } else if (!currentPath.startsWith("/agent/edit/")) {
+          } else if (!currentPath.startsWith("/agent/edit/") && !currentUser?.email) {
             console.log("Navigating to /update-profile with currentUser:", currentUser);
             navigate("/update-profile");
           } else {
-            console.log("Preserving agent edit route:", currentPath);
+            console.log("Preserving current route or no navigation needed:", currentPath);
           }
           setHasCheckedWallet(true);
+          sessionStorage.setItem("hasCheckedWallet", "true");
         }, 0);
       } catch (error) {
         console.error("Error during wallet connection:", error);
@@ -146,8 +142,15 @@ function MainContent() {
       }
     };
 
-    handleWalletConnection();
-  }, [connected, publicKey, setCurrentUser, navigate, hasCheckedWallet, location.pathname, searchParams]);
+    // If currentUser is already set from sessionStorage, skip wallet check
+    if (!currentUser) {
+      handleWalletConnection();
+    } else {
+      setHasCheckedWallet(true);
+      sessionStorage.setItem("hasCheckedWallet", "true");
+      console.log("Current user restored from sessionStorage, skipping wallet check:", currentUser);
+    }
+  }, [connected, publicKey, setCurrentUser, navigate, hasCheckedWallet, location.pathname, searchParams, currentUser]);
 
   useEffect(() => {
     console.log("MainContent currentUser:", currentUser);

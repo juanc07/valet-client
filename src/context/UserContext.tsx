@@ -16,12 +16,24 @@ const UserContext = createContext<UserContextType>({
 });
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    const savedUser = sessionStorage.getItem("currentUser");
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
   const [viewMode, setViewMode] = useState<"myAgents" | "othersAgents">("myAgents");
 
   // Log state changes for debugging
   console.log("UserContext - currentUser:", currentUser);
   console.log("UserContext - viewMode:", viewMode);
+
+  const handleSetCurrentUser = (user: User | null) => {
+    setCurrentUser(user);
+    if (user) {
+      sessionStorage.setItem("currentUser", JSON.stringify(user));
+    } else {
+      sessionStorage.removeItem("currentUser");
+    }
+  };
 
   const handleSetViewMode = (mode: "myAgents" | "othersAgents") => {
     console.log("Setting viewMode to:", mode);
@@ -29,7 +41,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <UserContext.Provider value={{ currentUser, setCurrentUser, viewMode, setViewMode: handleSetViewMode }}>
+    <UserContext.Provider value={{ currentUser, setCurrentUser: handleSetCurrentUser, viewMode, setViewMode: handleSetViewMode }}>
       {children}
     </UserContext.Provider>
   );
