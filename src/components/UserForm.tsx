@@ -17,6 +17,7 @@ export const UserForm = () => {
     twitterHandle: '',
     discordId: '',
     telegramId: '',
+    credit: 0,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {

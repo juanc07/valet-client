@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Image1 from "../assets/logo.png";
-import { Logs, House, Users, UserPlus, FileText, User, MessageSquare, Edit, Twitter } from "lucide-react"; // Added Twitter
+import { Logs, House, Users, UserPlus, FileText, User, MessageSquare, Edit, Twitter, CreditCard } from "lucide-react"; // Added CreditCard
 import { Link, useNavigate } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
@@ -55,9 +55,10 @@ export default function Header() {
     { name: "My Agents", path: "/youragent", icon: <Users className="text-2xl" /> },
     { name: "Create Agents", path: "/createagent", icon: <UserPlus className="text-2xl" /> },
     { name: "Chat", path: "/chat", icon: <MessageSquare className="text-2xl" /> },
-    { name: "Twitter Test", path: "/twitter-test", icon: <Twitter className="text-2xl" /> }, // Added Twitter Test
+    { name: "Twitter Test", path: "/twitter-test", icon: <Twitter className="text-2xl" /> },
     ...(currentUser
       ? [
+          { name: "Add Credits", path: "/add-credits", icon: <CreditCard className="text-2xl" /> }, // New Add Credits item
           { name: "Update Profile", path: "/update-profile", icon: <Edit className="text-2xl" /> },
           { name: "My Profile", path: "/profile", icon: <User className="text-2xl" /> },
         ]

@@ -16,6 +16,8 @@ import UpdateAgent from "./pages/UpdateAgent";
 import AgentProfile from "./pages/AgentProfile";
 import ChatApplication from "./pages/ChatApplication";
 import TwitterTestPage from "./pages/TwitterTestPage.tsx";
+import AddCreditsPage from "./pages/AddCreditsPage.tsx";
+
 import {
   ConnectionProvider,
   WalletProvider,
@@ -106,6 +108,7 @@ function MainContent() {
             twitterHandle: "",
             discordId: "",
             telegramId: "",
+            credit: 0
           };
           console.log("Creating user with data:", newUserData);
           const newUser = await createUser(newUserData);
@@ -170,6 +173,7 @@ function MainContent() {
               <Route path="/createagent" element={<CreateAgent />} />
               <Route path="/youragent" element={<YourAgent />} />
               <Route path="/manage" element={<Manage />} />
+              <Route path="/add-credits" element={<AddCreditsPage />} />
               <Route path="/chat" element={<ChatApplication />} />
               <Route path="/twitter-test" element={<TwitterTestPage />} />
               <Route

@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { House, Users, UserPlus, FileText, User, MessageSquare, Edit, Twitter } from "lucide-react"; // Added Twitter icon
+import { House, Users, UserPlus, FileText, User, MessageSquare, Edit, Twitter, CreditCard } from "lucide-react"; // Added CreditCard icon
 import { useUser } from "../context/UserContext";
 
 const Sidebar = () => {
@@ -28,10 +28,15 @@ const Sidebar = () => {
     {
       name: "Twitter Test",
       path: "/twitter-test",
-      icon: <Twitter className="text-2xl" />, // New Twitter Test item
+      icon: <Twitter className="text-2xl" />,
     },
     ...(currentUser
       ? [
+          {
+            name: "Add Credits",
+            path: "/add-credits",
+            icon: <CreditCard className="text-2xl" />, // New Add Credits item
+          },
           {
             name: "Update Profile",
             path: "/update-profile",

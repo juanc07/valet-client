@@ -14,6 +14,12 @@ interface GetUserByWalletResponse {
   user: User | null;
 }
 
+// Interface for the response from addUserCredits
+interface AddCreditsResponse {
+  message: string;
+  newCreditBalance: number;
+}
+
 export const createUser = async (userData: Omit<User, 'userId'>): Promise<User> => {
   return fetchWrapper(`${BASE_URL}/users`, {
     method: 'POST',
@@ -82,5 +88,14 @@ export const deleteUser = async (userId: string): Promise<{ message: string }> =
 export const deleteAllUsers = async (): Promise<{ message: string }> => {
   return fetchWrapper(`${BASE_URL}/users`, {
     method: 'DELETE',
+  });
+};
+
+// New function to add credits
+export const addUserCredits = async (userId: string, txSignature: string, code: string): Promise<AddCreditsResponse> => {
+  return fetchWrapper<AddCreditsResponse>(`${BASE_URL}/users/credits`, {
+    method: 'POST',
+    body: JSON.stringify({ userId, txSignature, code }),
+    headers: { 'Content-Type': 'application/json' },
   });
 };
