@@ -1,3 +1,4 @@
+// agentApi.ts
 import { Agent } from '../interfaces/agent';
 import { fetchWrapper } from '../utils/fetchWrapper';
 
@@ -121,13 +122,4 @@ export const chatWithAgentStream = async (
     console.error("Streaming error:", error);
     throw error;
   }
-};
-
-// New: Post a manual tweet
-export const postTweetManually = async (agentId: string, message?: string): Promise<{ message: string; tweetedMessage: string }> => {
-  return fetchWrapper(`${BASE_URL}/agents/${agentId}/tweet`, {
-    method: 'POST',
-    body: JSON.stringify({ message }), // Optional message
-    headers: { 'Content-Type': 'application/json' },
-  });
 };

@@ -34,7 +34,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { createUser, getUserByWallet } from "./api/userApi";
 import { User } from "./interfaces/user";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom"; // Added useSearchParams
 
 type Network = "mainnet-beta" | "testnet" | "devnet";
 
@@ -65,6 +65,7 @@ function App() {
 
 function MainContent() {
   const location = useLocation();
+  const [searchParams] = useSearchParams(); // Get query params
   const isStartPage = location.pathname === "/";
   const { currentUser, setCurrentUser } = useUser();
   const wallet = useWallet();
@@ -77,21 +78,19 @@ function MainContent() {
       if (!connected || !publicKey || hasCheckedWallet) return;
 
       const walletAddress = publicKey.toBase58();
-      console.log("Checking wallet:", walletAddress);
+      console.log("Effect running at:", Date.now(), "Checking wallet:", walletAddress);
 
       try {
         const user = await getUserByWallet(walletAddress);
         console.log("User response:", user);
 
         if (user) {
-          // User exists
           setCurrentUser(user);
           toast.success(`Welcome back!`, {
             description: `Connected as ${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`,
             duration: 3000,
           });
         } else {
-          // User not found, create new user
           const newUserData: Omit<User, "userId"> = {
             username: `user_${walletAddress.slice(0, 8)}`,
             solanaWalletAddress: walletAddress,
@@ -107,29 +106,35 @@ function MainContent() {
             discordId: "",
             telegramId: "",
           };
-          try {
-            console.log("Creating user with data:", newUserData);
-            const newUser = await createUser(newUserData);
-            console.log("Created user response:", newUser);
-            setCurrentUser(newUser);
-            toast.success(`Account created!`, {
-              description: `Connected as ${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`,
-              duration: 3000,
-            });
-          } catch (createError) {
-            console.error("Create user error:", createError);
-            toast.error("Failed to create user", {
-              description: "Please try again",
-              duration: 3000,
-            });
-            return;
-          }
+          console.log("Creating user with data:", newUserData);
+          const newUser = await createUser(newUserData);
+          console.log("Created user response:", newUser);
+          setCurrentUser(newUser);
+          toast.success(`Account created!`, {
+            description: `Connected as ${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`,
+            duration: 3000,
+          });
         }
 
-        // Navigate after setting user
         setTimeout(() => {
-          console.log("Navigating to /update-profile with currentUser:", currentUser);
-          navigate("/update-profile");
+          const currentPath = location.pathname;
+          const isOAuthCallback = searchParams.get("oauth_callback") === "true";
+          const intendedRoute = sessionStorage.getItem("oauthRedirect");
+          console.log(
+            "Current path:", currentPath,
+            "Is OAuth callback:", isOAuthCallback,
+            "Intended route:", intendedRoute
+          );
+
+          if (isOAuthCallback && intendedRoute && currentPath === intendedRoute.split("?")[0]) {
+            console.log("Preserving OAuth redirect route:", currentPath);
+            sessionStorage.removeItem("oauthRedirect");
+          } else if (!currentPath.startsWith("/agent/edit/")) {
+            console.log("Navigating to /update-profile with currentUser:", currentUser);
+            navigate("/update-profile");
+          } else {
+            console.log("Preserving agent edit route:", currentPath);
+          }
           setHasCheckedWallet(true);
         }, 0);
       } catch (error) {
@@ -142,7 +147,7 @@ function MainContent() {
     };
 
     handleWalletConnection();
-  }, [connected, publicKey, setCurrentUser, navigate, hasCheckedWallet]);
+  }, [connected, publicKey, setCurrentUser, navigate, hasCheckedWallet, location.pathname, searchParams]);
 
   useEffect(() => {
     console.log("MainContent currentUser:", currentUser);
@@ -184,14 +189,8 @@ function MainContent() {
                   )
                 }
               />
-              <Route
-                path="/agent/edit/:agentId"
-                element={<UpdateAgent />}
-              />
-              <Route
-                path="/agent/view/:agentId"
-                element={<AgentProfile />}
-              />
+              <Route path="/agent/edit/:agentId" element={<UpdateAgent />} />
+              <Route path="/agent/view/:agentId" element={<AgentProfile />} />
             </Routes>
           </Layout>
         )}

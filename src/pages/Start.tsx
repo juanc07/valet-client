@@ -9,12 +9,14 @@ function Start() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (currentUser && !currentUser.email) {
+    const isOAuthCallback = window.location.search.includes("oauth_callback");
+    if (currentUser && !currentUser.email && !isOAuthCallback) {
+      console.log("Start.tsx: Navigating to /update-profile due to missing email");
       navigate("/update-profile");
     }
   }, [currentUser, navigate]);
 
-  const isWalletConnected = !!currentUser; // True if currentUser exists
+  const isWalletConnected = !!currentUser;
 
   return (
     <div
@@ -31,7 +33,7 @@ function Start() {
                 ? "bg-[#6894f3] hover:bg-black hover:text-[#6894f3] cursor-pointer"
                 : "bg-gray-500 text-gray-300 cursor-not-allowed"
             }`}
-            disabled={!isWalletConnected} // Disable button if no wallet connected
+            disabled={!isWalletConnected}
           >
             Get Started
           </button>

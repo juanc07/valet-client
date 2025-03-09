@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Agent } from "../interfaces/agent";
 import { getAgentsByUserId } from "../api/userApi";
-import { postTweetManually } from "../api/agentApi";
+import { postTweetManually } from "../api/twitterApi";
 import { useUser } from "../context/UserContext";
 import { toast } from "sonner";
 

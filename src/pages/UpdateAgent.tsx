@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Agent } from "../interfaces/agent";
 import { getAgentById, updateAgent } from "../api/agentApi";
+import { requestTwitterOAuth } from "../api/twitterApi";
 import { toast } from "sonner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCopy, faArrowLeft, faPlus, faMinus } from "@fortawesome/free-solid-svg-icons";
@@ -34,16 +35,32 @@ export default function UpdateAgent() {
     agentType: "basic",
     createdBy: "",
   });
-  const [activeTab, setActiveTab] = useState("basic");
+  const [activeTab, setActiveTab] = useState("basic"); // Default to "basic", no sessionStorage init
   const [newKnowledgeKey, setNewKnowledgeKey] = useState("");
   const [newKnowledgeValue, setNewKnowledgeValue] = useState("");
+  const [isAdvancedTwitterSetup, setIsAdvancedTwitterSetup] = useState(false);
 
   const { connected: walletConnected } = useWallet();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!walletConnected) navigate("/");
-  }, [walletConnected, navigate]);
+    const isOAuthCallback = window.location.search.includes("oauth_callback");
+    console.log("UpdateAgent walletConnected:", walletConnected, "Is OAuth callback:", isOAuthCallback);
+    
+    if (!walletConnected && !isOAuthCallback) {
+      console.log("Redirecting to / due to no wallet connection");
+      navigate("/");
+    } else if (isOAuthCallback) {
+      const savedTab = sessionStorage.getItem("activeTab");
+      if (savedTab === "twitter") {
+        setActiveTab("twitter");
+        sessionStorage.removeItem("activeTab"); // Clear after use
+        console.log("Restored tab to twitter and cleared sessionStorage");
+      }
+      // Clean up URL
+      window.history.replaceState({}, document.title, `/agent/edit/${agentId}`);
+    }
+  }, [walletConnected, navigate, agentId]);
 
   useEffect(() => {
     const fetchAgentData = async () => {
@@ -143,6 +160,28 @@ export default function UpdateAgent() {
     }
   };
 
+  const handleTwitterOAuth = async () => {
+    try {
+      if (!agentId) throw new Error("Agent ID is required");
+      sessionStorage.removeItem("hasCheckedWallet"); // Reset wallet check
+      sessionStorage.setItem("activeTab", "twitter"); // Save tab state only on button click
+      console.log("Cleared hasCheckedWallet and set activeTab to twitter for OAuth");
+      const { redirectUrl } = await requestTwitterOAuth(agentId);
+      if (redirectUrl) {
+        window.location.href = redirectUrl;
+      } else {
+        throw new Error("No redirect URL received");
+      }
+    } catch (error) {
+      console.error("Twitter OAuth initiation failed:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      toast.error("Twitter Connection Failed", {
+        description: `Unable to start Twitter authentication: ${errorMessage}`,
+        duration: 3000
+      });
+    }
+  };
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!agentId) return;
@@ -190,7 +229,7 @@ export default function UpdateAgent() {
         <div className="w-full lg:w-4/5 pt-10 pb-10 text-center">
           <h1 className="text-2xl md:text-3xl font-bold mb-10">Update Agent</h1>
           <p className="text-lg mb-8">Agent ID: {agentId || "Not provided"}</p>
-          
+
           <form onSubmit={handleSubmit}>
             {/* Tab Navigation */}
             <div className="mb-8 relative">
@@ -200,11 +239,10 @@ export default function UpdateAgent() {
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveTab(tab.id)}
-                    className={`py-2 px-4 text-lg font-medium rounded-t-lg transition-all duration-200 relative z-10 ${
-                      activeTab === tab.id
-                        ? "bg-[#6a94f0] text-black"
-                        : "bg-[#494848] text-white hover:bg-[#6a94f0] hover:text-black"
-                    }`}
+                    className={`py-2 px-4 text-lg font-medium rounded-t-lg transition-all duration-200 relative z-10 ${activeTab === tab.id
+                      ? "bg-[#6a94f0] text-black"
+                      : "bg-[#494848] text-white hover:bg-[#6a94f0] hover:text-black"
+                      }`}
                   >
                     {tab.label}
                   </button>
@@ -440,32 +478,109 @@ export default function UpdateAgent() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="twitterHandle" className="block text-lg mb-2">Twitter Handle</label>
-                    <input id="twitterHandle" name="twitterHandle" type="text" value={formData.twitterHandle} onChange={handleChange} className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" />
+                    <input
+                      id="twitterHandle"
+                      name="twitterHandle"
+                      type="text"
+                      value={formData.twitterHandle}
+                      onChange={handleChange}
+                      disabled={isAdvancedTwitterSetup && !!formData.twitterAccessToken}
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black disabled:bg-[#333] disabled:cursor-not-allowed"
+                    />
                   </div>
-                  <div>
-                    <label htmlFor="twitterAppKey" className="block text-lg mb-2">Twitter App Key</label>
-                    <input id="twitterAppKey" name="twitterAppKey" type="text" value={formData.twitterAppKey} onChange={handleChange} className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" />
-                  </div>
-                  <div>
-                    <label htmlFor="twitterAppSecret" className="block text-lg mb-2">Twitter App Secret</label>
-                    <input id="twitterAppSecret" name="twitterAppSecret" type="text" value={formData.twitterAppSecret} onChange={handleChange} className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" />
-                  </div>
+                  {!isAdvancedTwitterSetup && (
+                    <div>
+                      <label htmlFor="twitterAppKey" className="block text-lg mb-2">Twitter App Key</label>
+                      <input
+                        id="twitterAppKey"
+                        name="twitterAppKey"
+                        type="text"
+                        value={formData.twitterAppKey}
+                        onChange={handleChange}
+                        className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                      />
+                    </div>
+                  )}
+                  {!isAdvancedTwitterSetup && (
+                    <div>
+                      <label htmlFor="twitterAppSecret" className="block text-lg mb-2">Twitter App Secret</label>
+                      <input
+                        id="twitterAppSecret"
+                        name="twitterAppSecret"
+                        type="text"
+                        value={formData.twitterAppSecret}
+                        onChange={handleChange}
+                        className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                      />
+                    </div>
+                  )}
                   <div>
                     <label htmlFor="twitterAccessToken" className="block text-lg mb-2">Twitter Access Token</label>
-                    <input id="twitterAccessToken" name="twitterAccessToken" type="text" value={formData.twitterAccessToken} onChange={handleChange} className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" />
+                    <input
+                      id="twitterAccessToken"
+                      name="twitterAccessToken"
+                      type="text"
+                      value={formData.twitterAccessToken}
+                      onChange={handleChange}
+                      disabled={isAdvancedTwitterSetup}
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black disabled:bg-[#333] disabled:cursor-not-allowed"
+                    />
                   </div>
                   <div>
                     <label htmlFor="twitterAccessSecret" className="block text-lg mb-2">Twitter Access Secret</label>
-                    <input id="twitterAccessSecret" name="twitterAccessSecret" type="text" value={formData.twitterAccessSecret} onChange={handleChange} className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" />
+                    <input
+                      id="twitterAccessSecret"
+                      name="twitterAccessSecret"
+                      type="text"
+                      value={formData.twitterAccessSecret}
+                      onChange={handleChange}
+                      disabled={isAdvancedTwitterSetup}
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black disabled:bg-[#333] disabled:cursor-not-allowed"
+                    />
                   </div>
                   <div className="flex items-center">
-                    <input id="enablePostTweet" name="enablePostTweet" type="checkbox" checked={formData.enablePostTweet} onChange={handleChange} className="mr-2 text-[#6a94f0] border-[#494848] bg-black focus:ring-[#6a94f0]" />
+                    <input
+                      id="enablePostTweet"
+                      name="enablePostTweet"
+                      type="checkbox"
+                      checked={formData.enablePostTweet}
+                      onChange={handleChange}
+                      className="mr-2 text-[#6a94f0] border-[#494848] bg-black focus:ring-[#6a94f0]"
+                    />
                     <label htmlFor="enablePostTweet" className="text-lg">Enable Tweet Posting</label>
                   </div>
                   <div>
                     <label htmlFor="postTweetInterval" className="block text-lg mb-2">Tweet Post Interval (seconds)</label>
-                    <input id="postTweetInterval" name="postTweetInterval" type="number" value={formData.postTweetInterval} onChange={handleChange} className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black" />
+                    <input
+                      id="postTweetInterval"
+                      name="postTweetInterval"
+                      type="number"
+                      value={formData.postTweetInterval}
+                      onChange={handleChange}
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                    />
                   </div>
+                  <div className="flex items-center">
+                    <input
+                      id="advancedTwitterSetup"
+                      type="checkbox"
+                      checked={isAdvancedTwitterSetup}
+                      onChange={(e) => setIsAdvancedTwitterSetup(e.target.checked)}
+                      className="mr-2 text-[#6a94f0] border-[#494848] bg-black focus:ring-[#6a94f0]"
+                    />
+                    <label htmlFor="advancedTwitterSetup" className="text-lg">Advanced Setup</label>
+                  </div>
+                  {isAdvancedTwitterSetup && (
+                    <div className="col-span-1 md:col-span-2">
+                      <button
+                        type="button"
+                        onClick={handleTwitterOAuth}
+                        className="w-full py-2 px-4 bg-[#1DA1F2] text-white rounded-lg hover:bg-[#1a91da] transition-all duration-400"
+                      >
+                        Connect with Twitter
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
