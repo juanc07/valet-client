@@ -1,6 +1,5 @@
 import { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import puppet from "../assets/puppet.jpg";
-import openai from "../assets/openai.jpg";
 import { toast } from "sonner";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useNavigate } from "react-router-dom";
@@ -17,7 +16,7 @@ import {
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 const RECEIVER_PUBLIC_KEY = import.meta.env.VITE_SOLANA_PAYMENT_WALLET;
 const SOLANA_ENDPOINT = import.meta.env.VITE_SOLANA_ENDPOINT || "https://api.devnet.solana.com";
-const SOL_AMOUNT = 0.01 * LAMPORTS_PER_SOL; // 0.01 SOL in lamports
+const AGENT_CREATION_SOL_AMOUNT = 0.2 * LAMPORTS_PER_SOL;
 
 interface FormData {
   name: string;
@@ -26,7 +25,6 @@ interface FormData {
   formality: string;
   catchphrase: string;
   agentType: "puppetos" | "basic";
-  openaiApiKey: string;
 }
 
 export default function CreateAgent() {
@@ -37,7 +35,6 @@ export default function CreateAgent() {
     formality: "",
     catchphrase: "",
     agentType: "basic",
-    openaiApiKey: "",
   });
   const [error, setError] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -72,7 +69,7 @@ export default function CreateAgent() {
       return;
     }
 
-    const requiredFields = ["name", "bio", "tone", "formality", "catchphrase", "openaiApiKey"];
+    const requiredFields = ["name", "bio", "tone", "formality", "catchphrase"];
     const missingFields = requiredFields.filter((field) => !formData[field as keyof FormData]);
     if (missingFields.length > 0) {
       setError(`Missing required fields: ${missingFields.join(", ")}`);
@@ -113,7 +110,7 @@ export default function CreateAgent() {
         SystemProgram.transfer({
           fromPubkey: publicKey,
           toPubkey: receiverPublicKey,
-          lamports: SOL_AMOUNT,
+          lamports: AGENT_CREATION_SOL_AMOUNT,
         })
       );
 
@@ -137,7 +134,6 @@ export default function CreateAgent() {
         },
         agentType: formData.agentType,
         createdBy: currentUser.userId,
-        openaiApiKey: formData.openaiApiKey,
         description: "A new AI agent",
         mission: "To assist users",
         vision: "A helpful future",
@@ -165,7 +161,6 @@ export default function CreateAgent() {
         formality: "",
         catchphrase: "",
         agentType: "basic",
-        openaiApiKey: "",
       });
     } catch (err: any) {
       console.error("Error creating agent:", err);
@@ -184,7 +179,7 @@ export default function CreateAgent() {
       <div className="w-full px-2 py-2 lg:px-0 lg:py- rounded-4xl md:rounded-lg shadow-lg flex justify-center items-center">
         <div className="w-full lg:w-4/5 pt-10 pb-10">
           <h1 className="text-2xl md:text-3xl font-bold text-center mb-10">
-            Create Your AI Agent (0.01 SOL)
+            Create Your AI Agent (0.2 SOL)
           </h1>
           <form onSubmit={handleSubmit}>
             {/* Agent Type Selection */}
@@ -197,26 +192,12 @@ export default function CreateAgent() {
                     setFormData((prev) => ({ ...prev, agentType: "basic" }))
                   }
                 >
-                  <img
-                    src={openai}
-                    className="w-14 h-14 lg:w-10 lg:h-10 mb-4 lg:mb-0 lg:mr-4 rounded-lg"
-                    alt="OpenAI"
-                  />
                   <div className="flex-1">
                     <div className="font-semibold text-white text-sm md:text-base">
-                      OpenAI
+                      Basic Agent
                     </div>
                     <div className="text-xs md:text-sm text-gray-400 mt-2 md:mt-0">
-                      GPT-4{" "}
-                      <a
-                        href="https://platform.openai.com/docs/overview"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(event) => event.stopPropagation()}
-                        className="cursor-pointer text-[#6b94ed] text-nowrap"
-                      >
-                        learn more
-                      </a>
+                      Standard AI Framework
                     </div>
                   </div>
                   <input
@@ -356,21 +337,6 @@ export default function CreateAgent() {
                   maxLength={500}
                 />
               </div>
-              <div className="flex flex-col mb-2">
-                <label htmlFor="openaiApiKey" className="mb-1 text-white">
-                  OpenAI API Key *
-                </label>
-                <input
-                  id="openaiApiKey"
-                  name="openaiApiKey"
-                  type="text"
-                  value={formData.openaiApiKey}
-                  onChange={handleChange}
-                  required
-                  placeholder="Enter OpenAI API Key"
-                  className="w-full border border-[#494848] text-white p-2 md:p-3 rounded-lg outline-none focus:ring-1 focus:ring-gray-500"
-                />
-              </div>
             </div>
 
             {error && <p className="text-red-500 text-center mt-2">{error}</p>}
@@ -383,7 +349,7 @@ export default function CreateAgent() {
                   isSubmitting ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >
-                {isSubmitting ? "Processing..." : "Create (Pay 0.01 SOL)"}
+                {isSubmitting ? "Processing..." : "Create (Pay 0.2 SOL)"}
               </button>
             </div>
           </form>
