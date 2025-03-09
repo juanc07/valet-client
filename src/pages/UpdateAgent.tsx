@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCopy, faArrowLeft, faPlus, faMinus } from "@fortawesome/free-solid-svg-icons";
 import { useUser } from "../context/UserContext";
+import Cookies from "js-cookie";
 
 export default function UpdateAgent() {
   const { agentId } = useParams<{ agentId: string }>();
@@ -44,6 +45,13 @@ export default function UpdateAgent() {
   const { connected: walletConnected } = useWallet();
   const { currentUser, setCurrentUser } = useUser();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const savedAdvancedSetup = Cookies.get("isAdvancedTwitterSetup");
+    if (savedAdvancedSetup !== undefined) {
+      setIsAdvancedTwitterSetup(savedAdvancedSetup === "true");
+    }
+  }, []);
 
   useEffect(() => {
     const isOAuthCallback = window.location.search.includes("oauth_callback");
@@ -169,10 +177,10 @@ export default function UpdateAgent() {
   const handleTwitterOAuth = async () => {
     try {
       if (!agentId) throw new Error("Agent ID is required");
-      sessionStorage.removeItem("hasCheckedWallet"); // Reset wallet check
-      sessionStorage.setItem("activeTab", "twitter"); // Save tab state
+      sessionStorage.removeItem("hasCheckedWallet");
+      sessionStorage.setItem("activeTab", "twitter");
       if (currentUser) {
-        sessionStorage.setItem("currentUser", JSON.stringify(currentUser)); // Save currentUser
+        sessionStorage.setItem("currentUser", JSON.stringify(currentUser));
       }
       console.log("Cleared hasCheckedWallet, set activeTab to twitter, saved currentUser:", currentUser);
       const { redirectUrl } = await requestTwitterOAuth(agentId);
@@ -189,6 +197,12 @@ export default function UpdateAgent() {
         duration: 3000,
       });
     }
+  };
+
+  const handleAdvancedTwitterSetupChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const isChecked = e.target.checked;
+    setIsAdvancedTwitterSetup(isChecked);
+    Cookies.set("isAdvancedTwitterSetup", isChecked.toString(), { expires: 365 });
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -734,39 +748,38 @@ export default function UpdateAgent() {
                       type="text"
                       value={formData.twitterHandle}
                       onChange={handleChange}
-                      disabled={isAdvancedTwitterSetup && !!formData.twitterAccessToken}
-                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black disabled:bg-[#333] disabled:cursor-not-allowed"
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
                     />
                   </div>
-                  {!isAdvancedTwitterSetup && (
-                    <div>
-                      <label htmlFor="twitterAppKey" className="block text-lg mb-2">
-                        Twitter App Key
-                      </label>
-                      <input
-                        id="twitterAppKey"
-                        name="twitterAppKey"
-                        type="text"
-                        value={formData.twitterAppKey}
-                        onChange={handleChange}
-                        className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
-                      />
-                    </div>
-                  )}
-                  {!isAdvancedTwitterSetup && (
-                    <div>
-                      <label htmlFor="twitterAppSecret" className="block text-lg mb-2">
-                        Twitter App Secret
-                      </label>
-                      <input
-                        id="twitterAppSecret"
-                        name="twitterAppSecret"
-                        type="text"
-                        value={formData.twitterAppSecret}
-                        onChange={handleChange}
-                        className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
-                      />
-                    </div>
+                  {isAdvancedTwitterSetup && (
+                    <>
+                      <div>
+                        <label htmlFor="twitterAppKey" className="block text-lg mb-2">
+                          Twitter App Key
+                        </label>
+                        <input
+                          id="twitterAppKey"
+                          name="twitterAppKey"
+                          type="text"
+                          value={formData.twitterAppKey}
+                          onChange={handleChange}
+                          className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="twitterAppSecret" className="block text-lg mb-2">
+                          Twitter App Secret
+                        </label>
+                        <input
+                          id="twitterAppSecret"
+                          name="twitterAppSecret"
+                          type="text"
+                          value={formData.twitterAppSecret}
+                          onChange={handleChange}
+                          className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                        />
+                      </div>
+                    </>
                   )}
                   <div>
                     <label htmlFor="twitterAccessToken" className="block text-lg mb-2">
@@ -778,8 +791,7 @@ export default function UpdateAgent() {
                       type="text"
                       value={formData.twitterAccessToken}
                       onChange={handleChange}
-                      disabled={isAdvancedTwitterSetup}
-                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black disabled:bg-[#333] disabled:cursor-not-allowed"
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
                     />
                   </div>
                   <div>
@@ -792,8 +804,7 @@ export default function UpdateAgent() {
                       type="text"
                       value={formData.twitterAccessSecret}
                       onChange={handleChange}
-                      disabled={isAdvancedTwitterSetup}
-                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black disabled:bg-[#333] disabled:cursor-not-allowed"
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
                     />
                   </div>
                   <div className="flex items-center">
@@ -827,14 +838,14 @@ export default function UpdateAgent() {
                       id="advancedTwitterSetup"
                       type="checkbox"
                       checked={isAdvancedTwitterSetup}
-                      onChange={(e) => setIsAdvancedTwitterSetup(e.target.checked)}
+                      onChange={handleAdvancedTwitterSetupChange}
                       className="mr-2 text-[#6a94f0] border-[#494848] bg-black focus:ring-[#6a94f0]"
                     />
                     <label htmlFor="advancedTwitterSetup" className="text-lg">
                       Advanced Setup
                     </label>
                   </div>
-                  {isAdvancedTwitterSetup && (
+                  {!isAdvancedTwitterSetup && (
                     <div className="col-span-1 md:col-span-2">
                       <button
                         type="button"
