@@ -12,7 +12,6 @@ import {
 } from "@solana/web3.js";
 import { toast } from "sonner";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 const RECEIVER_PUBLIC_KEY = import.meta.env.VITE_SOLANA_PAYMENT_WALLET;
 const SOLANA_ENDPOINT = import.meta.env.VITE_SOLANA_ENDPOINT || "https://api.devnet.solana.com";
 
@@ -128,7 +127,7 @@ export default function AddCreditsPage() {
 
         {/* Plan Selection */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {Object.entries(CREDIT_PLANS).map(([code, { credits, label, solPrice }]) => (
+          {Object.entries(CREDIT_PLANS).map(([code, { label, solPrice }]) => (
             <div
               key={code}
               className={`border border-[#494848] rounded-lg p-6 text-center cursor-pointer transition-all duration-300 ${

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCopy } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "sonner";
-import { getUser, getAgentCount, getActiveAgentCount } from "../api/userApi";
+import { getUser, getAgentCount } from "../api/userApi";
 import { User } from "../interfaces/user";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useNavigate } from "react-router-dom";

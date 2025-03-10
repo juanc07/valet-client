@@ -1,27 +1,29 @@
 import path from "path";
 import { defineConfig } from "vite";
-import tailwindcss from '@tailwindcss/vite';
+import { nodePolyfills } from "vite-plugin-node-polyfills"; // Correct import
 
 export default defineConfig({
-  plugins: [tailwindcss()],
+  plugins: [
+    nodePolyfills({
+      globals: {
+        Buffer: true, // Polyfill Buffer globally
+      },
+    }),
+  ],
+  base: "/", // Ensure assets load from root
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      // Explicitly map Buffer imports to the buffer package
-      "buffer": "buffer",
     },
   },
-  optimizeDeps: {
-    include: ["buffer"],
-  },
-  // Inject a polyfill script before other code runs
   build: {
     commonjsOptions: {
       transformMixedEsModules: true,
     },
-  },
-  esbuild: {
-    // Inject Buffer polyfill at the top of every module
-    banner: `import { Buffer } from "buffer"; globalThis.Buffer = Buffer;`,
+    outDir: "dist",
+    assetsDir: "assets",
+    rollupOptions: {
+      external: [], // Ensure no externalization of built-ins
+    },
   },
 });
