@@ -14,6 +14,7 @@ Current features:
 10. creation of agent using sol as payment
 11. auto post tweet using free api but limited post only per month
 12. manual post tweet in front end using free api but limited post only per month
+13. buying of credits usings solana as currency and showing the current user credits (this can be use for future features)
 
 
 Current Integrations:
@@ -24,6 +25,7 @@ Current Integrations:
 5. agent prompting template
 6. creation of agent using sol as payment
 7. twitter integration for free and paid api approach
+8. buying of credits usings solana as currency
 
 Server Repo
 https://github.com/juanc07/valet-server
