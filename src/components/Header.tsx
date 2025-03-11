@@ -1,11 +1,14 @@
 import { useState } from "react";
 import Image1 from "../assets/logo.png";
-import { Logs, House, Users, UserPlus, FileText, User, MessageSquare, Edit, Twitter, CreditCard } from "lucide-react"; // Added CreditCard
+import { Logs, House, Users, UserPlus, FileText, User, MessageSquare, Edit, Twitter, CreditCard } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { toast } from "sonner";
 import { useUser } from "../context/UserContext";
+
+// Get the debug flag from environment variable
+const isAgentDebug = import.meta.env.VITE_SOLANA_AGENT_DEBUG === "TRUE";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -54,11 +57,13 @@ export default function Header() {
     { name: "Home", path: "/", icon: <House className="text-2xl" /> },
     { name: "My Agents", path: "/youragent", icon: <Users className="text-2xl" /> },
     { name: "Create Agents", path: "/createagent", icon: <UserPlus className="text-2xl" /> },
-    { name: "Chat", path: "/chat", icon: <MessageSquare className="text-2xl" /> },
-    { name: "Twitter Test", path: "/twitter-test", icon: <Twitter className="text-2xl" /> },
+    ...(isAgentDebug ? [
+      { name: "Chat", path: "/chat", icon: <MessageSquare className="text-2xl" /> },
+      { name: "Twitter Test", path: "/twitter-test", icon: <Twitter className="text-2xl" /> },
+    ] : []),
     ...(currentUser
       ? [
-          { name: "Add Credits", path: "/add-credits", icon: <CreditCard className="text-2xl" /> }, // New Add Credits item
+          { name: "Add Credits", path: "/add-credits", icon: <CreditCard className="text-2xl" /> },
           { name: "Update Profile", path: "/update-profile", icon: <Edit className="text-2xl" /> },
           { name: "My Profile", path: "/profile", icon: <User className="text-2xl" /> },
         ]

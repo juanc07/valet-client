@@ -9,6 +9,9 @@ import { getAllAgents, deleteAgent } from "../api/agentApi";
 import { getAgentsByUserId } from "../api/userApi";
 import { useUser } from "../context/UserContext";
 
+// Get the debug flag from environment variable
+const isAgentDebug = import.meta.env.VITE_SOLANA_AGENT_DEBUG === "TRUE";
+
 function YourAgent() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -33,7 +36,7 @@ function YourAgent() {
           console.log("Fetching My Agents for user:", currentUser.userId);
           const userAgents = await getAgentsByUserId(currentUser.userId);
           setAgents(userAgents);
-        } else {
+        } else if (isAgentDebug) {  // Only fetch others' agents if debug is true
           console.log("Fetching Other People's Agents");
           const allAgents = await getAllAgents();
           const othersAgents = allAgents.filter(agent => agent.createdBy !== currentUser.userId);
@@ -110,14 +113,16 @@ function YourAgent() {
             <h2 className="text-4xl font-bold text-center sm:text-left">
               {viewMode === "myAgents" ? "Your Agents" : "Other People's Agents"}
             </h2>
-            <select
-              value={viewMode}
-              onChange={(e) => setViewMode(e.target.value as "myAgents" | "othersAgents")}
-              className="mt-4 sm:mt-0 bg-[#222128] text-white p-2 rounded-lg border border-[#494848] focus:outline-none focus:ring-1 focus:ring-gray-500"
-            >
-              <option value="myAgents">My Agents</option>
-              <option value="othersAgents">Other People's Agents</option>
-            </select>
+            {isAgentDebug && (  // Only show dropdown when debug is true
+              <select
+                value={viewMode}
+                onChange={(e) => setViewMode(e.target.value as "myAgents" | "othersAgents")}
+                className="mt-4 sm:mt-0 bg-[#222128] text-white p-2 rounded-lg border border-[#494848] focus:outline-none focus:ring-1 focus:ring-gray-500"
+              >
+                <option value="myAgents">My Agents</option>
+                <option value="othersAgents">Other People's Agents</option>
+              </select>
+            )}
           </div>
           {agents.length === 0 ? (
             <div className="text-center text-3xl text-white pt-40">
@@ -201,7 +206,7 @@ function YourAgent() {
       {/* Delete Confirmation Dialog with 50% Transparent Background */}
       {isDialogOpen && (
         <div
-          style={{ backgroundColor: "rgba(0, 0, 0, 0.65)" }} // 50% transparent black
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.65)" }}
           className="fixed inset-0 flex items-center justify-center z-50"
         >
           <div className="bg-[#222128] p-6 rounded-lg shadow-lg border border-[#494848] w-full max-w-md">

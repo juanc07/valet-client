@@ -1,7 +1,10 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { House, Users, UserPlus, FileText, User, MessageSquare, Edit, Twitter, CreditCard } from "lucide-react"; // Added CreditCard icon
+import { House, Users, UserPlus, FileText, User, MessageSquare, Edit, Twitter, CreditCard } from "lucide-react";
 import { useUser } from "../context/UserContext";
+
+// Get the debug flag from environment variable
+const isAgentDebug = import.meta.env.VITE_SOLANA_AGENT_DEBUG === "TRUE";
 
 const Sidebar = () => {
   const location = useLocation();
@@ -20,7 +23,7 @@ const Sidebar = () => {
       path: "/createagent",
       icon: <UserPlus className="text-2xl" />,
     },
-    {
+    ...(isAgentDebug ? [{
       name: "Chat",
       path: "/chat",
       icon: <MessageSquare className="text-2xl" />,
@@ -29,13 +32,13 @@ const Sidebar = () => {
       name: "Twitter Test",
       path: "/twitter-test",
       icon: <Twitter className="text-2xl" />,
-    },
+    }] : []),
     ...(currentUser
       ? [
           {
             name: "Add Credits",
             path: "/add-credits",
-            icon: <CreditCard className="text-2xl" />, // New Add Credits item
+            icon: <CreditCard className="text-2xl" />,
           },
           {
             name: "Update Profile",
