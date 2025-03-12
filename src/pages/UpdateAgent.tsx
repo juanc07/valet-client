@@ -3,10 +3,11 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Agent } from "../interfaces/agent";
 import { getAgentById, updateAgent } from "../api/agentApi";
+import { uploadProfileImage, getProfileImage, deleteProfileImage } from "../api/imageApi";
 import { requestTwitterOAuth } from "../api/twitterApi";
 import { toast } from "sonner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCopy, faArrowLeft, faPlus, faMinus } from "@fortawesome/free-solid-svg-icons";
+import { faCopy, faArrowLeft, faPlus, faMinus, faUpload, faTrash } from "@fortawesome/free-solid-svg-icons"; // Add faUpload
 import { useUser } from "../context/UserContext";
 import Cookies from "js-cookie";
 
@@ -36,15 +37,52 @@ export default function UpdateAgent() {
     postTweetInterval: 0,
     agentType: "basic",
     createdBy: "",
+    profileImageId: "",
   });
   const [activeTab, setActiveTab] = useState("basic");
   const [newKnowledgeKey, setNewKnowledgeKey] = useState("");
   const [newKnowledgeValue, setNewKnowledgeValue] = useState("");
   const [isAdvancedTwitterSetup, setIsAdvancedTwitterSetup] = useState(false);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const { connected: walletConnected } = useWallet();
   const { currentUser, setCurrentUser } = useUser();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchAgentData = async () => {
+      if (!agentId) return;
+      try {
+        const agentData = await getAgentById(agentId);
+        setFormData((prevData) => ({
+          ...prevData,
+          ...agentData,
+          contact: { ...prevData.contact, ...(agentData.contact || {}), socials: { ...prevData.contact.socials, ...(agentData.contact?.socials || {}) } },
+          wallets: { ...prevData.wallets, ...(agentData.wallets || {}) },
+          knowledge: agentData.knowledge || {},
+          personality: {
+            ...prevData.personality,
+            ...(agentData.personality || {}),
+            preferences: { ...prevData.personality.preferences, ...(agentData.personality?.preferences || {}), topics: agentData.personality?.preferences?.topics || [], languages: agentData.personality?.preferences?.languages || [] },
+          },
+          settings: { ...prevData.settings, ...(agentData.settings || {}), platforms: agentData.settings?.platforms || [] },
+          ruleIds: agentData.ruleIds || [],
+          enablePostTweet: agentData.enablePostTweet || false,
+          postTweetInterval: agentData.postTweetInterval || 0,
+          profileImageId: agentData.profileImageId || "",
+        }));
+
+        if (agentData.profileImageId) {
+          const imageData = await getProfileImage(agentId);
+          setProfileImageUrl(imageData.url);
+        }
+      } catch (error: any) {
+        console.error("Fetch agent or image error:", error);
+      }
+    };
+    if (agentId && (walletConnected || currentUser)) fetchAgentData();
+  }, [agentId, walletConnected, currentUser]);
 
   useEffect(() => {
     const savedAdvancedSetup = Cookies.get("isAdvancedTwitterSetup");
@@ -76,34 +114,6 @@ export default function UpdateAgent() {
     }
   }, [walletConnected, navigate, agentId, currentUser, setCurrentUser]);
 
-  useEffect(() => {
-    const fetchAgentData = async () => {
-      if (!agentId) return;
-      try {
-        const agentData = await getAgentById(agentId);
-        setFormData((prevData) => ({
-          ...prevData,
-          ...agentData,
-          contact: { ...prevData.contact, ...(agentData.contact || {}), socials: { ...prevData.contact.socials, ...(agentData.contact?.socials || {}) } },
-          wallets: { ...prevData.wallets, ...(agentData.wallets || {}) },
-          knowledge: agentData.knowledge || {},
-          personality: {
-            ...prevData.personality,
-            ...(agentData.personality || {}),
-            preferences: { ...prevData.personality.preferences, ...(agentData.personality?.preferences || {}), topics: agentData.personality?.preferences?.topics || [], languages: agentData.personality?.preferences?.languages || [] },
-          },
-          settings: { ...prevData.settings, ...(agentData.settings || {}), platforms: agentData.settings?.platforms || [] },
-          ruleIds: agentData.ruleIds || [],
-          enablePostTweet: agentData.enablePostTweet || false,
-          postTweetInterval: agentData.postTweetInterval || 0,
-        }));
-      } catch (error: any) {
-        console.error("Fetch agent error:", error);
-      }
-    };
-    if (agentId && (walletConnected || currentUser)) fetchAgentData();
-  }, [agentId, walletConnected, currentUser]);
-
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     const checked = type === "checkbox" ? (e.target as HTMLInputElement).checked : undefined;
@@ -123,6 +133,39 @@ export default function UpdateAgent() {
         ...prevData,
         [name]: type === "checkbox" ? checked : value,
       }));
+    }
+  };
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      handleUploadImage(file); // Auto-upload on file selection
+    }
+  };
+
+  const handleUploadImage = async (file: File) => {
+    if (!agentId) return;
+    try {
+      const result = await uploadProfileImage(agentId, file);
+      setFormData((prev) => ({ ...prev, profileImageId: result.profileImageId }));
+      setProfileImageUrl(result.url);
+      setSelectedFile(null);
+      toast.success("Image Uploaded", { description: "Profile image updated successfully.", duration: 3000 });
+    } catch (error: any) {
+      toast.error("Upload Failed", { description: "Failed to upload image.", duration: 3000 });
+    }
+  };
+
+  const handleDeleteImage = async () => {
+    if (!agentId || !formData.profileImageId) return;
+    try {
+      await deleteProfileImage(agentId);
+      setFormData((prev) => ({ ...prev, profileImageId: "" }));
+      setProfileImageUrl(null);
+      toast.success("Image Deleted", { description: "Profile image removed successfully.", duration: 3000 });
+    } catch (error: any) {
+      toast.error("Delete Failed", { description: "Failed to delete image.", duration: 3000 });
     }
   };
 
@@ -254,7 +297,6 @@ export default function UpdateAgent() {
           <p className="text-lg mb-8">Agent ID: {agentId || "Not provided"}</p>
 
           <form onSubmit={handleSubmit}>
-            {/* Tab Navigation */}
             <div className="mb-8 relative">
               <div className="flex flex-wrap justify-center gap-2 bg-[#2a2a2a] rounded-t-lg">
                 {tabs.map((tab) => (
@@ -273,10 +315,45 @@ export default function UpdateAgent() {
               <div className="absolute bottom-0 left-0 right-0 h-px bg-[#494848] z-0" />
             </div>
 
-            {/* Tab Content */}
             <div className="space-y-6 min-h-[400px]">
               {activeTab === "basic" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Profile Image Section */}
+                  <div className="col-span-1 md:col-span-2 flex justify-center mb-6">
+                    <div className="relative w-32 h-32 group">
+                      <img
+                        src={profileImageUrl || "https://via.placeholder.com/150/494848/FFFFFF?text=Agent"}
+                        alt="Agent Profile"
+                        className="w-full h-full object-cover rounded-full border-2 border-[#494848]"
+                      />
+                      <div className="absolute inset-0 flex items-end justify-between p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <label
+                          htmlFor="profileImage"
+                          className="cursor-pointer bg-[#6a94f0] text-black py-1 px-2 rounded-full hover:bg-[#8faef0] transition-all duration-400 flex items-center gap-1 text-sm"
+                        >
+                          <FontAwesomeIcon icon={faUpload} />
+                          {profileImageUrl ? "Replace" : "Upload"}
+                        </label>
+                        <input
+                          id="profileImage"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          className="hidden"
+                        />
+                        {profileImageUrl && (
+                          <button
+                            type="button"
+                            onClick={handleDeleteImage}
+                            className="bg-red-600 text-white py-1 px-2 rounded-full hover:bg-red-700 transition-all duration-400 flex items-center gap-1 text-sm"
+                          >
+                            <FontAwesomeIcon icon={faTrash} />
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                   <div>
                     <label htmlFor="name" className="block text-lg mb-2">
                       Name *
@@ -380,6 +457,7 @@ export default function UpdateAgent() {
                 </div>
               )}
 
+              {/* Other tabs remain unchanged */}
               {activeTab === "contact" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -878,7 +956,6 @@ export default function UpdateAgent() {
               )}
             </div>
 
-            {/* Buttons */}
             <div className="mt-6 flex justify-center gap-4">
               <button type="submit" className="py-2 px-4 bg-[#6a94f0] text-black rounded-lg hover:bg-[#8faef0] transition-all duration-400 font-semibold">
                 Save
