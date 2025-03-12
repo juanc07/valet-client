@@ -49,3 +49,4 @@ coverage/
 
 # Optional: Lockfiles (if you want to commit pnpm-lock.yaml, omit this)
 # pnpm-lock.yaml
+.qodo
