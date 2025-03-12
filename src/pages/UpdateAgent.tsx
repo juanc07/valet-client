@@ -7,9 +7,18 @@ import { uploadProfileImage, getProfileImage, deleteProfileImage } from "../api/
 import { requestTwitterOAuth } from "../api/twitterApi";
 import { toast } from "sonner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCopy, faArrowLeft, faPlus, faMinus, faUpload, faTrash } from "@fortawesome/free-solid-svg-icons"; // Add faUpload
+import { faCopy, faArrowLeft, faPlus, faMinus, faUpload, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { useUser } from "../context/UserContext";
 import Cookies from "js-cookie";
+
+// Import default agent images
+import agentDefaultImage1 from "../assets/agent-default-image/agent_default-1.jpg";
+import agentDefaultImage2 from "../assets/agent-default-image/agent_default-2.jpg";
+import agentDefaultImage3 from "../assets/agent-default-image/agent_default-3.jpg";
+import agentDefaultImage4 from "../assets/agent-default-image/agent_default-4.jpg";
+import agentDefaultImage5 from "../assets/agent-default-image/agent_default-5.jpg";
+import agentDefaultImage6 from "../assets/agent-default-image/agent_default-6.jpg";
+import agentDefaultImage7 from "../assets/agent-default-image/agent_default-7.jpg";
 
 export default function UpdateAgent() {
   const { agentId } = useParams<{ agentId: string }>();
@@ -44,11 +53,27 @@ export default function UpdateAgent() {
   const [newKnowledgeValue, setNewKnowledgeValue] = useState("");
   const [isAdvancedTwitterSetup, setIsAdvancedTwitterSetup] = useState(false);
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const { connected: walletConnected } = useWallet();
   const { currentUser, setCurrentUser } = useUser();
   const navigate = useNavigate();
+
+  // Array of default images
+  const defaultImages = [
+    agentDefaultImage1,
+    agentDefaultImage2,
+    agentDefaultImage3,
+    agentDefaultImage4,
+    agentDefaultImage5,
+    agentDefaultImage6,
+    agentDefaultImage7,
+  ];
+
+  // Function to get a random default image
+  const getRandomDefaultImage = () => {
+    const randomIndex = Math.floor(Math.random() * defaultImages.length);
+    return defaultImages[randomIndex];
+  };
 
   useEffect(() => {
     const fetchAgentData = async () => {
@@ -76,9 +101,16 @@ export default function UpdateAgent() {
         if (agentData.profileImageId) {
           const imageData = await getProfileImage(agentId);
           setProfileImageUrl(imageData.url);
+        } else {
+          // Set a random default image if profileImageId is empty
+          setProfileImageUrl(getRandomDefaultImage());
         }
       } catch (error: any) {
         console.error("Fetch agent or image error:", error);
+        // Fallback to random default image on error if no profileImageId
+        if (!formData.profileImageId) {
+          setProfileImageUrl(getRandomDefaultImage());
+        }
       }
     };
     if (agentId && (walletConnected || currentUser)) fetchAgentData();
@@ -139,7 +171,6 @@ export default function UpdateAgent() {
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setSelectedFile(file);
       handleUploadImage(file); // Auto-upload on file selection
     }
   };
@@ -150,7 +181,6 @@ export default function UpdateAgent() {
       const result = await uploadProfileImage(agentId, file);
       setFormData((prev) => ({ ...prev, profileImageId: result.profileImageId }));
       setProfileImageUrl(result.url);
-      setSelectedFile(null);
       toast.success("Image Uploaded", { description: "Profile image updated successfully.", duration: 3000 });
     } catch (error: any) {
       toast.error("Upload Failed", { description: "Failed to upload image.", duration: 3000 });
@@ -162,7 +192,7 @@ export default function UpdateAgent() {
     try {
       await deleteProfileImage(agentId);
       setFormData((prev) => ({ ...prev, profileImageId: "" }));
-      setProfileImageUrl(null);
+      setProfileImageUrl(getRandomDefaultImage()); // Set random default image after deletion
       toast.success("Image Deleted", { description: "Profile image removed successfully.", duration: 3000 });
     } catch (error: any) {
       toast.error("Delete Failed", { description: "Failed to delete image.", duration: 3000 });
@@ -322,7 +352,7 @@ export default function UpdateAgent() {
                   <div className="col-span-1 md:col-span-2 flex justify-center mb-6">
                     <div className="relative w-32 h-32 group">
                       <img
-                        src={profileImageUrl || "https://via.placeholder.com/150/494848/FFFFFF?text=Agent"}
+                        src={profileImageUrl || getRandomDefaultImage()}
                         alt="Agent Profile"
                         className="w-full h-full object-cover rounded-full border-2 border-[#494848]"
                       />
@@ -341,7 +371,7 @@ export default function UpdateAgent() {
                           onChange={handleFileChange}
                           className="hidden"
                         />
-                        {profileImageUrl && (
+                        {formData.profileImageId && (
                           <button
                             type="button"
                             onClick={handleDeleteImage}
@@ -457,7 +487,6 @@ export default function UpdateAgent() {
                 </div>
               )}
 
-              {/* Other tabs remain unchanged */}
               {activeTab === "contact" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
