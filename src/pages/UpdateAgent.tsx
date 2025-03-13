@@ -334,9 +334,8 @@ export default function UpdateAgent() {
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveTab(tab.id)}
-                    className={`py-2 px-4 text-lg font-medium rounded-t-lg transition-all duration-200 relative z-10 ${
-                      activeTab === tab.id ? "bg-[#6a94f0] text-black" : "bg-[#494848] text-white hover:bg-[#6a94f0] hover:text-black"
-                    }`}
+                    className={`py-2 px-4 text-lg font-medium rounded-t-lg transition-all duration-200 relative z-10 ${activeTab === tab.id ? "bg-[#6a94f0] text-black" : "bg-[#494848] text-white hover:bg-[#6a94f0] hover:text-black"
+                      }`}
                   >
                     {tab.label}
                   </button>
@@ -356,7 +355,7 @@ export default function UpdateAgent() {
                         alt="Agent Profile"
                         className="w-full h-full object-cover rounded-full border-2 border-[#494848]"
                       />
-                      <div className="absolute inset-0 flex items-end justify-between p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute inset-0 flex items-end justify-center gap-2 p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <label
                           htmlFor="profileImage"
                           className="cursor-pointer bg-[#6a94f0] text-black py-1 px-2 rounded-full hover:bg-[#8faef0] transition-all duration-400 flex items-center gap-1 text-sm"
