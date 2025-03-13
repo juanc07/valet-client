@@ -3,13 +3,14 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Agent } from "../interfaces/agent";
 import { getAgentById, updateAgent } from "../api/agentApi";
-import { uploadProfileImage, getProfileImage, deleteProfileImage } from "../api/imageApi";
+import { getProfileImage } from "../api/imageApi";
 import { requestTwitterOAuth } from "../api/twitterApi";
 import { toast } from "sonner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCopy, faArrowLeft, faPlus, faMinus, faUpload, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faCopy, faArrowLeft, faPlus, faMinus } from "@fortawesome/free-solid-svg-icons";
 import { useUser } from "../context/UserContext";
 import Cookies from "js-cookie";
+import ProfileImage from "../components/ProfileImage";
 
 // Import default agent images
 import agentDefaultImage1 from "../assets/agent-default-image/agent_default-1.jpg";
@@ -102,12 +103,10 @@ export default function UpdateAgent() {
           const imageData = await getProfileImage(agentId);
           setProfileImageUrl(imageData.url);
         } else {
-          // Set a random default image if profileImageId is empty
           setProfileImageUrl(getRandomDefaultImage());
         }
       } catch (error: any) {
         console.error("Fetch agent or image error:", error);
-        // Fallback to random default image on error if no profileImageId
         if (!formData.profileImageId) {
           setProfileImageUrl(getRandomDefaultImage());
         }
@@ -168,35 +167,9 @@ export default function UpdateAgent() {
     }
   };
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleUploadImage(file); // Auto-upload on file selection
-    }
-  };
-
-  const handleUploadImage = async (file: File) => {
-    if (!agentId) return;
-    try {
-      const result = await uploadProfileImage(agentId, file);
-      setFormData((prev) => ({ ...prev, profileImageId: result.profileImageId }));
-      setProfileImageUrl(result.url);
-      toast.success("Image Uploaded", { description: "Profile image updated successfully.", duration: 3000 });
-    } catch (error: any) {
-      toast.error("Upload Failed", { description: "Failed to upload image.", duration: 3000 });
-    }
-  };
-
-  const handleDeleteImage = async () => {
-    if (!agentId || !formData.profileImageId) return;
-    try {
-      await deleteProfileImage(agentId);
-      setFormData((prev) => ({ ...prev, profileImageId: "" }));
-      setProfileImageUrl(getRandomDefaultImage()); // Set random default image after deletion
-      toast.success("Image Deleted", { description: "Profile image removed successfully.", duration: 3000 });
-    } catch (error: any) {
-      toast.error("Delete Failed", { description: "Failed to delete image.", duration: 3000 });
-    }
+  const handleImageChange = (profileImageId: string, url: string) => {
+    setFormData((prev) => ({ ...prev, profileImageId }));
+    setProfileImageUrl(url);
   };
 
   const handleArrayChange = (e: ChangeEvent<HTMLInputElement>, field: keyof Agent, subField?: "topics" | "languages" | "platforms") => {
@@ -334,8 +307,7 @@ export default function UpdateAgent() {
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveTab(tab.id)}
-                    className={`py-2 px-4 text-lg font-medium rounded-t-lg transition-all duration-200 relative z-10 ${activeTab === tab.id ? "bg-[#6a94f0] text-black" : "bg-[#494848] text-white hover:bg-[#6a94f0] hover:text-black"
-                      }`}
+                    className={`py-2 px-4 text-lg font-medium rounded-t-lg transition-all duration-200 relative z-10 ${activeTab === tab.id ? "bg-[#6a94f0] text-black" : "bg-[#494848] text-white hover:bg-[#6a94f0] hover:text-black"}`}
                   >
                     {tab.label}
                   </button>
@@ -349,39 +321,13 @@ export default function UpdateAgent() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Profile Image Section */}
                   <div className="col-span-1 md:col-span-2 flex justify-center mb-6">
-                    <div className="relative w-32 h-32 group">
-                      <img
-                        src={profileImageUrl || getRandomDefaultImage()}
-                        alt="Agent Profile"
-                        className="w-full h-full object-cover rounded-full border-2 border-[#494848]"
-                      />
-                      <div className="absolute inset-0 flex items-end justify-center gap-2 p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <label
-                          htmlFor="profileImage"
-                          className="cursor-pointer bg-[#6a94f0] text-black py-1 px-2 rounded-full hover:bg-[#8faef0] transition-all duration-400 flex items-center gap-1 text-sm"
-                        >
-                          <FontAwesomeIcon icon={faUpload} />
-                          {profileImageUrl ? "Replace" : "Upload"}
-                        </label>
-                        <input
-                          id="profileImage"
-                          type="file"
-                          accept="image/*"
-                          onChange={handleFileChange}
-                          className="hidden"
-                        />
-                        {formData.profileImageId && (
-                          <button
-                            type="button"
-                            onClick={handleDeleteImage}
-                            className="bg-red-600 text-white py-1 px-2 rounded-full hover:bg-red-700 transition-all duration-400 flex items-center gap-1 text-sm"
-                          >
-                            <FontAwesomeIcon icon={faTrash} />
-                            Delete
-                          </button>
-                        )}
-                      </div>
-                    </div>
+                    <ProfileImage
+                      agentId={agentId}
+                      profileImageId={formData.profileImageId || ""}
+                      profileImageUrl={profileImageUrl}
+                      defaultImage={getRandomDefaultImage()}
+                      onImageChange={handleImageChange}
+                    />
                   </div>
                   <div>
                     <label htmlFor="name" className="block text-lg mb-2">
