@@ -16,7 +16,7 @@ import {
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 const RECEIVER_PUBLIC_KEY = import.meta.env.VITE_SOLANA_PAYMENT_WALLET;
 const SOLANA_ENDPOINT = import.meta.env.VITE_SOLANA_ENDPOINT || "https://api.devnet.solana.com";
-const AGENT_CREATION_SOL_AMOUNT = 0.2 * LAMPORTS_PER_SOL;
+const AGENT_CREATION_SOL_AMOUNT = 0.01 * LAMPORTS_PER_SOL;
 
 interface FormData {
   name: string;
@@ -179,7 +179,7 @@ export default function CreateAgent() {
       <div className="w-full px-2 py-2 lg:px-0 lg:py- rounded-4xl md:rounded-lg shadow-lg flex justify-center items-center">
         <div className="w-full lg:w-4/5 pt-10 pb-10">
           <h1 className="text-2xl md:text-3xl font-bold text-center mb-10">
-            Create Your AI Agent (0.2 SOL)
+            Create Your AI Agent (0.01 SOL)
           </h1>
           <form onSubmit={handleSubmit}>
             {/* Agent Type Selection */}
@@ -349,7 +349,7 @@ export default function CreateAgent() {
                   isSubmitting ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >
-                {isSubmitting ? "Processing..." : "Create (Pay 0.2 SOL)"}
+                {isSubmitting ? "Processing..." : "Create (Pay 0.01 SOL)"}
               </button>
             </div>
           </form>
