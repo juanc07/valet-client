@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import backgroundImage from "../assets/background.webp";
@@ -15,17 +15,23 @@ function Start() {
     console.log("Start.tsx: isWalletConnected:", isWalletConnected);
     console.log("Start.tsx: currentUser:", currentUser);
     const isOAuthCallback = window.location.search.includes("oauth_callback");
-    if (isWalletConnected && currentUser && !currentUser.email && !isOAuthCallback) {
-      console.log("Start.tsx: Navigating to /update-profile due to missing email");
-      navigate("/update-profile");
+
+    if (isWalletConnected) {
+      if (currentUser && !currentUser.email && !isOAuthCallback) {
+        console.log("Start.tsx: Navigating to /update-profile due to missing email");
+        navigate("/update-profile");
+      } else if (!isOAuthCallback) {
+        console.log("Start.tsx: Wallet connected, auto-navigating to /createagent");
+        navigate("/createagent");
+      }
     }
   }, [isWalletConnected, currentUser, navigate]);
 
   const buttonClasses =
-    "w-[250px] py-2 rounded-full text-lg font-medium transition-colors duration-300 ease-in-out border-2 border-[#6894f3] bg-[#6894f3] hover:bg-black hover:text-[#6894f3] cursor-pointer";
+    "w-[250px] py-2 rounded-full text-lg font-medium border-2 border-[#6894f3] bg-[#6894f3] cursor-pointer";
 
   const walletButtonStyles = {
-    height: "40px", // Adjust if "Get Started" height differs (check DevTools)
+    height: "40px", // Adjust if needed after DevTools check
     paddingTop: "8px",
     paddingBottom: "8px",
     fontSize: "1.125rem", // text-lg
@@ -36,8 +42,8 @@ function Start() {
     width: "250px",
     borderRadius: "9999px",
     borderWidth: "2px",
-    backgroundColor: "#6894f3", // Force match bg-[#6894f3]
-    color: "#ffffff", // White text to match "Get Started" on bg-[#6894f3]
+    backgroundColor: "#6894f3",
+    color: "#ffffff",
     fontFamily: "inherit",
   };
 
@@ -49,15 +55,11 @@ function Start() {
       <div className="w-[800px] h-[500px] lg:border lg:border-[#494848] p-8 rounded-3xl shadow-lg text-center flex flex-col justify-center items-center bg-black/50 backdrop-blur-md">
         <img src={logo} alt="" className="w-[100px]" />
         <h2 className="text-5xl font-semibold mb-6 text-white">Valet</h2>
-        {isWalletConnected ? (
-          <Link to="/createagent">
-            <button className={buttonClasses}>Get Started</button>
-          </Link>
-        ) : (
+        {!isWalletConnected ? (
           <WalletMultiButton className={buttonClasses} style={walletButtonStyles}>
-            {!isWalletConnected && "Connect Wallet"}
+            Get Started
           </WalletMultiButton>
-        )}
+        ) : null}
       </div>
     </div>
   );
