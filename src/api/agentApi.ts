@@ -1,15 +1,15 @@
 // agentApi.ts
-import { Agent } from '../interfaces/agent';
-import { fetchWrapper } from '../utils/fetchWrapper';
+import { Agent } from "../interfaces/agent";
+import { fetchWrapper } from "../utils/fetchWrapper";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 
 // CRUD operations for Agent
-export const createAgent = async (agentData: Omit<Agent, 'id'>): Promise<Agent & { _id: string }> => {
+export const createAgent = async (agentData: Omit<Agent, "id">): Promise<Agent & { _id: string }> => {
   return fetchWrapper(`${BASE_URL}/agents`, {
-    method: 'POST',
+    method: "POST",
     body: JSON.stringify(agentData),
-    headers: { 'Content-Type': 'application/json' },
+    headers: { "Content-Type": "application/json" },
   });
 };
 
@@ -23,103 +23,115 @@ export const getActiveAgents = async (): Promise<Agent[]> => {
 
 export const getAgentById = async (id: string): Promise<Agent> => {
   return fetchWrapper(`${BASE_URL}/agents/${id}`, {
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
   });
 };
 
 export const updateAgent = async (id: string, agentData: Partial<Agent>): Promise<{ message: string }> => {
   return fetchWrapper(`${BASE_URL}/agents/${id}`, {
-    method: 'PUT',
+    method: "PUT",
     body: JSON.stringify(agentData),
-    headers: { 'Content-Type': 'application/json' },
+    headers: { "Content-Type": "application/json" },
   });
 };
 
 export const deleteAgent = async (id: string): Promise<{ message: string }> => {
   return fetchWrapper(`${BASE_URL}/agents/${id}`, {
-    method: 'DELETE',
+    method: "DELETE",
   });
 };
 
 export const deleteAllAgents = async (): Promise<{ message: string }> => {
   return fetchWrapper(`${BASE_URL}/agents`, {
-    method: 'DELETE',
+    method: "DELETE",
   });
 };
 
 // Chat with Agent (Non-Streaming)
 export const chatWithAgent = async (agentId: string, message: string): Promise<{ agentId: string; reply: string }> => {
   return fetchWrapper(`${BASE_URL}/chat/${agentId}`, {
-    method: 'POST',
+    method: "POST",
     body: JSON.stringify({ message }),
-    headers: { 'Content-Type': 'application/json' },
+    headers: { "Content-Type": "application/json" },
   });
 };
 
 // Chat with Agent (Streaming)
-export const chatWithAgentStream = async (
+export const chatWithAgentStream = (
   agentId: string,
   message: string,
   onMessage: (content: string) => void,
   onDone: () => void
-) => {
-  try {
-    const response = await fetch(`${BASE_URL}/chat/stream/${agentId}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "text/event-stream",
-      },
-      body: JSON.stringify({ message }),      
-    });
+): Promise<void> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // First, initiate the stream with a POST request
+      const response = await fetch(`${BASE_URL}/chat/stream/${agentId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "text/event-stream",
+        },
+        body: JSON.stringify({ message }),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(JSON.stringify({ status: response.status, ...errorData }));
-    }
-
-    const reader = response.body?.getReader();
-    if (!reader) {
-      throw new Error("Response body not readable");
-    }
-
-    const decoder = new TextDecoder();
-    let buffer = "";
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        onDone();
-        break;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(JSON.stringify({ status: response.status, ...errorData }));
       }
 
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error("Response body not readable");
+      }
 
-      for (let i = 0; i < lines.length - 1; i++) {
-        const line = lines[i].trim();
-        if (line.startsWith("data:")) {
-          const dataStr = line.slice(5).trim();
-          if (dataStr === "[DONE]") {
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      const processStream = async () => {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) {
             onDone();
-            reader.cancel();
-            return;
+            resolve();
+            break;
           }
-          try {
-            const data = JSON.parse(dataStr);
-            if (data.content) {
-              onMessage(data.content);
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n\n"); // Split by SSE event boundary
+
+          for (let i = 0; i < lines.length - 1; i++) {
+            const line = lines[i].trim();
+            if (line.startsWith("data:")) {
+              const dataStr = line.slice(5).trim();
+              if (dataStr === "[DONE]") {
+                onDone();
+                resolve();
+                reader.cancel();
+                return;
+              }
+              try {
+                const data = JSON.parse(dataStr);
+                if (data.content) {
+                  onMessage(data.content);
+                }
+              } catch (e) {
+                console.error("Error parsing stream data:", e);
+              }
             }
-          } catch (e) {
-            console.error("Error parsing stream data:", e);
           }
+          buffer = lines[lines.length - 1];
         }
-      }
-      buffer = lines[lines.length - 1];
+      };
+
+      processStream().catch((error) => {
+        console.error("Stream processing error:", error);
+        reject(error);
+      });
+    } catch (error) {
+      console.error("Streaming error:", error);
+      reject(error);
     }
-  } catch (error) {
-    console.error("Streaming error:", error);
-    throw error;
-  }
+  });
 };

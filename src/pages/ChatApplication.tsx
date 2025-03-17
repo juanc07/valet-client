@@ -16,6 +16,7 @@ export default function ChatApplication() {
   const [inputMessage, setInputMessage] = useState("");
   const [loading, setLoading] = useState<boolean>(true);
   const [isStreamChat, setIsStreamChat] = useState<boolean>(false);
+  const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   const { connected: walletConnected } = useWallet();
@@ -35,7 +36,7 @@ export default function ChatApplication() {
         setMyAgents(userAgents);
 
         const allAgents = await getAllAgents();
-        const othersAgents = allAgents.filter(agent => agent.createdBy !== currentUser.userId);
+        const othersAgents = allAgents.filter((agent) => agent.createdBy !== currentUser.userId);
         setOtherAgents(othersAgents);
 
         if (userAgents.length > 0 && !selectedAgent) {
@@ -66,7 +67,7 @@ export default function ChatApplication() {
   const handleAgentChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const agentId = e.target.value;
     const agentList = selectedCategory === "myAgents" ? myAgents : otherAgents;
-    const agent = agentList.find(a => a.agentId === agentId) || null;
+    const agent = agentList.find((a) => a.agentId === agentId) || null;
     setSelectedAgent(agent);
     setMessages([]);
   };
@@ -93,19 +94,19 @@ export default function ChatApplication() {
     if (!inputMessage.trim() || !selectedAgent) return;
 
     const userMessage = { sender: "user" as const, text: inputMessage };
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInputMessage("");
 
     if (isStreamChat) {
       try {
-        setMessages(prev => [...prev, { sender: "agent", text: "" }]);
+        setIsStreaming(true);
         await chatWithAgentStream(
           selectedAgent.agentId,
           inputMessage,
           (content) => {
-            setMessages(prev => {
+            setMessages((prev) => {
               const lastMsg = prev[prev.length - 1];
-              if (lastMsg.sender === "agent") {
+              if (lastMsg.sender === "agent" && !lastMsg.text.startsWith("Unable")) {
                 return [
                   ...prev.slice(0, -1),
                   { sender: "agent", text: lastMsg.text + content },
@@ -115,10 +116,12 @@ export default function ChatApplication() {
             });
           },
           () => {
+            setIsStreaming(false);
             console.log("Stream complete");
           }
         );
       } catch (error) {
+        setIsStreaming(false);
         console.error("Streaming chat error:", error);
         let errorMessage = "Unable to stream response from the agent.";
         if (error instanceof Error && error.message) {
@@ -126,35 +129,27 @@ export default function ChatApplication() {
             const errorData = JSON.parse(error.message);
             if (errorData.status === 403) {
               errorMessage = errorData.reply || "This agent is currently inactive.";
-              setMessages(prev => [
-                ...prev.filter(m => m.sender !== "agent" || m.text !== ""),
-                { sender: "agent", text: errorMessage },
-              ]);
-              return;
             } else if (errorData.status === 404) {
               errorMessage = "Agent not found.";
             } else if (errorData.status === 400) {
               errorMessage = errorData.reply || "Bad request. Check agent configuration.";
             } else {
-              errorMessage = errorData.reply || "Streaming failed or the agent configuration isn't set up yet.";
+              errorMessage = errorData.reply || "Streaming failed or agent configuration isn’t set up.";
             }
           } catch (parseError) {
-            // If parsing fails, use the generic message
+            // Fallback to generic message if parsing fails
           }
         }
         toast.error("Stream Chat Failed", {
           description: errorMessage,
           duration: 3000,
         });
-        setMessages(prev => [
-          ...prev.filter(m => m.sender !== "agent" || m.text !== ""),
-          { sender: "agent", text: errorMessage },
-        ]);
+        setMessages((prev) => [...prev, { sender: "agent", text: errorMessage }]);
       }
     } else {
       try {
         const response = await chatWithAgent(selectedAgent.agentId, inputMessage);
-        setMessages(prev => [...prev, { sender: "agent", text: response.reply }]);
+        setMessages((prev) => [...prev, { sender: "agent", text: response.reply }]);
       } catch (error) {
         console.error("Error chatting with agent:", error);
         let errorMessage = "Unable to get a response from the agent.";
@@ -163,24 +158,22 @@ export default function ChatApplication() {
             const errorData = JSON.parse(error.message);
             if (errorData.status === 403) {
               errorMessage = errorData.reply || "This agent is currently inactive.";
-              setMessages(prev => [...prev, { sender: "agent", text: errorMessage }]);
-              return;
             } else if (errorData.status === 404) {
               errorMessage = "Agent not found.";
             } else if (errorData.status === 400) {
               errorMessage = errorData.reply || "Bad request. Check agent configuration.";
             } else {
-              errorMessage = errorData.reply || "Chat failed or the agent configuration isn't set up yet.";
+              errorMessage = errorData.reply || "Chat failed or agent configuration isn’t set up.";
             }
           } catch (parseError) {
-            // If parsing fails, use the generic message
+            // Fallback to generic message
           }
         }
         toast.error("Chat Failed", {
           description: errorMessage,
           duration: 3000,
         });
-        setMessages(prev => [...prev, { sender: "agent", text: errorMessage }]);
+        setMessages((prev) => [...prev, { sender: "agent", text: errorMessage }]);
       }
     }
   };
@@ -230,7 +223,7 @@ export default function ChatApplication() {
               <option value="" disabled>
                 Select an Agent
               </option>
-              {currentAgents.map(agent => (
+              {currentAgents.map((agent) => (
                 <option key={agent.agentId} value={agent.agentId}>
                   {agent.name}
                 </option>
@@ -242,64 +235,67 @@ export default function ChatApplication() {
         {/* Chat Area */}
         <div className="flex-1 p-4 overflow-y-auto">
           {selectedAgent ? (
-            messages.length > 0 ? (
-              messages.map((msg, index) => (
-                <div
-                  key={index}
-                  className={`mb-4 flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
-                >
+            messages.length > 0 || isStreaming ? (
+              <>
+                {messages.map((msg, index) => (
                   <div
-                    className={`max-w-[85%] sm:max-w-[70%] p-3 rounded-lg ${
-                      msg.sender === "user"
-                        ? "bg-[#6a94f0] text-black"
-                        : "bg-[#333] text-white"
-                    }`}
+                    key={index}
+                    className={`mb-4 flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
                   >
-                    <div className="text-sm whitespace-pre-wrap break-words">{msg.text}</div>
-                    {msg.sender === "agent" && (
-                      <div className="flex justify-end mt-2">
-                        <button
-                          onClick={() => handleCopy(msg.text, index)}
-                          className="p-1 rounded hover:bg-gray-500/20 transition-colors duration-200"
-                          title="Copy text"
-                        >
-                          {copiedIndex === index ? (
-                            <svg
-                              className="w-4 h-4 text-green-400"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M5 13l4 4L19 7"
-                              />
-                            </svg>
-                          ) : (
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                              />
-                            </svg>
-                          )}
-                        </button>
-                      </div>
-                    )}
+                    <div
+                      className={`max-w-[85%] sm:max-w-[70%] p-3 rounded-lg ${
+                        msg.sender === "user" ? "bg-[#6a94f0] text-black" : "bg-[#333] text-white"
+                      }`}
+                    >
+                      <div className="text-sm whitespace-pre-wrap break-words">{msg.text}</div>
+                      {msg.sender === "agent" && (
+                        <div className="flex justify-end mt-2">
+                          <button
+                            onClick={() => handleCopy(msg.text, index)}
+                            className="p-1 rounded hover:bg-gray-500/20 transition-colors duration-200"
+                            title="Copy text"
+                          >
+                            {copiedIndex === index ? (
+                              <svg
+                                className="w-4 h-4 text-green-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                            ) : (
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))
+                ))}
+                {isStreaming && (
+                  <div className="text-center text-gray-400 animate-pulse">Streaming response...</div>
+                )}
+              </>
             ) : (
               <div className="text-center text-gray-400">
                 Start chatting with {selectedAgent.name}!
@@ -321,12 +317,12 @@ export default function ChatApplication() {
               onChange={(e) => setInputMessage(e.target.value)}
               placeholder="Type your message..."
               className="flex-1 bg-[#222128] text-white p-2 rounded-lg border border-[#494848] outline-none focus:ring-1 focus:ring-[#6a94f0]"
-              disabled={!selectedAgent}
+              disabled={!selectedAgent || isStreaming}
             />
             <button
               type="submit"
               className="w-full sm:w-auto py-2 px-4 bg-[#6a94f0] text-black rounded-lg hover:bg-white/10 hover:text-white transition-all duration-400 disabled:opacity-50"
-              disabled={!selectedAgent || !inputMessage.trim()}
+              disabled={!selectedAgent || !inputMessage.trim() || isStreaming}
             >
               Send
             </button>
