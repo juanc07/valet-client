@@ -17,6 +17,7 @@ import AgentProfile from "./pages/AgentProfile";
 import ChatApplication from "./pages/ChatApplication";
 import TwitterTestPage from "./pages/TwitterTestPage.tsx";
 import AddCreditsPage from "./pages/AddCreditsPage.tsx";
+import AgentCreationGuide from "./pages/AgentCreationGuide";
 
 import {
   ConnectionProvider,
@@ -196,6 +197,7 @@ function MainContent() {
                   )
                 }
               />
+              <Route path="/docs" element={<AgentCreationGuide />} />
               <Route path="/agent/edit/:agentId" element={<UpdateAgent />} />
               <Route path="/agent/view/:agentId" element={<AgentProfile />} />
             </Routes>

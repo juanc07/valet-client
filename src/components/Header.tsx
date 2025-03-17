@@ -68,7 +68,7 @@ export default function Header() {
           { name: "My Profile", path: "/profile", icon: <User className="text-2xl" /> },
         ]
       : []),
-    { name: "Documentation", path: "https://x.com/home", icon: <FileText className="text-2xl" />, isExternal: true },
+    { name: "Documentation", path: "/docs", icon: <FileText className="text-2xl" /> }, // Internal route
   ];
 
   return (
@@ -116,30 +116,17 @@ export default function Header() {
         <div className="absolute top-16 right-0 w-64 bg-black text-white mr-3 shadow-xl border border-[#494848] lg:hidden z-50">
           <div className="flex flex-col gap-2 p-4">
             <span className="font-light ml-2 text-gray-400">Terminal</span>
-            {menuItems.map((item) =>
-              item.isExternal ? (
-                <a
-                  key={item.path}
-                  href={item.path}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-2 hover:bg-[#222128] rounded-lg transition-all duration-400 ease-in-out text-gray-400"
-                >
-                  {item.icon}
-                  <span>{item.name}</span>
-                </a>
-              ) : (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className="flex items-center gap-3 p-2 hover:bg-[#222128] rounded-lg transition-all duration-400 ease-in-out text-gray-400"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {item.icon}
-                  <span>{item.name}</span>
-                </Link>
-              )
-            )}
+            {menuItems.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className="flex items-center gap-3 p-2 hover:bg-[#222128] rounded-lg transition-all duration-400 ease-in-out text-gray-400"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {item.icon}
+                <span>{item.name}</span>
+              </Link>
+            ))}
           </div>
         </div>
       )}
