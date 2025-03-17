@@ -339,6 +339,7 @@ export default function AgentProfile() {
 
           {isCreator && activeTab === "twitter" && (
             <div className="space-y-4">
+              {/* All Twitter fields are shown by default, no checkbox */}
               {(["twitterHandle", "twitterAppKey", "twitterAppSecret", "twitterAccessToken", "twitterAccessSecret"] as const).map((field) => (
                 <div key={field} className="flex justify-between items-center">
                   <span className="text-gray-400 capitalize">{field.replace(/([A-Z])/g, " $1").trim()}:</span>
@@ -358,6 +359,13 @@ export default function AgentProfile() {
                   </div>
                 </div>
               ))}
+              {/* Commented out basic functionality for potential reuse */}
+              {/* 
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400">Twitter Handle (Basic):</span>
+                <span>{agentData.twitterHandle || "Not set"}</span>
+              </div>
+              */}
             </div>
           )}
 
