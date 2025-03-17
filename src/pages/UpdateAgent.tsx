@@ -45,6 +45,7 @@ export default function UpdateAgent() {
     twitterHandle: "",
     enablePostTweet: false,
     postTweetInterval: 0,
+    isTwitterPaid: false, // Added isTwitterPaid property
     agentType: "basic",
     createdBy: "",
     profileImageId: "",
@@ -96,6 +97,7 @@ export default function UpdateAgent() {
           ruleIds: agentData.ruleIds || [],
           enablePostTweet: agentData.enablePostTweet || false,
           postTweetInterval: agentData.postTweetInterval || 0,
+          isTwitterPaid: agentData.isTwitterPaid || false, // Added isTwitterPaid
           profileImageId: agentData.profileImageId || "",
         }));
 
@@ -361,9 +363,7 @@ export default function UpdateAgent() {
                       required
                       className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
                     >
-                      <option value="basic">Basic</option>
-                      <option value="puppetos">PuppetOS</option>
-                      <option value="thirdparty">Third Party</option>
+                      <option value="basic">Basic</option>                      
                     </select>
                   </div>
                   <div>
@@ -887,6 +887,19 @@ export default function UpdateAgent() {
                       onChange={handleChange}
                       className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
                     />
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      id="isTwitterPaid"
+                      name="isTwitterPaid"
+                      type="checkbox"
+                      checked={formData.isTwitterPaid}
+                      onChange={handleChange}
+                      className="mr-2 text-[#6a94f0] border-[#494848] bg-black focus:ring-[#6a94f0]"
+                    />
+                    <label htmlFor="isTwitterPaid" className="text-lg">
+                      Twitter Paid Account
+                    </label>
                   </div>
                   {/* Checkbox removed from UI */}
                   {/* 

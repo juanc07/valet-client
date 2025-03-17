@@ -30,6 +30,9 @@ export default function AgentProfile() {
     twitterAccessToken: "",
     twitterAccessSecret: "",
     twitterHandle: "",
+    enablePostTweet: false, // Added missing field
+    postTweetInterval: 0,   // Added missing field
+    isTwitterPaid: false,   // Added isTwitterPaid
     agentType: "basic",
     createdBy: "",
   });
@@ -90,6 +93,9 @@ export default function AgentProfile() {
             platforms: agent.settings?.platforms || [],
           },
           ruleIds: agent.ruleIds || [],
+          enablePostTweet: agent.enablePostTweet || false, // Added
+          postTweetInterval: agent.postTweetInterval || 0, // Added
+          isTwitterPaid: agent.isTwitterPaid || false,     // Added
         }));
       } catch (error: any) {
         console.error("Fetch agent error:", error);
@@ -359,13 +365,18 @@ export default function AgentProfile() {
                   </div>
                 </div>
               ))}
-              {/* Commented out basic functionality for potential reuse */}
-              {/* 
               <div className="flex justify-between items-center">
-                <span className="text-gray-400">Twitter Handle (Basic):</span>
-                <span>{agentData.twitterHandle || "Not set"}</span>
+                <span className="text-gray-400">Enable Tweet Posting:</span>
+                <span>{agentData.enablePostTweet ? "Yes" : "No"}</span>
               </div>
-              */}
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400">Tweet Post Interval:</span>
+                <span>{agentData.postTweetInterval ? `${agentData.postTweetInterval} seconds` : "Not set"}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400">Twitter Paid Account:</span>
+                <span>{agentData.isTwitterPaid ? "Yes" : "No"}</span>
+              </div>              
             </div>
           )}
 
