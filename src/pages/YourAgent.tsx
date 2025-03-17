@@ -8,8 +8,8 @@ import { Agent } from "../interfaces/agent";
 import { getAllAgents, deleteAgent } from "../api/agentApi";
 import { getAgentsByUserId } from "../api/userApi";
 import { useUser } from "../context/UserContext";
+import { Skeleton } from "../components/ui/skeleton";
 
-// Get the debug flag from environment variable
 const isAgentDebug = import.meta.env.VITE_SOLANA_AGENT_DEBUG === "TRUE";
 
 function YourAgent() {
@@ -36,7 +36,7 @@ function YourAgent() {
           console.log("Fetching My Agents for user:", currentUser.userId);
           const userAgents = await getAgentsByUserId(currentUser.userId);
           setAgents(userAgents);
-        } else if (isAgentDebug) {  // Only fetch others' agents if debug is true
+        } else if (isAgentDebug) {
           console.log("Fetching Other People's Agents");
           const allAgents = await getAllAgents();
           const othersAgents = allAgents.filter(agent => agent.createdBy !== currentUser.userId);
@@ -106,14 +106,24 @@ function YourAgent() {
     <div className="h-full bg-black text-white flex items-center justify-center p-0 lg:p-4 relative">
       {/* Main Content */}
       {loading ? (
-        <div className="text-center">Loading agents...</div>
+        <div className="w-full max-w-4xl space-y-4 p-6">
+          <Skeleton className="h-10 w-1/3 bg-gray-800" /> {/* Header skeleton */}
+          <div className="space-y-2">
+            {/* Table header skeleton */}
+            <Skeleton className="h-8 w-full bg-gray-800" />
+            {/* Table rows skeleton */}
+            {[...Array(3)].map((_, index) => (
+              <Skeleton key={index} className="h-12 w-full bg-gray-800" />
+            ))}
+          </div>
+        </div>
       ) : (
         <div className="w-full p-0 lg:p-6 rounded-none lg:rounded-lg shadow-lg overflow-x-auto max-w-full pt-10 pb-10">
           <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
             <h2 className="text-4xl font-bold text-center sm:text-left">
               {viewMode === "myAgents" ? "Your Agents" : "Other People's Agents"}
             </h2>
-            {isAgentDebug && (  // Only show dropdown when debug is true
+            {isAgentDebug && (
               <select
                 value={viewMode}
                 onChange={(e) => setViewMode(e.target.value as "myAgents" | "othersAgents")}
@@ -203,7 +213,7 @@ function YourAgent() {
         </div>
       )}
 
-      {/* Delete Confirmation Dialog with 50% Transparent Background */}
+      {/* Delete Confirmation Dialog */}
       {isDialogOpen && (
         <div
           style={{ backgroundColor: "rgba(0, 0, 0, 0.65)" }}
