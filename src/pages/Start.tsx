@@ -5,6 +5,7 @@ import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import backgroundImage from "../assets/background.webp";
 import logo from "../assets/svg.svg";
 import { useUser } from "../context/UserContext";
+import { toast } from "sonner"; // Added toast import
 
 function Start() {
   const { currentUser } = useUser();
@@ -17,6 +18,12 @@ function Start() {
     const isOAuthCallback = window.location.search.includes("oauth_callback");
 
     if (isWalletConnected) {
+      // Show toast when wallet connects
+      toast.success("Wallet Connected", {
+        description: "Your wallet is now connected!",
+        duration: 3000,
+      });
+
       if (currentUser && !currentUser.email && !isOAuthCallback) {
         console.log("Start.tsx: Navigating to /update-profile due to missing email");
         navigate("/update-profile");
@@ -31,7 +38,7 @@ function Start() {
     "w-[250px] py-2 rounded-full text-lg font-medium border-2 border-[#6894f3] bg-[#6894f3] cursor-pointer";
 
   const walletButtonStyles = {
-    height: "40px", // Adjust if needed after DevTools check
+    height: "40px",
     paddingTop: "8px",
     paddingBottom: "8px",
     fontSize: "1.125rem", // text-lg
