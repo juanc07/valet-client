@@ -1,0 +1,51 @@
+[33m6f35db7[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m twitter config always advance by default
+[33m1c216a3[m create of agent to 0.01 sol
+[33m79fc472[m update env file
+[33m6ab8cf6[m refactor remove agent profile image in update agent and create own profile image component
+[33m40e1db4[m center the upload and delete button for profile image
+[33ma90efa7[m added port to preview
+[33me35fd02[m added random load of default aget profile image
+[33m32e465b[m added agent image
+[33m73d2dac[m added .qodo on gitignore file
+[33mf147a4b[m make the chat , twit and checking of other agent a debug tool
+[33m1be4458[m update read me
+[33m5f4de6a[m fix vite preview and vite dev issues about buffer
+[33m844a61b[m added readme
+[33m47a8d5b[m fixed update agent twitter config ui layout flow
+[33m3b23dd5[m change price of creating agent to 0.2 sol
+[33m99474dc[m introduce credit to user account this will be deducted by agent action and service it use
+[33mb57e8b2[m fix returning back to agent edit tab twitter when oauth success
+[33me90d186[m added twitter oauth
+[33me2701be[m update notes
+[33m5eb566c[m added new page for manual test tweet post
+[33m6fe188b[m update notes
+[33m451072f[m added agent creatio payment using sol
+[33m36ade90[m improved agetprofile view only page
+[33ma14f80a[m improve user profile page
+[33ma83e00d[m fix the error message when agent is not active
+[33m1e1f123[m aded notes text
+[33m38266bb[m added .env.copy file
+[33mec692e0[m change knowledge data structure to key value pair
+[33m90417ad[m fix header menu for small screen
+[33m785c391[m improve agent management pages and user management pages
+[33m5c0a4d8[m added a manual transparent on delete confirmation
+[33m7fcfefc[m added a confirmation before deletingt the agent in dashboard
+[33m4202f34[m added copy the chatbuble text
+[33m0450dfc[m fix chat stream
+[33m3647c7c[m added a chat with basic chat to agent
+[33m9bf56e1[m added view context for agents to view your own and other agent and back button for agents page
+[33mc9a26aa[m fixed logic of creating a new account and for checking for user not found
+[33m31d0136[m make the view button to work for agent profile from dashboard
+[33mdd0aded[m add a dropdown to check other people created agent in my agents tab view
+[33m50cd45c[m make the agent dashboard show agent name and agent id and copy button to copy agentid
+[33m61bce17[m fix update agent fucntionality
+[33m8fdbd88[m fix rendering of agent update page
+[33m8285866[m added initial user agents dashboard and update agent page
+[33md64057a[m added user profile and make the create agent working
+[33maeeaaea[m creation of agent working but without agentype
+[33mcf1846c[m added actual call to get user agent count
+[33m88e6276[m added user profile page
+[33m050b972[m fix country selection for user profile update page
+[33m5d757b4[m creation of user account using wallet when connected and updating of user profile
+[33mabba54e[m improve git ignore
+[33m8e0f065[m 1st commit

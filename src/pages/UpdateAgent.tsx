@@ -52,7 +52,7 @@ export default function UpdateAgent() {
   const [activeTab, setActiveTab] = useState("basic");
   const [newKnowledgeKey, setNewKnowledgeKey] = useState("");
   const [newKnowledgeValue, setNewKnowledgeValue] = useState("");
-  const [isAdvancedTwitterSetup, setIsAdvancedTwitterSetup] = useState(false);
+  // Removed isAdvancedTwitterSetup state since it’s always true now
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
 
   const { connected: walletConnected } = useWallet();
@@ -115,12 +115,15 @@ export default function UpdateAgent() {
     if (agentId && (walletConnected || currentUser)) fetchAgentData();
   }, [agentId, walletConnected, currentUser]);
 
+  // Removed cookie-based advanced setup logic since it’s always advanced now
+  /*
   useEffect(() => {
     const savedAdvancedSetup = Cookies.get("isAdvancedTwitterSetup");
     if (savedAdvancedSetup !== undefined) {
       setIsAdvancedTwitterSetup(savedAdvancedSetup === "true");
     }
   }, []);
+  */
 
   useEffect(() => {
     const isOAuthCallback = window.location.search.includes("oauth_callback");
@@ -245,11 +248,14 @@ export default function UpdateAgent() {
     }
   };
 
+  // Removed handleAdvancedTwitterSetupChange since checkbox is hidden
+  /*
   const handleAdvancedTwitterSetupChange = (e: ChangeEvent<HTMLInputElement>) => {
     const isChecked = e.target.checked;
     setIsAdvancedTwitterSetup(isChecked);
     Cookies.set("isAdvancedTwitterSetup", isChecked.toString(), { expires: 365 });
   };
+  */
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -803,36 +809,33 @@ export default function UpdateAgent() {
                       className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
                     />
                   </div>
-                  {isAdvancedTwitterSetup && (
-                    <>
-                      <div>
-                        <label htmlFor="twitterAppKey" className="block text-lg mb-2">
-                          Twitter App Key
-                        </label>
-                        <input
-                          id="twitterAppKey"
-                          name="twitterAppKey"
-                          type="text"
-                          value={formData.twitterAppKey}
-                          onChange={handleChange}
-                          className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="twitterAppSecret" className="block text-lg mb-2">
-                          Twitter App Secret
-                        </label>
-                        <input
-                          id="twitterAppSecret"
-                          name="twitterAppSecret"
-                          type="text"
-                          value={formData.twitterAppSecret}
-                          onChange={handleChange}
-                          className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
-                        />
-                      </div>
-                    </>
-                  )}
+                  {/* Always show advanced fields; no conditional rendering */}
+                  <div>
+                    <label htmlFor="twitterAppKey" className="block text-lg mb-2">
+                      Twitter App Key
+                    </label>
+                    <input
+                      id="twitterAppKey"
+                      name="twitterAppKey"
+                      type="text"
+                      value={formData.twitterAppKey}
+                      onChange={handleChange}
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="twitterAppSecret" className="block text-lg mb-2">
+                      Twitter App Secret
+                    </label>
+                    <input
+                      id="twitterAppSecret"
+                      name="twitterAppSecret"
+                      type="text"
+                      value={formData.twitterAppSecret}
+                      onChange={handleChange}
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                    />
+                  </div>
                   <div>
                     <label htmlFor="twitterAccessToken" className="block text-lg mb-2">
                       Twitter Access Token
@@ -885,6 +888,8 @@ export default function UpdateAgent() {
                       className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
                     />
                   </div>
+                  {/* Checkbox removed from UI */}
+                  {/* 
                   <div className="flex items-center">
                     <input
                       id="advancedTwitterSetup"
@@ -897,17 +902,19 @@ export default function UpdateAgent() {
                       Advanced Setup
                     </label>
                   </div>
-                  {!isAdvancedTwitterSetup && (
-                    <div className="col-span-1 md:col-span-2">
-                      <button
-                        type="button"
-                        onClick={handleTwitterOAuth}
-                        className="w-full py-2 px-4 bg-[#1DA1F2] text-white rounded-lg hover:bg-[#1a91da] transition-all duration-400"
-                      >
-                        Connect with Twitter
-                      </button>
-                    </div>
-                  )}
+                  */}
+                  {/* Basic functionality (Connect with Twitter) commented out for future use */}
+                  {/* 
+                  <div className="col-span-1 md:col-span-2">
+                    <button
+                      type="button"
+                      onClick={handleTwitterOAuth}
+                      className="w-full py-2 px-4 bg-[#1DA1F2] text-white rounded-lg hover:bg-[#1a91da] transition-all duration-400"
+                    >
+                      Connect with Twitter
+                    </button>
+                  </div>
+                  */}
                 </div>
               )}
 
