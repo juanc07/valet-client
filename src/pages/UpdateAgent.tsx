@@ -4,12 +4,12 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { Agent } from "../interfaces/agent";
 import { getAgentById, updateAgent } from "../api/agentApi";
 import { getProfileImage } from "../api/imageApi";
-import { requestTwitterOAuth } from "../api/twitterApi";
+//import { requestTwitterOAuth } from "../api/twitterApi";
 import { toast } from "sonner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCopy, faArrowLeft, faPlus, faMinus } from "@fortawesome/free-solid-svg-icons";
 import { useUser } from "../context/UserContext";
-import Cookies from "js-cookie";
+//import Cookies from "js-cookie";
 import ProfileImage from "../components/ProfileImage";
 
 // Import default agent images
@@ -223,7 +223,7 @@ export default function UpdateAgent() {
     }
   };
 
-  const handleTwitterOAuth = async () => {
+  /*const handleTwitterOAuth = async () => {
     try {
       if (!agentId) throw new Error("Agent ID is required");
       sessionStorage.removeItem("hasCheckedWallet");
@@ -246,7 +246,7 @@ export default function UpdateAgent() {
         duration: 3000,
       });
     }
-  };
+  };*/
 
   // Removed handleAdvancedTwitterSetupChange since checkbox is hidden
   /*
