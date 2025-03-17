@@ -374,7 +374,7 @@ export default function AgentProfile() {
                 <span>{agentData.postTweetInterval ? `${agentData.postTweetInterval} seconds` : "Not set"}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-400">Twitter Paid Account:</span>
+                <span className="text-gray-400">Twitter Paid Developer Account:</span>
                 <span>{agentData.isTwitterPaid ? "Yes" : "No"}</span>
               </div>              
             </div>

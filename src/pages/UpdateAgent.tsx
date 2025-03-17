@@ -898,7 +898,7 @@ export default function UpdateAgent() {
                       className="mr-2 text-[#6a94f0] border-[#494848] bg-black focus:ring-[#6a94f0]"
                     />
                     <label htmlFor="isTwitterPaid" className="text-lg">
-                      Twitter Paid Account
+                      Twitter Paid Developer Account
                     </label>
                   </div>
                   {/* Checkbox removed from UI */}
