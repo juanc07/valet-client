@@ -1,14 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEdit, faEye, faTrash, faCopy } from "@fortawesome/free-solid-svg-icons";
+import { faEdit, faEye, faTrash, faCopy, faSpinner } from "@fortawesome/free-solid-svg-icons"; // Add faSpinner
 import { toast } from "sonner";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Agent } from "../interfaces/agent";
 import { getAllAgents, deleteAgent } from "../api/agentApi";
 import { getAgentsByUserId } from "../api/userApi";
 import { useUser } from "../context/UserContext";
-import { Skeleton } from "../components/ui/skeleton";
 
 const isAgentDebug = import.meta.env.VITE_SOLANA_AGENT_DEBUG === "TRUE";
 
@@ -106,16 +105,14 @@ function YourAgent() {
     <div className="h-full bg-black text-white flex items-center justify-center p-0 lg:p-4 relative">
       {/* Main Content */}
       {loading ? (
-        <div className="w-full max-w-4xl space-y-4 p-6">
-          <Skeleton className="h-10 w-1/3 bg-gray-800" /> {/* Header skeleton */}
-          <div className="space-y-2">
-            {/* Table header skeleton */}
-            <Skeleton className="h-8 w-full bg-gray-800" />
-            {/* Table rows skeleton */}
-            {[...Array(3)].map((_, index) => (
-              <Skeleton key={index} className="h-12 w-full bg-gray-800" />
-            ))}
-          </div>
+        <div className="flex flex-col items-center justify-center min-h-[50vh] text-white">
+          <FontAwesomeIcon
+            icon={faSpinner}
+            className="text-[#6894f3] text-4xl animate-spin"
+          />
+          <p className="mt-4 text-lg font-medium text-gray-300 animate-pulse">
+            Loading Agents...
+          </p>
         </div>
       ) : (
         <div className="w-full p-0 lg:p-6 rounded-none lg:rounded-lg shadow-lg overflow-x-auto max-w-full pt-10 pb-10">
@@ -192,7 +189,7 @@ function YourAgent() {
                             title="View Agent"
                           >
                             <FontAwesomeIcon icon={faEye} />
-                          </Link>
+                            </Link>
                           {isOwnAgent && (
                             <button
                               onClick={() => openDeleteDialog(agent.agentId)}
