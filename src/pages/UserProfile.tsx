@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCopy } from "@fortawesome/free-solid-svg-icons";
+import { faCopy, faSpinner } from "@fortawesome/free-solid-svg-icons"; // Added faSpinner
 import { toast } from "sonner";
 import { getUser, getAgentCount } from "../api/userApi";
 import { User } from "../interfaces/user";
@@ -78,7 +78,15 @@ export default function UserProfile({ userId }: UserProfileProps) {
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
-        <div className="text-center">Loading your profile...</div>
+        <div className="flex flex-col items-center justify-center">
+          <FontAwesomeIcon
+            icon={faSpinner}
+            className="text-[#6894f3] text-4xl animate-spin"
+          />
+          <p className="mt-4 text-lg font-medium text-gray-300 animate-pulse">
+            Loading Your Profile...
+          </p>
+        </div>
       </div>
     );
   }

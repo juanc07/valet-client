@@ -5,7 +5,7 @@ import { Agent } from "../interfaces/agent";
 import { getAgentById } from "../api/agentApi";
 import { toast } from "sonner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCopy, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import { faCopy, faArrowLeft, faSpinner } from "@fortawesome/free-solid-svg-icons"; // Added faSpinner
 import { useUser } from "../context/UserContext";
 
 export default function AgentProfile() {
@@ -30,9 +30,9 @@ export default function AgentProfile() {
     twitterAccessToken: "",
     twitterAccessSecret: "",
     twitterHandle: "",
-    enablePostTweet: false, // Added missing field
-    postTweetInterval: 0,   // Added missing field
-    isTwitterPaid: false,   // Added isTwitterPaid
+    enablePostTweet: false,
+    postTweetInterval: 0,
+    isTwitterPaid: false,
     agentType: "basic",
     createdBy: "",
   });
@@ -93,9 +93,9 @@ export default function AgentProfile() {
             platforms: agent.settings?.platforms || [],
           },
           ruleIds: agent.ruleIds || [],
-          enablePostTweet: agent.enablePostTweet || false, // Added
-          postTweetInterval: agent.postTweetInterval || 0, // Added
-          isTwitterPaid: agent.isTwitterPaid || false,     // Added
+          enablePostTweet: agent.enablePostTweet || false,
+          postTweetInterval: agent.postTweetInterval || 0,
+          isTwitterPaid: agent.isTwitterPaid || false,
         }));
       } catch (error: any) {
         console.error("Fetch agent error:", error);
@@ -135,7 +135,15 @@ export default function AgentProfile() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
-        <div className="text-center">Loading agent profile...</div>
+        <div className="flex flex-col items-center justify-center">
+          <FontAwesomeIcon
+            icon={faSpinner}
+            className="text-[#6894f3] text-4xl animate-spin"
+          />
+          <p className="mt-4 text-lg font-medium text-gray-300 animate-pulse">
+            Loading Agent Profile...
+          </p>
+        </div>
       </div>
     );
   }
@@ -345,7 +353,6 @@ export default function AgentProfile() {
 
           {isCreator && activeTab === "twitter" && (
             <div className="space-y-4">
-              {/* All Twitter fields are shown by default, no checkbox */}
               {(["twitterHandle", "twitterAppKey", "twitterAppSecret", "twitterAccessToken", "twitterAccessSecret"] as const).map((field) => (
                 <div key={field} className="flex justify-between items-center">
                   <span className="text-gray-400 capitalize">{field.replace(/([A-Z])/g, " $1").trim()}:</span>
@@ -376,7 +383,7 @@ export default function AgentProfile() {
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Twitter Paid Developer Account:</span>
                 <span>{agentData.isTwitterPaid ? "Yes" : "No"}</span>
-              </div>              
+              </div>
             </div>
           )}
 

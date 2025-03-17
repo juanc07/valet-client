@@ -6,6 +6,8 @@ import { getAllAgents, chatWithAgent, chatWithAgentStream } from "../api/agentAp
 import { getAgentsByUserId } from "../api/userApi";
 import { useUser } from "../context/UserContext";
 import { toast } from "sonner";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSpinner } from "@fortawesome/free-solid-svg-icons"; // Added faSpinner
 
 export default function ChatApplication() {
   const [myAgents, setMyAgents] = useState<Agent[]>([]);
@@ -183,7 +185,15 @@ export default function ChatApplication() {
   if (loading) {
     return (
       <div className="h-screen bg-black text-white flex items-center justify-center p-4">
-        <div className="text-center">Loading chat application...</div>
+        <div className="flex flex-col items-center justify-center">
+          <FontAwesomeIcon
+            icon={faSpinner}
+            className="text-[#6894f3] text-4xl animate-spin"
+          />
+          <p className="mt-4 text-lg font-medium text-gray-300 animate-pulse">
+            Loading Chat Application...
+          </p>
+        </div>
       </div>
     );
   }

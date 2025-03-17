@@ -6,6 +6,8 @@ import { getAgentsByUserId } from "../api/userApi";
 import { postTweetManually } from "../api/twitterApi";
 import { useUser } from "../context/UserContext";
 import { toast } from "sonner";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSpinner } from "@fortawesome/free-solid-svg-icons"; // Added faSpinner
 
 export default function TwitterTestPage() {
   const [myAgents, setMyAgents] = useState<Agent[]>([]);
@@ -49,7 +51,7 @@ export default function TwitterTestPage() {
 
   const handleAgentChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const agentId = e.target.value;
-    const agent = myAgents.find(a => a.agentId === agentId) || null;
+    const agent = myAgents.find((a) => a.agentId === agentId) || null;
     setSelectedAgent(agent);
     setTweetResponse(null); // Reset response on agent change
   };
@@ -78,7 +80,15 @@ export default function TwitterTestPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
-        <div className="text-center">Loading Twitter test page...</div>
+        <div className="flex flex-col items-center justify-center">
+          <FontAwesomeIcon
+            icon={faSpinner}
+            className="text-[#6894f3] text-4xl animate-spin"
+          />
+          <p className="mt-4 text-lg font-medium text-gray-300 animate-pulse">
+            Loading Twitter Test Page...
+          </p>
+        </div>
       </div>
     );
   }
@@ -97,7 +107,7 @@ export default function TwitterTestPage() {
             <option value="" disabled>
               Select an Agent
             </option>
-            {myAgents.map(agent => (
+            {myAgents.map((agent) => (
               <option key={agent.agentId} value={agent.agentId}>
                 {agent.name}
               </option>
