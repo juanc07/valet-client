@@ -7,6 +7,10 @@ import twitterConfig1 from "../assets/twitterConfig1.jpg"; // Step 1 image
 import twitterConfig2 from "../assets/twitterConfig2.jpg"; // Step 2 image
 import twitterConfig3 from "../assets/twitterConfig3.jpg"; // Step 3 image
 import twitterConfig4 from "../assets/twitterConfig4.jpg"; // Step 4 image
+import manageAgents from "../assets/manageAgents.jpg"; // New image for Step 5
+import testAgentResponse from "../assets/TestAgentResponse.jpg"; // New image for Showcase
+import agentProfile from "../assets/AgentProfile.jpg"; // New image for Showcase
+import easyToUpdateKnowledge from "../assets/EasyToUpdateKnowledge.jpg"; // New image for Showcase
 
 export default function AgentCreationGuide() {
   useEffect(() => {
@@ -114,12 +118,17 @@ export default function AgentCreationGuide() {
               </p>
             </div>
 
-            {/* Step 5 */}
+            {/* Step 5 - NEW IMAGE ADDED HERE */}
             <div>
               <h3 className="text-lg sm:text-xl font-medium mb-2">Step 5: Manage Your Agent</h3>
               <p className="text-gray-300 text-sm sm:text-base">
                 After creation, you’ll be redirected to manage your agent. You can edit its details, view its profile, or integrate it into your workflows.
               </p>
+              <img
+                src={manageAgents}
+                alt="Manage Agents Page"
+                className="mt-3 sm:mt-4 rounded-lg shadow-md w-full sm:w-full md:w-full lg:w-3/4 h-auto"
+              />
             </div>
           </div>
         </section>
@@ -196,12 +205,52 @@ export default function AgentCreationGuide() {
                 className="mt-3 sm:mt-4 rounded-lg shadow-md w-full sm:w-full md:w-full lg:w-3/4 h-auto"
               />
             </div>
+
+            {/* NEW SHOWCASE SECTION ADDED HERE */}
+            <div>
+              <h3 className="text-lg sm:text-xl font-medium mb-2">Showcase: Your Agent in Action</h3>
+              <p className="text-gray-300 text-sm sm:text-base">
+                Once configured, your agent is ready to perform tasks. Here’s how it looks in action:
+              </p>
+              <div className="space-y-4 mt-4">
+                <div>
+                  <p className="text-gray-300 text-sm sm:text-base italic">
+                    Test your agent’s response using the web app tool to ensure it’s working as expected.
+                  </p>
+                  <img
+                    src={testAgentResponse}
+                    alt="Test Agent Response in Web App"
+                    className="mt-3 sm:mt-4 rounded-lg shadow-md w-full sm:w-full md:w-full lg:w-3/4 h-auto"
+                  />
+                </div>
+                <div>
+                  <p className="text-gray-300 text-sm sm:text-base italic">
+                    View your agent’s profile to verify the setup and details.
+                  </p>
+                  <img
+                    src={agentProfile}
+                    alt="Agent Profile View"
+                    className="mt-3 sm:mt-4 rounded-lg shadow-md w-full sm:w-full md:w-full lg:w-3/4 h-auto"
+                  />
+                </div>
+                <div>
+                  <p className="text-gray-300 text-sm sm:text-base italic">
+                    Easily add or update knowledge for your agent to enhance its capabilities.
+                  </p>
+                  <img
+                    src={easyToUpdateKnowledge}
+                    alt="Easy to Update Knowledge"
+                    className="mt-3 sm:mt-4 rounded-lg shadow-md w-full sm:w-full md:w-full lg:w-3/4 h-auto"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
         {/* Troubleshooting */}
         <section className="mb-10 sm:mb-12">
-          <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">Troubleshooting</h2>
+          <h3 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">Troubleshooting</h3>
           <ul className="list-disc list-inside text-gray-300 text-sm sm:text-base space-y-2 sm:space-y-3">
             <li>
               <strong>Wallet Not Connecting</strong>: Ensure your wallet extension is installed and unlocked. Refresh the page and try again.
