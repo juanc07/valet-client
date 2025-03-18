@@ -1,15 +1,12 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import backgroundImage from "../assets/background.webp";
 import logo from "../assets/svg.svg";
 import { useUser } from "../context/UserContext";
-import { toast } from "sonner"; // Added toast import
 
 function Start() {
-  const { currentUser } = useUser();
-  const { connected: isWalletConnected } = useWallet();
+  const { currentUser, isWalletConnected } = useUser();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -18,12 +15,6 @@ function Start() {
     const isOAuthCallback = window.location.search.includes("oauth_callback");
 
     if (isWalletConnected) {
-      // Show toast when wallet connects
-      toast.success("Wallet Connected", {
-        description: "Your wallet is now connected!",
-        duration: 3000,
-      });
-
       if (currentUser && !currentUser.email && !isOAuthCallback) {
         console.log("Start.tsx: Navigating to /update-profile due to missing email");
         navigate("/update-profile");
@@ -41,7 +32,7 @@ function Start() {
     height: "40px",
     paddingTop: "8px",
     paddingBottom: "8px",
-    fontSize: "1.125rem", // text-lg
+    fontSize: "1.125rem",
     lineHeight: "1",
     display: "flex",
     alignItems: "center",

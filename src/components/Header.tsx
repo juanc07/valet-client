@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image1 from "../assets/logo.png";
 import { Logs, House, Users, UserPlus, FileText, User, MessageSquare, Edit, Twitter, CreditCard } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -7,17 +7,30 @@ import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { toast } from "sonner";
 import { useUser } from "../context/UserContext";
 
-// Get the debug flag from environment variable
 const isAgentDebug = import.meta.env.VITE_SOLANA_AGENT_DEBUG === "TRUE";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isWalletMenuOpen, setIsWalletMenuOpen] = useState(false);
-  const { currentUser } = useUser();
+  const { currentUser, isWalletConnected, setIsWalletConnected } = useUser();
   const wallet = useWallet();
   const { publicKey, connected, disconnect, connecting } = wallet;
   const { setVisible } = useWalletModal();
   const navigate = useNavigate();
+
+  // Sync wallet state with context
+  useEffect(() => {
+    if (connected !== isWalletConnected) {
+      setIsWalletConnected(connected);
+      if (connected && !isWalletConnected) {
+        // Only show toast on transition from not connected to connected
+        toast.success("Wallet Connected", {
+          description: "Your wallet is now connected!",
+          duration: 3000,
+        });
+      }
+    }
+  }, [connected, isWalletConnected, setIsWalletConnected]);
 
   const handleWalletClick = async () => {
     try {
@@ -57,10 +70,12 @@ export default function Header() {
     { name: "Home", path: "/", icon: <House className="text-2xl" /> },
     { name: "My Agents", path: "/youragent", icon: <Users className="text-2xl" /> },
     { name: "Create Agents", path: "/createagent", icon: <UserPlus className="text-2xl" /> },
-    ...(isAgentDebug ? [
-      { name: "Chat", path: "/chat", icon: <MessageSquare className="text-2xl" /> },
-      { name: "Twitter Test", path: "/twitter-test", icon: <Twitter className="text-2xl" /> },
-    ] : []),
+    ...(isAgentDebug
+      ? [
+          { name: "Chat", path: "/chat", icon: <MessageSquare className="text-2xl" /> },
+          { name: "Twitter Test", path: "/twitter-test", icon: <Twitter className="text-2xl" /> },
+        ]
+      : []),
     ...(currentUser
       ? [
           { name: "Add Credits", path: "/add-credits", icon: <CreditCard className="text-2xl" /> },
@@ -68,7 +83,7 @@ export default function Header() {
           { name: "My Profile", path: "/profile", icon: <User className="text-2xl" /> },
         ]
       : []),
-    { name: "Documentation", path: "/docs", icon: <FileText className="text-2xl" /> }, // Internal route
+    { name: "Documentation", path: "/docs", icon: <FileText className="text-2xl" /> },
   ];
 
   return (

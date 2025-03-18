@@ -10,7 +10,6 @@ import CreateAgent from "./pages/CreateAgent";
 import YourAgent from "./pages/YourAgent";
 import UserProfile from "./pages/UserProfile";
 import Start from "./pages/Start.tsx";
-import Manage from "./pages/Manage.tsx";
 import UpdateProfile from "./pages/UpdateProfile.tsx";
 import UpdateAgent from "./pages/UpdateAgent";
 import AgentProfile from "./pages/AgentProfile";
@@ -172,8 +171,7 @@ function MainContent() {
           <Layout>
             <Routes>
               <Route path="/createagent" element={<CreateAgent />} />
-              <Route path="/youragent" element={<YourAgent />} />
-              <Route path="/manage" element={<Manage />} />
+              <Route path="/youragent" element={<YourAgent />} />              
               <Route path="/add-credits" element={<AddCreditsPage />} />
               <Route path="/chat" element={<ChatApplication />} />
               <Route path="/twitter-test" element={<TwitterTestPage />} />
