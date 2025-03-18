@@ -3,10 +3,20 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Agent } from "../interfaces/agent";
 import { getAgentById } from "../api/agentApi";
+import { getProfileImage } from "../api/imageApi";
 import { toast } from "sonner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCopy, faArrowLeft, faSpinner } from "@fortawesome/free-solid-svg-icons"; // Added faSpinner
+import { faCopy, faArrowLeft, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { useUser } from "../context/UserContext";
+
+// Import default agent images
+import agentDefaultImage1 from "../assets/agent-default-image/agent_default-1.jpg";
+import agentDefaultImage2 from "../assets/agent-default-image/agent_default-2.jpg";
+import agentDefaultImage3 from "../assets/agent-default-image/agent_default-3.jpg";
+import agentDefaultImage4 from "../assets/agent-default-image/agent_default-4.jpg";
+import agentDefaultImage5 from "../assets/agent-default-image/agent_default-5.jpg";
+import agentDefaultImage6 from "../assets/agent-default-image/agent_default-6.jpg";
+import agentDefaultImage7 from "../assets/agent-default-image/agent_default-7.jpg";
 
 export default function AgentProfile() {
   const { agentId } = useParams<{ agentId: string }>();
@@ -35,13 +45,32 @@ export default function AgentProfile() {
     isTwitterPaid: false,
     agentType: "basic",
     createdBy: "",
+    profileImageId: "",
   });
   const [loading, setLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState("basic");
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
 
   const { connected: walletConnected } = useWallet();
   const { currentUser } = useUser();
   const navigate = useNavigate();
+
+  // Array of default images
+  const defaultImages = [
+    agentDefaultImage1,
+    agentDefaultImage2,
+    agentDefaultImage3,
+    agentDefaultImage4,
+    agentDefaultImage5,
+    agentDefaultImage6,
+    agentDefaultImage7,
+  ];
+
+  // Function to get a random default image
+  const getRandomDefaultImage = () => {
+    const randomIndex = Math.floor(Math.random() * defaultImages.length);
+    return defaultImages[randomIndex];
+  };
 
   useEffect(() => {
     if (!walletConnected) {
@@ -54,6 +83,7 @@ export default function AgentProfile() {
       if (!agentId) {
         console.log("No agent ID provided.");
         toast.error("No Agent ID", { description: "Agent ID is required.", duration: 3000 });
+        setLoading(false);
         return;
       }
 
@@ -96,13 +126,24 @@ export default function AgentProfile() {
           enablePostTweet: agent.enablePostTweet || false,
           postTweetInterval: agent.postTweetInterval || 0,
           isTwitterPaid: agent.isTwitterPaid || false,
+          profileImageId: agent.profileImageId || "",
         }));
+
+        if (agent.profileImageId) {
+          const imageData = await getProfileImage(agentId);
+          setProfileImageUrl(imageData.url);
+        } else {
+          setProfileImageUrl(getRandomDefaultImage());
+        }
       } catch (error: any) {
-        console.error("Fetch agent error:", error);
+        console.error("Fetch agent or image error:", error);
         toast.error("Failed to Load Agent", {
-          description: "Unable to fetch agent data. Please try again later.",
+          description: "Unable to fetch agent data or image. Please try again later.",
           duration: 3000,
         });
+        if (!agentData.profileImageId) {
+          setProfileImageUrl(getRandomDefaultImage());
+        }
       } finally {
         setLoading(false);
       }
@@ -175,24 +216,35 @@ export default function AgentProfile() {
           <span className="text-sm">Back</span>
         </button>
 
-        {/* Header */}
-        <div className="text-center mb-6 pt-8">
-          <h1 className="text-3xl font-bold text-[#6a94f0]">{agentData.name || "Unnamed Agent"}</h1>
-          <div className="flex justify-center items-center gap-2 mt-2">
-            <p className="text-gray-400 text-sm">ID: {agentData.agentId || "Not set"}</p>
-            {agentData.agentId && (
-              <button
-                onClick={() => handleCopy(agentData.agentId, "Agent ID")}
-                className="text-[#6a94f0] hover:text-[#8faef0]"
-                title="Copy Agent ID"
-              >
-                <FontAwesomeIcon icon={faCopy} size="sm" />
-              </button>
+        {/* Header with Profile Image on Left */}
+        <div className="mb-6 pt-8">
+          <div className="flex items-center justify-center gap-4">
+            {profileImageUrl && (
+              <img
+                src={profileImageUrl}
+                alt={`${agentData.name || "Agent"} Profile`}
+                className="w-24 h-24 rounded-full object-cover border-2 border-[#6a94f0] shadow-md"
+              />
             )}
+            <div className="text-center">
+              <h1 className="text-3xl font-bold text-[#6a94f0]">{agentData.name || "Unnamed Agent"}</h1>
+              <div className="flex justify-center items-center gap-2 mt-2">
+                <p className="text-gray-400 text-sm">ID: {agentData.agentId || "Not set"}</p>
+                {agentData.agentId && (
+                  <button
+                    onClick={() => handleCopy(agentData.agentId, "Agent ID")}
+                    className="text-[#6a94f0] hover:text-[#8faef0]"
+                    title="Copy Agent ID"
+                  >
+                    <FontAwesomeIcon icon={faCopy} size="sm" />
+                  </button>
+                )}
+              </div>
+              <p className="text-sm mt-1">
+                Status: <span className={agentData.isActive ? "text-green-400" : "text-red-400"}>{agentData.isActive ? "Active" : "Inactive"}</span>
+              </p>
+            </div>
           </div>
-          <p className="text-sm mt-1">
-            Status: <span className={agentData.isActive ? "text-green-400" : "text-red-400"}>{agentData.isActive ? "Active" : "Inactive"}</span>
-          </p>
         </div>
 
         {/* Tab Navigation */}
