@@ -7,7 +7,7 @@ import { getAgentsByUserId } from "../api/userApi";
 import { useUser } from "../context/UserContext";
 import { toast } from "sonner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSpinner } from "@fortawesome/free-solid-svg-icons"; // Added faSpinner
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
 export default function ChatApplication() {
   const [myAgents, setMyAgents] = useState<Agent[]>([]);
@@ -308,7 +308,9 @@ export default function ChatApplication() {
               </>
             ) : (
               <div className="text-center text-gray-400">
-                Start chatting with {selectedAgent.name}!
+                {selectedCategory === "myAgents"
+                  ? `Start chatting with ${selectedAgent.name}! Test your agent response to see if it’s responding based on your goal.`
+                  : `Start chatting with ${selectedAgent.name}!`}
               </div>
             )
           ) : (

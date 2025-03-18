@@ -7,7 +7,7 @@ import { postTweetManually } from "../api/twitterApi";
 import { useUser } from "../context/UserContext";
 import { toast } from "sonner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSpinner } from "@fortawesome/free-solid-svg-icons"; // Added faSpinner
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
 export default function TwitterTestPage() {
   const [myAgents, setMyAgents] = useState<Agent[]>([]);
@@ -118,30 +118,59 @@ export default function TwitterTestPage() {
         {/* Tweet Form */}
         <div className="py-4">
           {selectedAgent ? (
-            <form onSubmit={handlePostTweet} className="flex flex-col gap-4">
-              <textarea
-                value={tweetMessage}
-                onChange={(e) => setTweetMessage(e.target.value)}
-                placeholder="Enter your tweet (max 280 characters)"
-                maxLength={280}
-                className="w-full bg-[#222128] text-white p-3 rounded-lg border border-[#494848] outline-none focus:ring-1 focus:ring-[#6a94f0] resize-none h-20 sm:h-24 text-sm sm:text-base"
-              />
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
-                <span className="text-xs sm:text-sm text-gray-400">
-                  {tweetMessage.length}/280
-                </span>
-                <button
-                  type="submit"
-                  className="w-full sm:w-auto py-2 px-4 bg-[#6a94f0] text-black rounded-lg hover:bg-white/10 hover:text-white transition-all duration-400 disabled:opacity-50 text-sm sm:text-base"
-                  disabled={!tweetMessage.trim()}
-                >
-                  Post Tweet
-                </button>
+            tweetResponse ? (
+              <form onSubmit={handlePostTweet} className="flex flex-col gap-4">
+                <textarea
+                  value={tweetMessage}
+                  onChange={(e) => setTweetMessage(e.target.value)}
+                  placeholder="Enter your tweet (max 280 characters)"
+                  maxLength={280}
+                  className="w-full bg-[#222128] text-white p-3 rounded-lg border border-[#494848] outline-none focus:ring-1 focus:ring-[#6a94f0] resize-none h-20 sm:h-24 text-sm sm:text-base"
+                />
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
+                  <span className="text-xs sm:text-sm text-gray-400">
+                    {tweetMessage.length}/280
+                  </span>
+                  <button
+                    type="submit"
+                    className="w-full sm:w-auto py-2 px-4 bg-[#6a94f0] text-black rounded-lg hover:bg-white/10 hover:text-white transition-all duration-400 disabled:opacity-50 text-sm sm:text-base"
+                    disabled={!tweetMessage.trim()}
+                  >
+                    Post Tweet
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="flex flex-col gap-4">
+                <div className="text-center text-gray-400 text-sm sm:text-base">
+                  Try to post a tweet here to see if your Twitter configuration is working or not.
+                </div>
+                <form onSubmit={handlePostTweet} className="flex flex-col gap-4">
+                  <textarea
+                    value={tweetMessage}
+                    onChange={(e) => setTweetMessage(e.target.value)}
+                    placeholder="Enter your tweet (max 280 characters)"
+                    maxLength={280}
+                    className="w-full bg-[#222128] text-white p-3 rounded-lg border border-[#494848] outline-none focus:ring-1 focus:ring-[#6a94f0] resize-none h-20 sm:h-24 text-sm sm:text-base"
+                  />
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
+                    <span className="text-xs sm:text-sm text-gray-400">
+                      {tweetMessage.length}/280
+                    </span>
+                    <button
+                      type="submit"
+                      className="w-full sm:w-auto py-2 px-4 bg-[#6a94f0] text-black rounded-lg hover:bg-white/10 hover:text-white transition-all duration-400 disabled:opacity-50 text-sm sm:text-base"
+                      disabled={!tweetMessage.trim()}
+                    >
+                      Post Tweet
+                    </button>
+                  </div>
+                </form>
               </div>
-            </form>
+            )
           ) : (
             <div className="text-center text-gray-400 text-sm sm:text-base">
-              Select an agent to start testing Twitter features.
+              Select an agent to start testing Twitter features. Try to post a tweet here to see if your Twitter configuration is working or not.
             </div>
           )}
         </div>
