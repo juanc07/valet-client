@@ -83,7 +83,7 @@ export default function Header() {
           { name: "My Profile", path: "/profile", icon: <User className="text-2xl" /> },
         ]
       : []),
-    { name: "Guides", path: "/docs", icon: <BookOpen className="text-2xl" /> }, // Changed from Documentation to Guides, FileText to BookOpen
+    { name: "Guides", path: "/guides", icon: <BookOpen className="text-2xl" /> }, // Changed from Documentation to Guides, FileText to BookOpen
   ];
 
   return (

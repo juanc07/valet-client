@@ -195,7 +195,7 @@ function MainContent() {
                   )
                 }
               />
-              <Route path="/docs" element={<AgentCreationGuide />} />
+              <Route path="/guides" element={<AgentCreationGuide />} />
               <Route path="/agent/edit/:agentId" element={<UpdateAgent />} />
               <Route path="/agent/view/:agentId" element={<AgentProfile />} />
             </Routes>
