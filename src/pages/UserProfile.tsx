@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCopy, faSpinner } from "@fortawesome/free-solid-svg-icons"; // Added faSpinner
+import { faCopy, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "sonner";
 import { getUser, getAgentCount } from "../api/userApi";
 import { User } from "../interfaces/user";
@@ -198,7 +198,7 @@ export default function UserProfile({ userId }: UserProfileProps) {
         {/* Stats Section */}
         <div className="bg-[#222128] rounded-lg p-4 mb-6">
           <h2 className="text-xl font-semibold text-white mb-4">Your Stats</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="text-center">
               <p className="text-gray-400 text-sm">Agents Created</p>
               <p className="text-2xl font-bold text-[#6a94f0]">{agentCount}</p>
@@ -210,10 +210,6 @@ export default function UserProfile({ userId }: UserProfileProps) {
             <div className="text-center">
               <p className="text-gray-400 text-sm">Credits</p>
               <p className="text-2xl font-bold text-[#6a94f0]">{user.credit ?? 0}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-gray-400 text-sm">Total Transactions</p>
-              <p className="text-2xl font-bold text-[#6a94f0]">0</p> {/* Placeholder */}
             </div>
           </div>
         </div>
