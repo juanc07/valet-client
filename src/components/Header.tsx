@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import Image1 from "../assets/logo.png";
-import { Logs, House, Users, UserPlus, FileText, User, MessageSquare, Edit, Twitter, CreditCard } from "lucide-react";
+import { Logs, House, Users, UserPlus, User, MessageSquare, Edit, Twitter, CreditCard, BookOpen } from "lucide-react"; // Replaced FileText with BookOpen
 import { Link, useNavigate } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
@@ -83,7 +83,7 @@ export default function Header() {
           { name: "My Profile", path: "/profile", icon: <User className="text-2xl" /> },
         ]
       : []),
-    { name: "Documentation", path: "/docs", icon: <FileText className="text-2xl" /> },
+    { name: "Guides", path: "/docs", icon: <BookOpen className="text-2xl" /> }, // Changed from Documentation to Guides, FileText to BookOpen
   ];
 
   return (

@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { House, Users, UserPlus, FileText, User, MessageSquare, Edit, Twitter, CreditCard } from "lucide-react";
+import { House, Users, UserPlus,User, MessageSquare, Edit, Twitter, CreditCard, BookOpen } from "lucide-react"; // Added BookOpen
 import { useUser } from "../context/UserContext";
 
 // Get the debug flag from environment variable
@@ -25,7 +25,7 @@ const Sidebar = () => {
           { name: "My Profile", path: "/profile", icon: <User className="text-2xl" /> },
         ]
       : []),
-    { name: "Documentation", path: "/docs", icon: <FileText className="text-2xl" /> }, // Updated to /docs
+    { name: "Guides", path: "/docs", icon: <BookOpen className="text-2xl" /> }, // Changed from Documentation to Guides, FileText to BookOpen
   ];
 
   return (
