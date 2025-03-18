@@ -11,6 +11,8 @@ import manageAgents from "../assets/manageAgents.jpg"; // New image for Step 5
 import testAgentResponse from "../assets/TestAgentResponse.jpg"; // New image for Showcase
 import agentProfile from "../assets/AgentProfile.jpg"; // New image for Showcase
 import easyToUpdateKnowledge from "../assets/EasyToUpdateKnowledge.jpg"; // New image for Showcase
+import twitterDeveloperCreds from "../assets/twitterDeveloperCreds.jpg"; // New image for Twitter Credentials Source
+import twitterDeveloperAuthSettings from "../assets/twitterDeveloperAuthSettings.jpg"; // New image for Twitter Auth Settings
 
 export default function AgentCreationGuide() {
   useEffect(() => {
@@ -118,7 +120,7 @@ export default function AgentCreationGuide() {
               </p>
             </div>
 
-            {/* Step 5 - NEW IMAGE ADDED HERE */}
+            {/* Step 5 */}
             <div>
               <h3 className="text-lg sm:text-xl font-medium mb-2">Step 5: Manage Your Agent</h3>
               <p className="text-gray-300 text-sm sm:text-base">
@@ -193,6 +195,32 @@ export default function AgentCreationGuide() {
               />
             </div>
 
+            {/* Twitter Credentials Source */}
+            <div>
+              <h3 className="text-lg sm:text-xl font-medium mb-2">Twitter Credentials Source</h3>
+              <p className="text-gray-300 text-sm sm:text-base">
+                Twitter credentials can be generated in this Twitter Developer page.
+              </p>
+              <img
+                src={twitterDeveloperCreds}
+                alt="Twitter Developer Portal Credentials Page"
+                className="mt-3 sm:mt-4 rounded-lg shadow-md w-full sm:w-full md:w-full lg:w-3/4 h-auto"
+              />
+            </div>
+
+            {/* NEW: Twitter Authentication Settings */}
+            <div>
+              <h3 className="text-lg sm:text-xl font-medium mb-2">Twitter Authentication Settings</h3>
+              <p className="text-gray-300 text-sm sm:text-base">
+                Make sure to check the auth settings to choose read and write and direct message if you got a paid developer Twitter account.
+              </p>
+              <img
+                src={twitterDeveloperAuthSettings}
+                alt="Twitter Developer Portal Authentication Settings"
+                className="mt-3 sm:mt-4 rounded-lg shadow-md w-full sm:w-full md:w-full lg:w-3/4 h-auto"
+              />
+            </div>
+
             {/* Step 4 */}
             <div>
               <h3 className="text-lg sm:text-xl font-medium mb-2">Step 4: Add OpenAI API Key</h3>
@@ -206,7 +234,7 @@ export default function AgentCreationGuide() {
               />
             </div>
 
-            {/* NEW SHOWCASE SECTION ADDED HERE */}
+            {/* Showcase Section */}
             <div>
               <h3 className="text-lg sm:text-xl font-medium mb-2">Showcase: Your Agent in Action</h3>
               <p className="text-gray-300 text-sm sm:text-base">
