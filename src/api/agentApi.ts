@@ -9,7 +9,7 @@ export const createAgent = async (agentData: Omit<Agent, "id">): Promise<Agent &
   return fetchWrapper(`${BASE_URL}/agents`, {
     method: "POST",
     body: JSON.stringify(agentData),
-    headers: { "Content-Type": "application/json" },
+    // fetchWrapper adds Content-Type and X-API-Key
   });
 };
 
@@ -24,7 +24,6 @@ export const getActiveAgents = async (): Promise<Agent[]> => {
 export const getAgentById = async (id: string): Promise<Agent> => {
   return fetchWrapper(`${BASE_URL}/agents/${id}`, {
     method: "GET",
-    headers: { "Content-Type": "application/json" },
   });
 };
 
@@ -32,7 +31,6 @@ export const updateAgent = async (id: string, agentData: Partial<Agent>): Promis
   return fetchWrapper(`${BASE_URL}/agents/${id}`, {
     method: "PUT",
     body: JSON.stringify(agentData),
-    headers: { "Content-Type": "application/json" },
   });
 };
 
@@ -53,7 +51,6 @@ export const chatWithAgent = async (agentId: string, message: string): Promise<{
   return fetchWrapper(`${BASE_URL}/chat/${agentId}`, {
     method: "POST",
     body: JSON.stringify({ message }),
-    headers: { "Content-Type": "application/json" },
   });
 };
 
@@ -66,12 +63,15 @@ export const chatWithAgentStream = (
 ): Promise<void> => {
   return new Promise(async (resolve, reject) => {
     try {
-      // First, initiate the stream with a POST request
+      const API_KEY = import.meta.env.VITE_API_KEY || "your-default-api-key"; // Get API key
+
+      // Initiate the stream with a POST request, including X-API-Key
       const response = await fetch(`${BASE_URL}/chat/stream/${agentId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Accept: "text/event-stream",
+          "Accept": "text/event-stream",
+          "X-API-Key": API_KEY, // Add API key header
         },
         body: JSON.stringify({ message }),
       });
