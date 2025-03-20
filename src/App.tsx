@@ -76,12 +76,16 @@ function MainContent() {
   const [hasCheckedWallet, setHasCheckedWallet] = useState(
     sessionStorage.getItem("hasCheckedWallet") === "true"
   );
-  const hasRunRef = useRef(false); // Track if wallet connection logic has run
+  const hasRunRef = useRef(false);
+  // Use sessionStorage to track if toast has been shown across page loads
+  const [hasShownToast, setHasShownToast] = useState(
+    sessionStorage.getItem("hasShownToast") === "true"
+  );
 
   // Handle wallet connection logic
   useEffect(() => {
     const handleWalletConnection = async () => {
-      if (!connected || !publicKey || hasRunRef.current || hasCheckedWallet) return;
+      if (!connected || !publicKey || hasRunRef.current) return;
 
       const walletAddress = publicKey.toBase58();
       console.log("Effect running at:", Date.now(), "Checking wallet:", walletAddress);
@@ -127,33 +131,34 @@ function MainContent() {
       }
     };
 
-    if (!currentUser && connected && publicKey && !hasCheckedWallet) {
+    if (connected && publicKey && !hasRunRef.current) {
       handleWalletConnection();
     }
 
-    // Cleanup for Strict Mode
     return () => {
       if (process.env.NODE_ENV === "development" && !hasRunRef.current) {
-        hasRunRef.current = false; // Reset only if not already run
+        hasRunRef.current = false;
       }
     };
-  }, [connected, publicKey, setCurrentUser, currentUser, hasCheckedWallet]);
+  }, [connected, publicKey, setCurrentUser]);
 
-  // Handle toast separately based on currentUser change
+  // Handle toast separately
   useEffect(() => {
-    if (!currentUser || !hasCheckedWallet) return;
+    if (!currentUser || !hasCheckedWallet || hasShownToast) return;
 
     const walletAddress = publicKey?.toBase58();
     if (walletAddress) {
       const message = currentUser.email
         ? `Welcome back!`
-        : `Account created!`; // Assuming email presence indicates existing user
+        : `Account created!`;
       toast.success(message, {
         description: `Connected as ${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`,
         duration: 3000,
       });
+      setHasShownToast(true);
+      sessionStorage.setItem("hasShownToast", "true");
     }
-  }, [currentUser, hasCheckedWallet, publicKey]); // Runs only when currentUser or hasCheckedWallet changes
+  }, [currentUser, hasCheckedWallet, publicKey, hasShownToast]);
 
   // Handle navigation separately
   useEffect(() => {
