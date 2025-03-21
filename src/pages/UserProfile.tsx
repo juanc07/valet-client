@@ -94,30 +94,36 @@ export default function UserProfile({ userId }: UserProfileProps) {
   if (error || !user) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
-        <div className="text-center text-red-500">{error || "User not found"}</div>
+        <div className="text-center text-red-500 text-xl md:text-3xl py-20">
+          {error || "User not found"}
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl bg-[#1a1a1a] rounded-lg shadow-lg p-6">
+      <div className="w-full bg-[#1a1a1a] rounded-lg shadow-lg p-4 sm:p-6">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-[#6a94f0]">{user.username}'s Profile</h1>
-          <p className="text-gray-400 mt-2">Your personal overview</p>
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#6a94f0]">
+            {user.username}'s Profile
+          </h1>
+          <p className="text-gray-400 mt-2 text-sm sm:text-base">Your personal overview</p>
         </div>
 
         {/* Top Row: Personal Details and Social Connections */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 mb-6">
           {/* Personal Details */}
           <div className="bg-[#222128] rounded-lg p-4">
-            <h2 className="text-xl font-semibold text-white mb-4">Personal Details</h2>
-            <div className="space-y-3">
+            <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">
+              Personal Details
+            </h2>
+            <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-gray-400 text-sm">User ID:</span>
+                <span className="text-gray-400">User ID:</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-white truncate max-w-[150px] md:max-w-[200px] text-sm">
+                  <span className="text-white truncate max-w-[120px] sm:max-w-[150px] md:max-w-[200px]">
                     {user.userId}
                   </span>
                   <button
@@ -130,9 +136,9 @@ export default function UserProfile({ userId }: UserProfileProps) {
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-400 text-sm">Wallet:</span>
+                <span className="text-gray-400">Wallet:</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-white truncate max-w-[150px] md:max-w-[200px] text-sm">
+                  <span className="text-white truncate max-w-[120px] sm:max-w-[150px] md:max-w-[200px]">
                     {publicKey ? publicKey.toBase58() : "Not connected"}
                   </span>
                   {publicKey && (
@@ -147,49 +153,59 @@ export default function UserProfile({ userId }: UserProfileProps) {
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-400 text-sm">Email:</span>
-                <span className="text-white text-sm">{user.email || "Not set"}</span>
+                <span className="text-gray-400">Email:</span>
+                <span className="text-white truncate max-w-[120px] sm:max-w-[150px] md:max-w-[200px]">
+                  {user.email || "Not set"}
+                </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-400 text-sm">Full Name:</span>
-                <span className="text-white text-sm">
+                <span className="text-gray-400">Full Name:</span>
+                <span className="text-white truncate max-w-[120px] sm:max-w-[150px] md:max-w-[200px]">
                   {user.firstName || user.lastName
                     ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
                     : "Not set"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-400 text-sm">Birthdate:</span>
-                <span className="text-white text-sm">{user.birthdate || "Not set"}</span>
+                <span className="text-gray-400">Birthdate:</span>
+                <span className="text-white">{user.birthdate || "Not set"}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-400 text-sm">Country:</span>
-                <span className="text-white text-sm">
+                <span className="text-gray-400">Country:</span>
+                <span className="text-white truncate max-w-[120px] sm:max-w-[150px] md:max-w-[200px]">
                   {countryOptions.find((opt) => opt.value === user.country)?.label || user.country || "Not set"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-400 text-sm">Mobile:</span>
-                <span className="text-white text-sm">{user.mobileNumber || "Not set"}</span>
+                <span className="text-gray-400">Mobile:</span>
+                <span className="text-white">{user.mobileNumber || "Not set"}</span>
               </div>
             </div>
           </div>
 
           {/* Social Connections */}
           <div className="bg-[#222128] rounded-lg p-4">
-            <h2 className="text-xl font-semibold text-white mb-4">Social Connections</h2>
-            <div className="space-y-3">
+            <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">
+              Social Connections
+            </h2>
+            <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-gray-400 text-sm">Twitter:</span>
-                <span className="text-white text-sm">{user.twitterHandle || "Not set"}</span>
+                <span className="text-gray-400">Twitter:</span>
+                <span className="text-white truncate max-w-[120px] sm:max-w-[150px] md:max-w-[200px]">
+                  {user.twitterHandle || "Not set"}
+                </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-400 text-sm">Discord:</span>
-                <span className="text-white text-sm">{user.discordId || "Not set"}</span>
+                <span className="text-gray-400">Discord:</span>
+                <span className="text-white truncate max-w-[120px] sm:max-w-[150px] md:max-w-[200px]">
+                  {user.discordId || "Not set"}
+                </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-400 text-sm">Telegram:</span>
-                <span className="text-white text-sm">{user.telegramId || "Not set"}</span>
+                <span className="text-gray-400">Telegram:</span>
+                <span className="text-white truncate max-w-[120px] sm:max-w-[150px] md:max-w-[200px]">
+                  {user.telegramId || "Not set"}
+                </span>
               </div>
             </div>
           </div>
@@ -197,19 +213,21 @@ export default function UserProfile({ userId }: UserProfileProps) {
 
         {/* Stats Section */}
         <div className="bg-[#222128] rounded-lg p-4 mb-6">
-          <h2 className="text-xl font-semibold text-white mb-4">Your Stats</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">
+            Your Stats
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div className="text-center">
-              <p className="text-gray-400 text-sm">Agents Created</p>
-              <p className="text-2xl font-bold text-[#6a94f0]">{agentCount}</p>
+              <p className="text-gray-400 text-xs sm:text-sm">Agents Created</p>
+              <p className="text-xl sm:text-2xl font-bold text-[#6a94f0]">{agentCount}</p>
             </div>
             <div className="text-center">
-              <p className="text-gray-400 text-sm">Active Agents</p>
-              <p className="text-2xl font-bold text-[#6a94f0]">{activeAgentCount}</p>
+              <p className="text-gray-400 text-xs sm:text-sm">Active Agents</p>
+              <p className="text-xl sm:text-2xl font-bold text-[#6a94f0]">{activeAgentCount}</p>
             </div>
             <div className="text-center">
-              <p className="text-gray-400 text-sm">Credits</p>
-              <p className="text-2xl font-bold text-[#6a94f0]">{user.credit ?? 0}</p>
+              <p className="text-gray-400 text-xs sm:text-sm">Credits</p>
+              <p className="text-xl sm:text-2xl font-bold text-[#6a94f0]">{user.credit ?? 0}</p>
             </div>
           </div>
         </div>
@@ -218,7 +236,7 @@ export default function UserProfile({ userId }: UserProfileProps) {
         <div className="text-center">
           <button
             onClick={handleUpdateProfile}
-            className="py-2 px-6 bg-[#6a94f0] text-black rounded-lg hover:bg-[#8faef0] transition-all duration-300"
+            className="py-2 px-4 sm:px-6 bg-[#6a94f0] text-black rounded-lg hover:bg-[#8faef0] transition-all duration-300 text-sm sm:text-base"
           >
             Update Profile
           </button>
