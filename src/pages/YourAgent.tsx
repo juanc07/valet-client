@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEdit, faEye, faTrash, faCopy, faSpinner } from "@fortawesome/free-solid-svg-icons"; // Add faSpinner
+import { faEdit, faEye, faTrash, faCopy, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "sonner";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Agent } from "../interfaces/agent";
@@ -102,10 +102,10 @@ function YourAgent() {
   };
 
   return (
-    <div className="h-full bg-black text-white flex items-center justify-center p-0 lg:p-4 relative">
+    <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
       {/* Main Content */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center min-h-[50vh] text-white">
+        <div className="flex flex-col items-center justify-center min-h-[50vh]">
           <FontAwesomeIcon
             icon={faSpinner}
             className="text-[#6894f3] text-4xl animate-spin"
@@ -115,16 +115,16 @@ function YourAgent() {
           </p>
         </div>
       ) : (
-        <div className="w-full p-0 lg:p-6 rounded-none lg:rounded-lg shadow-lg overflow-x-auto max-w-full pt-10 pb-10">
-          <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-            <h2 className="text-4xl font-bold text-center sm:text-left">
+        <div className="w-full max-w-5xl bg-[#1a1a1a] rounded-lg shadow-lg p-4 md:p-6">
+          <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+            <h2 className="text-2xl md:text-4xl font-bold text-center md:text-left">
               {viewMode === "myAgents" ? "Your Agents" : "Other People's Agents"}
             </h2>
             {isAgentDebug && (
               <select
                 value={viewMode}
                 onChange={(e) => setViewMode(e.target.value as "myAgents" | "othersAgents")}
-                className="mt-4 sm:mt-0 bg-[#222128] text-white p-2 rounded-lg border border-[#494848] focus:outline-none focus:ring-1 focus:ring-gray-500"
+                className="w-full md:w-auto bg-[#222128] text-white p-2 rounded-lg border border-[#494848] focus:outline-none focus:ring-1 focus:ring-gray-500"
               >
                 <option value="myAgents">My Agents</option>
                 <option value="othersAgents">Other People's Agents</option>
@@ -132,20 +132,20 @@ function YourAgent() {
             )}
           </div>
           {agents.length === 0 ? (
-            <div className="text-center text-3xl text-white pt-40">
+            <div className="text-center text-xl md:text-3xl text-white py-20">
               {viewMode === "myAgents"
                 ? "You have not created any agents."
                 : "No agents found from other users."}
             </div>
           ) : (
-            <div className="overflow-x-auto w-full">
-              <table className="w-full text-left border-collapse text-sm md:text-base">
-                <thead className="overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs sm:text-sm md:text-base">
+                <thead>
                   <tr className="bg-[#222128]">
-                    <th className="py-2 px-2 md:px-4 text-left rounded-l-lg font-medium">Name</th>
-                    <th className="py-2 px-2 md:px-4 text-center font-medium">Agent ID</th>
-                    <th className="py-2 px-2 md:px-4 text-center font-medium">Active</th>
-                    <th className="py-2 px-2 md:px-4 text-right rounded-r-lg font-medium">Actions</th>
+                    <th className="py-3 px-2 sm:px-4 text-left font-medium rounded-tl-lg">Name</th>
+                    <th className="py-3 px-2 sm:px-4 text-center font-medium">Agent ID</th>
+                    <th className="py-3 px-2 sm:px-4 text-center font-medium">Active</th>
+                    <th className="py-3 px-2 sm:px-4 text-right font-medium rounded-tr-lg">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -153,52 +153,54 @@ function YourAgent() {
                     const isOwnAgent = agent.createdBy === currentUser?.userId;
                     return (
                       <tr key={agent.agentId} className="border-b border-[#494848]">
-                        <td className="py-2 px-2 md:px-4 text-left text-nowrap">{agent.name}</td>
-                        <td className="py-2 px-2 md:px-4 text-center">
-                          <div className="flex items-center justify-center space-x-2">
-                            <span className="truncate max-w-[150px]">{agent.agentId}</span>
+                        <td className="py-3 px-2 sm:px-4 text-left truncate max-w-[100px] sm:max-w-[150px]">{agent.name}</td>
+                        <td className="py-3 px-2 sm:px-4 text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <span className="truncate max-w-[80px] sm:max-w-[120px] md:max-w-[150px]">{agent.agentId}</span>
                             <button
                               onClick={() => handleCopy(agent.agentId)}
-                              className="text-white hover:text-gray-300 transition duration-200"
+                              className="text-white hover:text-gray-300 transition duration-200 flex-shrink-0"
                               title="Copy Agent ID"
                             >
                               <FontAwesomeIcon icon={faCopy} className="text-sm" />
                             </button>
                           </div>
                         </td>
-                        <td className="py-2 px-2 md:px-4 text-center">
+                        <td className="py-3 px-2 sm:px-4 text-center">
                           <div
                             className={`w-3 h-3 rounded-full inline-block ${
                               agent.isActive ? "bg-green-500" : "bg-red-500"
                             }`}
                           ></div>
                         </td>
-                        <td className="py-4 px-2 md:px-4 text-right flex justify-end space-x-2">
-                          {isOwnAgent && (
+                        <td className="py-3 px-2 sm:px-4 text-right">
+                          <div className="flex justify-end gap-2">
+                            {isOwnAgent && (
+                              <Link
+                                to={`/agent/edit/${agent.agentId}`}
+                                className="p-2 text-white rounded-lg transition duration-200 backdrop-blur-lg bg-white/8 hover:bg-white/30"
+                                title="Edit Agent"
+                              >
+                                <FontAwesomeIcon icon={faEdit} />
+                              </Link>
+                            )}
                             <Link
-                              to={`/agent/edit/${agent.agentId}`}
-                              className="px-2 py-1 text-white rounded-lg transition duration-200 backdrop-blur-lg bg-white/8 hover:bg-white/30"
-                              title="Edit Agent"
+                              to={`/agent/view/${agent.agentId}`}
+                              className="p-2 text-white rounded-lg transition duration-200 backdrop-blur-lg bg-white/8 hover:bg-white/30"
+                              title="View Agent"
                             >
-                              <FontAwesomeIcon icon={faEdit} />
+                              <FontAwesomeIcon icon={faEye} />
                             </Link>
-                          )}
-                          <Link
-                            to={`/agent/view/${agent.agentId}`}
-                            className="px-2 py-1 text-white rounded-lg transition duration-200 backdrop-blur-lg bg-white/8 hover:bg-white/30"
-                            title="View Agent"
-                          >
-                            <FontAwesomeIcon icon={faEye} />
-                            </Link>
-                          {isOwnAgent && (
-                            <button
-                              onClick={() => openDeleteDialog(agent.agentId)}
-                              className="px-2 py-1 text-white rounded-lg transition duration-200 backdrop-blur-lg bg-red-500/80 hover:bg-red-600"
-                              title="Delete Agent"
-                            >
-                              <FontAwesomeIcon icon={faTrash} />
-                            </button>
-                          )}
+                            {isOwnAgent && (
+                              <button
+                                onClick={() => openDeleteDialog(agent.agentId)}
+                                className="p-2 text-white rounded-lg transition duration-200 backdrop-blur-lg bg-red-500/80 hover:bg-red-600"
+                                title="Delete Agent"
+                              >
+                                <FontAwesomeIcon icon={faTrash} />
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -214,24 +216,24 @@ function YourAgent() {
       {isDialogOpen && (
         <div
           style={{ backgroundColor: "rgba(0, 0, 0, 0.65)" }}
-          className="fixed inset-0 flex items-center justify-center z-50"
+          className="fixed inset-0 flex items-center justify-center z-50 px-4"
         >
           <div className="bg-[#222128] p-6 rounded-lg shadow-lg border border-[#494848] w-full max-w-md">
-            <h3 className="text-xl font-bold mb-4">Confirm Deletion</h3>
-            <p className="text-gray-300 mb-6">
+            <h3 className="text-lg md:text-xl font-bold mb-4">Confirm Deletion</h3>
+            <p className="text-gray-300 mb-6 text-sm md:text-base">
               Are you sure you want to delete the agent with ID:{" "}
-              <span className="font-mono text-white">{agentToDelete}</span>?
+              <span className="font-mono text-white break-all">{agentToDelete}</span>?
             </p>
-            <div className="flex justify-end gap-4">
+            <div className="flex justify-end gap-2 sm:gap-4">
               <button
                 onClick={closeDeleteDialog}
-                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-200"
+                className="px-3 py-2 sm:px-4 sm:py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-200 text-sm sm:text-base"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-200"
+                className="px-3 py-2 sm:px-4 sm:py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-200 text-sm sm:text-base"
               >
                 Delete
               </button>
