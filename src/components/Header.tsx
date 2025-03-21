@@ -89,13 +89,13 @@ export default function Header() {
 
   return (
     <header className="fixed top-0 left-0 w-full px-4 md:px-8 flex items-center justify-between p-4 bg-black text-white shadow-md z-50 border-b border-[#494848]">
-      <div className="flex items-center gap-12"> {/* Changed from gap-8 to gap-12 */}
+      <div className="flex items-center gap-12">
         <Link to="/">
           <div className="w-9 h-9 lg:w-12 lg:h-12 max-w-[150px]">
             <img src={Image1} className="w-full h-full object-contain" alt="Logo" />
           </div>
         </Link>
-        <div className="flex items-center gap-4">
+        <div className="hidden lg:flex items-center gap-4"> {/* Added hidden lg:flex */}
           <a
             href="https://twitter.com/ValetAgents"
             target="_blank"
