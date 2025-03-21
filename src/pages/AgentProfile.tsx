@@ -227,8 +227,8 @@ export default function AgentProfile() {
               />
             </div>
           )}
-          <div className="text-center md:text-left mt-4 md:mt-0">
-            <h1 className="text-xl md:text-3xl font-bold text-[#6a94f0] break-words max-w-[200px] md:max-w-none">
+          <div className="text-center mt-4 md:mt-0 md:text-left">
+            <h1 className="text-xl md:text-3xl font-bold text-[#6a94f0] break-words max-w-[200px] mx-auto md:max-w-none md:mx-0">
               {agentData.name || "Unnamed Agent"}
             </h1>
             <div className="flex justify-center md:justify-start items-center gap-2 mt-2">
