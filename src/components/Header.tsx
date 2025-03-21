@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import Image1 from "../assets/logo.png";
-import { Logs, House, Users, UserPlus, User, MessageSquare, Edit, Twitter, CreditCard, BookOpen } from "lucide-react"; // Replaced FileText with BookOpen
+import { Logs, House, Users, UserPlus, User, MessageSquare, Edit, Twitter, CreditCard, BookOpen, Mail } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
@@ -23,7 +23,6 @@ export default function Header() {
     if (connected !== isWalletConnected) {
       setIsWalletConnected(connected);
       if (connected && !isWalletConnected) {
-        // Only show toast on transition from not connected to connected
         toast.success("Wallet Connected", {
           description: "Your wallet is now connected!",
           duration: 3000,
@@ -72,7 +71,7 @@ export default function Header() {
     { name: "Create Agents", path: "/createagent", icon: <UserPlus className="text-2xl" /> },
     ...(isAgentDebug
       ? [
-          { name: "Chat", path: "/chat", icon: <MessageSquare className="text-2xl" /> },
+          { name: "Chat Test", path: "/chat", icon: <MessageSquare className="text-2xl" /> },
           { name: "Twitter Test", path: "/twitter-test", icon: <Twitter className="text-2xl" /> },
         ]
       : []),
@@ -83,17 +82,35 @@ export default function Header() {
           { name: "My Profile", path: "/profile", icon: <User className="text-2xl" /> },
         ]
       : []),
-    { name: "Guides", path: "/guides", icon: <BookOpen className="text-2xl" /> }, // Changed from Documentation to Guides, FileText to BookOpen
+    { name: "Guides", path: "/guides", icon: <BookOpen className="text-2xl" /> },
+    { name: "Twitter", path: "https://twitter.com/ValetAgents", icon: <Twitter className="text-2xl" /> },
+    { name: "Contact US", path: "mailto:valwea329@gmail.com", icon: <Mail className="text-2xl" /> },
   ];
 
   return (
     <header className="fixed top-0 left-0 w-full px-4 md:px-8 flex items-center justify-between p-4 bg-black text-white shadow-md z-50 border-b border-[#494848]">
-      <div>
+      <div className="flex items-center gap-12"> {/* Changed from gap-8 to gap-12 */}
         <Link to="/">
           <div className="w-9 h-9 lg:w-12 lg:h-12 max-w-[150px]">
             <img src={Image1} className="w-full h-full object-contain" alt="Logo" />
           </div>
         </Link>
+        <div className="flex items-center gap-4">
+          <a
+            href="https://twitter.com/ValetAgents"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-2 text-[#6894f3] hover:text-white transition-colors duration-300"
+          >
+            <Twitter size={24} />
+          </a>
+          <a
+            href="mailto:valwea329@gmail.com"
+            className="p-2 text-[#6894f3] hover:text-white transition-colors duration-300"
+          >
+            <Mail size={24} />
+          </a>
+        </div>
       </div>
       <div className="flex items-center gap-1">
         <div className="relative">
@@ -131,17 +148,31 @@ export default function Header() {
         <div className="absolute top-16 right-0 w-64 bg-black text-white mr-3 shadow-xl border border-[#494848] lg:hidden z-50">
           <div className="flex flex-col gap-2 p-4">
             <span className="font-light ml-2 text-gray-400">Terminal</span>
-            {menuItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className="flex items-center gap-3 p-2 hover:bg-[#222128] rounded-lg transition-all duration-400 ease-in-out text-gray-400"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                {item.icon}
-                <span>{item.name}</span>
-              </Link>
-            ))}
+            {menuItems.map((item) =>
+              item.path.startsWith("http") || item.path.startsWith("mailto") ? (
+                <a
+                  key={item.path}
+                  href={item.path}
+                  target={item.path.startsWith("http") ? "_blank" : "_self"}
+                  rel={item.path.startsWith("http") ? "noopener noreferrer" : ""}
+                  className="flex items-center gap-3 p-2 hover:bg-[#222128] rounded-lg transition-all duration-400 ease-in-out text-gray-400"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {item.icon}
+                  <span>{item.name}</span>
+                </a>
+              ) : (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className="flex items-center gap-3 p-2 hover:bg-[#222128] rounded-lg transition-all duration-400 ease-in-out text-gray-400"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {item.icon}
+                  <span>{item.name}</span>
+                </Link>
+              )
+            )}
           </div>
         </div>
       )}

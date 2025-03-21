@@ -15,7 +15,7 @@ const Sidebar = () => {
     { name: "My Agents", path: "/youragent", icon: <Users className="text-2xl" /> },
     { name: "Create Agents", path: "/createagent", icon: <UserPlus className="text-2xl" /> },
     ...(isAgentDebug ? [
-      { name: "Chat", path: "/chat", icon: <MessageSquare className="text-2xl" /> },
+      { name: "Chat Test", path: "/chat", icon: <MessageSquare className="text-2xl" /> },
       { name: "Twitter Test", path: "/twitter-test", icon: <Twitter className="text-2xl" /> },
     ] : []),
     ...(currentUser
