@@ -216,34 +216,38 @@ export default function AgentProfile() {
           <span className="text-sm">Back</span>
         </button>
 
-        {/* Header with Profile Image on Left */}
-        <div className="mb-6 pt-8">
-          <div className="flex items-center justify-center gap-4">
-            {profileImageUrl && (
+        {/* Header with Profile Image */}
+        <div className="mb-6 pt-8 flex flex-col items-center md:flex-row md:items-start md:gap-4">
+          {profileImageUrl && (
+            <div className="w-20 h-20 md:w-24 md:h-24 flex-shrink-0">
               <img
                 src={profileImageUrl}
                 alt={`${agentData.name || "Agent"} Profile`}
-                className="w-24 h-24 rounded-full object-cover border-2 border-[#6a94f0] shadow-md"
+                className="w-full h-full rounded-full object-cover border-2 border-[#6a94f0] shadow-md"
               />
-            )}
-            <div className="text-center">
-              <h1 className="text-3xl font-bold text-[#6a94f0]">{agentData.name || "Unnamed Agent"}</h1>
-              <div className="flex justify-center items-center gap-2 mt-2">
-                <p className="text-gray-400 text-sm">ID: {agentData.agentId || "Not set"}</p>
-                {agentData.agentId && (
-                  <button
-                    onClick={() => handleCopy(agentData.agentId, "Agent ID")}
-                    className="text-[#6a94f0] hover:text-[#8faef0]"
-                    title="Copy Agent ID"
-                  >
-                    <FontAwesomeIcon icon={faCopy} size="sm" />
-                  </button>
-                )}
-              </div>
-              <p className="text-sm mt-1">
-                Status: <span className={agentData.isActive ? "text-green-400" : "text-red-400"}>{agentData.isActive ? "Active" : "Inactive"}</span>
-              </p>
             </div>
+          )}
+          <div className="text-center md:text-left mt-4 md:mt-0">
+            <h1 className="text-xl md:text-3xl font-bold text-[#6a94f0] break-words max-w-[200px] md:max-w-none">
+              {agentData.name || "Unnamed Agent"}
+            </h1>
+            <div className="flex justify-center md:justify-start items-center gap-2 mt-2">
+              <p className="text-gray-400 text-xs md:text-sm">ID: {agentData.agentId || "Not set"}</p>
+              {agentData.agentId && (
+                <button
+                  onClick={() => handleCopy(agentData.agentId, "Agent ID")}
+                  className="text-[#6a94f0] hover:text-[#8faef0]"
+                  title="Copy Agent ID"
+                >
+                  <FontAwesomeIcon icon={faCopy} size="sm" />
+                </button>
+              )}
+            </div>
+            <p className="text-xs md:text-sm mt-1">
+              Status: <span className={agentData.isActive ? "text-green-400" : "text-red-400"}>
+                {agentData.isActive ? "Active" : "Inactive"}
+              </span>
+            </p>
           </div>
         </div>
 
