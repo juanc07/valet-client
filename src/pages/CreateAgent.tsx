@@ -39,7 +39,7 @@ export default function CreateAgent() {
   const [error, setError] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { connected: walletConnected, publicKey, signTransaction, sendTransaction } = useWallet();
+  const { connected: walletConnected, publicKey } = useWallet();
   const { currentUser } = useUser();
   const navigate = useNavigate();
 
@@ -63,7 +63,7 @@ export default function CreateAgent() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!publicKey || !signTransaction || !sendTransaction) {
+    if (!publicKey) {
       setError("Wallet not connected properly.");
       toast.error("Wallet Error", { description: "Please connect your wallet.", duration: 3000 });
       return;
@@ -93,7 +93,6 @@ export default function CreateAgent() {
     const connection = new Connection(SOLANA_ENDPOINT, "confirmed");
 
     try {
-      // Validate RECEIVER_PUBLIC_KEY and TOKEN_MINT_ADDRESS
       console.log("RECEIVER_PUBLIC_KEY:", RECEIVER_PUBLIC_KEY);
       console.log("TOKEN_MINT_ADDRESS:", TOKEN_MINT_ADDRESS);
       console.log("SOLANA_ENDPOINT:", SOLANA_ENDPOINT);
@@ -103,6 +102,9 @@ export default function CreateAgent() {
       if (!TOKEN_MINT_ADDRESS || typeof TOKEN_MINT_ADDRESS !== "string") {
         throw new Error("TOKEN_MINT_ADDRESS is invalid or undefined. Check your .env file.");
       }
+      if (!SOLANA_ENDPOINT || typeof SOLANA_ENDPOINT !== "string") {
+        throw new Error("SOLANA_ENDPOINT is invalid or undefined. Check your .env file.");
+      }
 
       const receiverPublicKey = new PublicKey(RECEIVER_PUBLIC_KEY);
       const tokenMintPublicKey = new PublicKey(TOKEN_MINT_ADDRESS);
@@ -110,7 +112,6 @@ export default function CreateAgent() {
       console.log("tokenMintPublicKey:", tokenMintPublicKey.toString());
       console.log("publicKey:", publicKey.toString());
 
-      // Check SOL balance for fees
       const solBalance = await connection.getBalance(publicKey);
       console.log("Sender SOL balance:", solBalance / 1e9, "SOL");
       if (solBalance < 5000) {
@@ -118,13 +119,11 @@ export default function CreateAgent() {
         throw new Error("Insufficient SOL for transaction fees. Please add at least 0.01 SOL to your wallet.");
       }
 
-      // Get sender's and receiver's Associated Token Accounts (ATAs)
       const senderATA = await getAssociatedTokenAddress(tokenMintPublicKey, publicKey);
       const receiverATA = await getAssociatedTokenAddress(tokenMintPublicKey, receiverPublicKey);
       console.log("senderATA:", senderATA.toString());
       console.log("receiverATA:", receiverATA.toString());
 
-      // Check if sender ATA exists and has sufficient balance
       try {
         const senderAccount = await getAccount(connection, senderATA, "confirmed");
         const balance = Number(senderAccount.amount);
@@ -141,7 +140,6 @@ export default function CreateAgent() {
         throw new Error("Failed to verify sender's token account.");
       }
 
-      // Check if receiver ATA exists
       try {
         await getAccount(connection, receiverATA, "confirmed");
         console.log("Receiver ATA exists.");
@@ -153,7 +151,6 @@ export default function CreateAgent() {
         throw new Error("Failed to verify receiver's token account.");
       }
 
-      // Create token transfer transaction
       const transferTx = new Transaction().add(
         createTransferInstruction(
           senderATA,
@@ -170,12 +167,15 @@ export default function CreateAgent() {
       transferTx.feePayer = publicKey;
       console.log("Recent blockhash:", blockhash);
 
-      const signedTransferTx = await signTransaction(transferTx);
-      const txSignature = await sendTransaction(signedTransferTx, connection);
-      console.log("Transaction signature:", txSignature);
-      await connection.confirmTransaction(txSignature, "confirmed");
+      const provider = window.solana;
+      if (!provider || !provider.isPhantom) {
+        throw new Error("Phantom wallet not detected.");
+      }
 
-      // Prepare agent data without txSignature
+      const { signature } = await provider.signAndSendTransaction(transferTx);
+      console.log("Transaction signature:", signature);
+      await connection.confirmTransaction(signature, "confirmed");
+
       const agentData = {
         name: formData.name,
         bio: formData.bio,
@@ -192,17 +192,18 @@ export default function CreateAgent() {
         vision: "A helpful future",
       };
 
-      // Send to backend with txSignature as a separate field
+      console.log("Sending to backend:", { txSignature: signature, ...agentData });
       const response = await fetchWrapper<{ message: string; agentId: string }>(
         `${BASE_URL}/agents`,
         {
           method: "POST",
-          body: JSON.stringify({ txSignature, ...agentData }),
+          body: JSON.stringify({ txSignature: signature, ...agentData }),
           headers: { "Content-Type": "application/json" },
         }
       );
+      console.log("Backend response:", response);
 
-      setError(""); // Clear any previous error
+      setError("");
       toast.success("Agent Created", {
         description: `Successfully created agent: ${formData.name} (ID: ${response.agentId})`,
         duration: 3000,
@@ -216,16 +217,15 @@ export default function CreateAgent() {
         agentType: "basic",
       });
     } catch (err: any) {
-      console.error("Error creating agent:", err.message || err); // Log detailed error to console
-      // Only show specific user-actionable errors in UI; otherwise, generic message
+      console.error("Error creating agent:", err.message || err);
       if (err.message.includes("Wallet not connected") || err.message.includes("Missing required fields") || err.message.includes("User must be logged in")) {
-        setError(err.message); // Keep specific errors in UI
+        setError(err.message);
         toast.error("Agent Creation Failed", {
           description: err.message,
           duration: 3000,
         });
       } else {
-        setError("Something went wrong."); // Generic UI message
+        setError("Something went wrong.");
         toast.error("Agent Creation Failed", {
           description: "Something went wrong. Please try again later.",
           duration: 3000,
@@ -244,7 +244,6 @@ export default function CreateAgent() {
             Create Your AI Agent (1000 Tokens)
           </h1>
           <form onSubmit={handleSubmit}>
-            {/* Agent Type Selection */}
             <div>
               <p className="font-semibold text-lg text-white mb-4">Select Framework</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -309,7 +308,6 @@ export default function CreateAgent() {
               </div>
             </div>
 
-            {/* Required Fields */}
             <div className="mx-auto py-2 mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
                 <div className="flex flex-col">
