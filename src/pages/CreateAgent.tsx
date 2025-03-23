@@ -113,7 +113,8 @@ export default function CreateAgent() {
       // Check SOL balance for fees
       const solBalance = await connection.getBalance(publicKey);
       console.log("Sender SOL balance:", solBalance / 1e9, "SOL");
-      if (solBalance < 5000) { // ~0.000005 SOL for basic fee, buffer to 0.00005 SOL
+      if (solBalance < 5000) {
+        console.error("Insufficient SOL balance:", solBalance / 1e9, "SOL");
         throw new Error("Insufficient SOL for transaction fees. Please add at least 0.01 SOL to your wallet.");
       }
 
@@ -129,15 +130,15 @@ export default function CreateAgent() {
         const balance = Number(senderAccount.amount);
         console.log("Sender token balance:", balance / Math.pow(10, 6), "tokens");
         if (balance < AGENT_CREATION_TOKEN_AMOUNT) {
-          throw new Error(`Insufficient token balance. Required: 1000 tokens, Available: ${balance / Math.pow(10, 6)} tokens`);
+          console.error("Insufficient token balance:", balance / Math.pow(10, 6), "tokens");
+          throw new Error("Insufficient token balance. Please ensure you have at least 1000 tokens.");
         }
       } catch (err: any) {
+        console.error("Sender ATA check failed:", err);
         if (err.name === "TokenAccountNotFoundError" || err.message.includes("could not find account")) {
-          throw new Error(
-            "Sender's token account (ATA) does not exist. Please add the token (2ex5kxL5ZKSxv6mJHf5EiM86ZYCGJp56JY1MjKrgpump) to your wallet (e.g., Phantom) and ensure it has at least 1000 tokens."
-          );
+          throw new Error("Sender's token account does not exist. Please add the token to your wallet.");
         }
-        throw err;
+        throw new Error("Failed to verify sender's token account.");
       }
 
       // Check if receiver ATA exists
@@ -145,12 +146,11 @@ export default function CreateAgent() {
         await getAccount(connection, receiverATA, "confirmed");
         console.log("Receiver ATA exists.");
       } catch (err: any) {
+        console.error("Receiver ATA check failed:", err);
         if (err.name === "TokenAccountNotFoundError" || err.message.includes("could not find account")) {
-          throw new Error(
-            `Receiver's token account (ATA) does not exist. The treasury wallet (${RECEIVER_PUBLIC_KEY}) must add the token (2ex5kxL5ZKSxv6mJHf5EiM86ZYCGJp56JY1MjKrgpump) to initialize its ATA.`
-          );
+          throw new Error("Receiver's token account does not exist. Please contact support to initialize the treasury wallet.");
         }
-        throw err;
+        throw new Error("Failed to verify receiver's token account.");
       }
 
       // Create token transfer transaction
@@ -202,7 +202,7 @@ export default function CreateAgent() {
         }
       );
 
-      setError("");
+      setError(""); // Clear any previous error
       toast.success("Agent Created", {
         description: `Successfully created agent: ${formData.name} (ID: ${response.agentId})`,
         duration: 3000,
@@ -216,12 +216,21 @@ export default function CreateAgent() {
         agentType: "basic",
       });
     } catch (err: any) {
-      console.error("Error creating agent:", err);
-      setError("Failed to create agent: " + (err.message || "Unknown error"));
-      toast.error("Agent Creation Failed", {
-        description: err.message || "Please try again later.",
-        duration: 3000,
-      });
+      console.error("Error creating agent:", err.message || err); // Log detailed error to console
+      // Only show specific user-actionable errors in UI; otherwise, generic message
+      if (err.message.includes("Wallet not connected") || err.message.includes("Missing required fields") || err.message.includes("User must be logged in")) {
+        setError(err.message); // Keep specific errors in UI
+        toast.error("Agent Creation Failed", {
+          description: err.message,
+          duration: 3000,
+        });
+      } else {
+        setError("Something went wrong."); // Generic UI message
+        toast.error("Agent Creation Failed", {
+          description: "Something went wrong. Please try again later.",
+          duration: 3000,
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
