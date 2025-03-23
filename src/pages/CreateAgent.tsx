@@ -14,7 +14,7 @@ import { TOKEN_PROGRAM_ID, createTransferInstruction, getAssociatedTokenAddress,
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 const RECEIVER_PUBLIC_KEY = import.meta.env.VITE_SOLANA_PAYMENT_WALLET;
-const SOLANA_ENDPOINT = import.meta.env.VITE_SOLANA_ENDPOINT || "https://mainnet.helius-rpc.com/?api-key=75a7bbaa-d1e6-4b25-b0a9-ed4ca67b02ab";
+const SOLANA_ENDPOINT = import.meta.env.VITE_SOLANA_ENDPOINT;
 const TOKEN_MINT_ADDRESS = import.meta.env.VITE_VALLET_TOKEN_ADDRESS || "2ex5kxL5ZKSxv6mJHf5EiM86ZYCGJp56JY1MjKrgpump";
 const AGENT_CREATION_TOKEN_AMOUNT = 1000 * Math.pow(10, 6); // 1000 tokens with 6 decimals
 
