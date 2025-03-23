@@ -6,7 +6,7 @@ import logo from "../assets/svg.svg";
 import { useUser } from "../context/UserContext";
 
 function Start() {
-  const { currentUser, isWalletConnected } = useUser();
+  const { currentUser, isWalletConnected } = useUser(); // No serverLive needed
   const navigate = useNavigate();
 
   useEffect(() => {

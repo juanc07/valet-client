@@ -1,23 +1,24 @@
 import { Link, useLocation } from "react-router-dom";
-import { House, Users, UserPlus,User, MessageSquare, Edit, Twitter, CreditCard, BookOpen } from "lucide-react"; // Added BookOpen
+import { House, Users, UserPlus, User, MessageSquare, Edit, Twitter, CreditCard, BookOpen } from "lucide-react";
 import { useUser } from "../context/UserContext";
 
-// Get the debug flag from environment variable
 const isAgentDebug = import.meta.env.VITE_SOLANA_AGENT_DEBUG === "TRUE";
 
 const Sidebar = () => {
   const location = useLocation();
   const active = location.pathname;
-  const { currentUser } = useUser();
+  const { currentUser } = useUser(); // No need for serverLive here
 
   const menuItems = [
     { name: "Home", path: "/", icon: <House className="text-2xl" /> },
     { name: "My Agents", path: "/youragent", icon: <Users className="text-2xl" /> },
     { name: "Create Agents", path: "/createagent", icon: <UserPlus className="text-2xl" /> },
-    ...(isAgentDebug ? [
-      { name: "Chat Test", path: "/chat", icon: <MessageSquare className="text-2xl" /> },
-      { name: "Twitter Test", path: "/twitter-test", icon: <Twitter className="text-2xl" /> },
-    ] : []),
+    ...(isAgentDebug
+      ? [
+          { name: "Chat Test", path: "/chat", icon: <MessageSquare className="text-2xl" /> },
+          { name: "Twitter Test", path: "/twitter-test", icon: <Twitter className="text-2xl" /> },
+        ]
+      : []),
     ...(currentUser
       ? [
           { name: "Add Credits", path: "/add-credits", icon: <CreditCard className="text-2xl" /> },
@@ -25,7 +26,7 @@ const Sidebar = () => {
           { name: "My Profile", path: "/profile", icon: <User className="text-2xl" /> },
         ]
       : []),
-    { name: "Guides", path: "/guides", icon: <BookOpen className="text-2xl" /> }, // Changed from Documentation to Guides, FileText to BookOpen
+    { name: "Guides", path: "/guides", icon: <BookOpen className="text-2xl" /> },
   ];
 
   return (

@@ -3,19 +3,14 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { addUserCredits } from "../api/userApi";
-import {
-  Connection,
-  PublicKey,
-  Transaction,
-  SystemProgram,
-  LAMPORTS_PER_SOL,
-} from "@solana/web3.js";
+import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { toast } from "sonner";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
 const RECEIVER_PUBLIC_KEY = import.meta.env.VITE_SOLANA_PAYMENT_WALLET;
 const SOLANA_ENDPOINT = import.meta.env.VITE_SOLANA_ENDPOINT || "https://api.mainnet-beta.solana.com";
 
-// Credit plans with dynamic SOL prices
 const CREDIT_PLANS = {
   "SECRET_CREDIT_10": { credits: 10, label: "10 Credits", solPrice: 0.05 },
   "SECRET_CREDIT_50": { credits: 50, label: "50 Credits", solPrice: 0.2 },
@@ -30,17 +25,36 @@ export default function AddCreditsPage() {
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showFailureDialog, setShowFailureDialog] = useState(false);
   const [newCreditBalance, setNewCreditBalance] = useState<number | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [serverError, setServerError] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(true);
 
   const { connected: walletConnected, publicKey, signTransaction, sendTransaction } = useWallet();
-  const { currentUser } = useUser();
+  const { currentUser, serverLive, checkServerStatus } = useUser();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!walletConnected) {
+    if (!walletConnected || !publicKey) {
       navigate("/");
+      return;
     }
-  }, [walletConnected, navigate]);
+
+    const initialCheck = async () => {
+      console.log("Running initial server status check on AddCreditsPage load...");
+      await checkServerStatus();
+      if (serverLive === false) {
+        setServerError("Server is currently unavailable.");
+        setLoading(false);
+        toast.error("Server Unavailable", {
+          description: "Cannot load Add Credits page at this time. Please try again later.",
+          duration: 3000,
+        });
+      } else {
+        setLoading(false);
+      }
+    };
+
+    initialCheck();
+  }, [walletConnected, publicKey, navigate, checkServerStatus, serverLive]);
 
   const handlePlanSelect = (plan: PlanKey) => {
     setSelectedPlan(plan);
@@ -48,7 +62,7 @@ export default function AddCreditsPage() {
 
   const handlePurchase = async () => {
     if (!publicKey || !signTransaction || !sendTransaction || !selectedPlan || !currentUser?.userId) {
-      setErrorMessage("Wallet not connected or user not logged in.");
+      setServerError("Wallet not connected or user not logged in.");
       setShowFailureDialog(true);
       toast.error("Purchase Error", {
         description: "Wallet not connected or user not logged in.",
@@ -58,9 +72,16 @@ export default function AddCreditsPage() {
     }
 
     setIsSubmitting(true);
+    setServerError("");
     const connection = new Connection(SOLANA_ENDPOINT, "confirmed");
 
     try {
+      console.log("Checking server status before purchase...");
+      await checkServerStatus();
+      if (serverLive === false) {
+        throw new Error("Server is currently unavailable.");
+      }
+
       if (!RECEIVER_PUBLIC_KEY || typeof RECEIVER_PUBLIC_KEY !== "string") {
         throw new Error("RECEIVER_PUBLIC_KEY is invalid or undefined. Check your .env file.");
       }
@@ -84,24 +105,37 @@ export default function AddCreditsPage() {
       await connection.confirmTransaction(txSignature, "confirmed");
 
       const response = await addUserCredits(currentUser.userId, txSignature, selectedPlan);
-
       setNewCreditBalance(response.newCreditBalance);
       setShowSuccessDialog(true);
       toast.success("Purchase Successful", {
         description: `Added ${CREDIT_PLANS[selectedPlan].credits} credits to your account.`,
         duration: 3000,
       });
-    } catch (error: any) {
-      console.error("Error purchasing credits:", error);
-      setErrorMessage(error.message || "Please try again later.");
-      setShowFailureDialog(true);
-      toast.error("Purchase Failed", {
-        description: error.message || "Please try again later.",
-        duration: 3000,
-      });
+    } catch (err: any) {
+      const errorMsg = err.message || String(err);
+      console.error("Error purchasing credits:", err);
+
+      // Check if the error is due to user canceling the transaction
+      if (errorMsg.includes("User rejected the request") || (err.code && err.code === 4001)) {
+        toast.error("Transaction Canceled", {
+          description: "You canceled the transaction. Please try again if you wish to proceed.",
+          duration: 3000,
+        });
+      } else {
+        setServerError(errorMsg || "Failed to purchase credits.");
+        if (errorMsg !== "Server is currently unavailable.") {
+          setShowFailureDialog(true);
+        }
+        toast.error("Purchase Failed", {
+          description: errorMsg || "Please try again later.",
+          duration: 3000,
+        });
+      }
     } finally {
       setIsSubmitting(false);
-      setSelectedPlan(null);
+      if (!showSuccessDialog) {
+        setSelectedPlan(null); // Only reset on failure or cancellation, not success
+      }
     }
   };
 
@@ -112,12 +146,32 @@ export default function AddCreditsPage() {
 
   const closeFailureDialog = () => {
     setShowFailureDialog(false);
-    setErrorMessage("");
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+        <div className="flex flex-col items-center justify-center">
+          <FontAwesomeIcon icon={faSpinner} className="text-[#6a94f3] text-4xl animate-spin" />
+          <p className="mt-4 text-lg font-medium text-gray-300 animate-pulse">
+            Loading Add Credits Page...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (serverError && !isSubmitting) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+        <div className="text-center text-red-500 text-xl md:text-2xl">{serverError}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl">
+      <div className="w-full max-w-4xl rounded-lg shadow-lg bg-[#222128] border border-[#494848] p-6">
         <h1 className="text-3xl md:text-4xl font-bold text-center mb-10">
           Add Credits to Your Account
         </h1>
@@ -125,15 +179,16 @@ export default function AddCreditsPage() {
           Choose a plan below to add credits via Solana payment.
         </p>
 
-        {/* Plan Selection */}
+        {serverError && isSubmitting && (
+          <p className="text-red-500 text-center mb-6">{serverError}</p>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {Object.entries(CREDIT_PLANS).map(([code, { label, solPrice }]) => (
             <div
               key={code}
               className={`border border-[#494848] rounded-lg p-6 text-center cursor-pointer transition-all duration-300 ${
-                selectedPlan === code
-                  ? "bg-[#6a94f0] text-black"
-                  : "bg-[#1a1a1a] hover:bg-[#2a2a2a]"
+                selectedPlan === code ? "bg-[#6a94f0] text-black" : "bg-[#1a1a1a] hover:bg-[#2a2a2a]"
               }`}
               onClick={() => handlePlanSelect(code as PlanKey)}
             >
@@ -153,15 +208,12 @@ export default function AddCreditsPage() {
           ))}
         </div>
 
-        {/* Purchase Button */}
         <div className="text-center mt-10">
           <button
             onClick={handlePurchase}
             disabled={!selectedPlan || isSubmitting}
             className={`w-full max-w-md py-4 rounded-lg text-xl font-semibold bg-[#6a94f0] text-black transition-all duration-400 ${
-              !selectedPlan || isSubmitting
-                ? "opacity-50 cursor-not-allowed"
-                : "hover:bg-[#8faef0]"
+              !selectedPlan || isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:bg-[#8faef0]"
             }`}
           >
             {isSubmitting
@@ -170,7 +222,6 @@ export default function AddCreditsPage() {
           </button>
         </div>
 
-        {/* Success Dialog */}
         {showSuccessDialog && (
           <div
             style={{ backgroundColor: "rgba(0, 0, 0, 0.65)" }}
@@ -195,7 +246,6 @@ export default function AddCreditsPage() {
           </div>
         )}
 
-        {/* Failure Dialog */}
         {showFailureDialog && (
           <div
             style={{ backgroundColor: "rgba(0, 0, 0, 0.65)" }}
@@ -203,9 +253,7 @@ export default function AddCreditsPage() {
           >
             <div className="bg-[#222128] p-6 rounded-lg shadow-lg border border-[#494848] w-full max-w-md">
               <h3 className="text-xl font-bold mb-4 text-red-500">Purchase Failed</h3>
-              <p className="text-gray-300 mb-6">
-                {errorMessage}
-              </p>
+              <p className="text-gray-300 mb-6">{serverError}</p>
               <div className="flex justify-end">
                 <button
                   onClick={closeFailureDialog}

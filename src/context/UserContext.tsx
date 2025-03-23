@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User } from "../interfaces/user";
+import { getServerStatus } from "../api/userApi";
 
 interface UserContextType {
   currentUser: User | null;
@@ -8,6 +9,9 @@ interface UserContextType {
   setViewMode: (mode: "myAgents" | "othersAgents") => void;
   isWalletConnected: boolean;
   setIsWalletConnected: (connected: boolean) => void;
+  serverLive: boolean | null;
+  setServerLive: (live: boolean | null) => void;
+  checkServerStatus: () => Promise<void>; // Expose manual check function
 }
 
 const UserContext = createContext<UserContextType>({
@@ -17,6 +21,9 @@ const UserContext = createContext<UserContextType>({
   setViewMode: () => {},
   isWalletConnected: false,
   setIsWalletConnected: () => {},
+  serverLive: null,
+  setServerLive: () => {},
+  checkServerStatus: async () => {},
 });
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
@@ -29,14 +36,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const savedWalletState = sessionStorage.getItem("isWalletConnected");
     return savedWalletState ? JSON.parse(savedWalletState) : false;
   });
+  const [serverLive, setServerLive] = useState<boolean | null>(null);
 
-  // Track previous wallet state to detect transitions
   const [prevWalletConnected, setPrevWalletConnected] = useState<boolean>(isWalletConnected);
 
-  // Log state changes for debugging
   console.log("UserContext - currentUser:", currentUser);
   console.log("UserContext - viewMode:", viewMode);
   console.log("UserContext - isWalletConnected:", isWalletConnected);
+  console.log("UserContext - serverLive:", serverLive);
 
   const handleSetCurrentUser = (user: User | null) => {
     setCurrentUser(user);
@@ -57,7 +64,33 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     sessionStorage.setItem("isWalletConnected", JSON.stringify(connected));
   };
 
-  // Detect wallet state transitions
+  const handleSetServerLive = (live: boolean | null) => {
+    setServerLive(live);
+  };
+
+  const checkServerStatus = async () => {
+    try {
+      const status = await getServerStatus();
+      setServerLive(status.isLive);
+      console.log("Server status checked:", status.isLive);
+    } catch (error) {
+      console.error("Failed to check server status:", error);
+      setServerLive(false);
+    }
+  };
+
+  useEffect(() => {
+    // Initial check
+    checkServerStatus();
+
+    // Polling every 5 minutes as backup
+    const interval = setInterval(() => {
+      checkServerStatus();
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     if (prevWalletConnected !== isWalletConnected) {
       if (isWalletConnected) {
@@ -65,7 +98,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       } else {
         console.log("Wallet state transitioned: Connected -> Not Connected");
       }
-      setPrevWalletConnected(isWalletConnected); // Update previous state
+      setPrevWalletConnected(isWalletConnected);
     }
   }, [isWalletConnected, prevWalletConnected]);
 
@@ -78,6 +111,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         setViewMode: handleSetViewMode,
         isWalletConnected,
         setIsWalletConnected: handleSetIsWalletConnected,
+        serverLive,
+        setServerLive: handleSetServerLive,
+        checkServerStatus, // Provide the function to consumers
       }}
     >
       {children}

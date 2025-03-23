@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import Image1 from "../assets/logo.png";
-import { Logs, House, Users, UserPlus, User, MessageSquare, Edit, Twitter, CreditCard, BookOpen, Mail } from "lucide-react";
+import { Logs, House, Users, UserPlus, User, MessageSquare, Edit, Twitter, CreditCard, BookOpen, Mail, Server } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
@@ -12,13 +12,12 @@ const isAgentDebug = import.meta.env.VITE_SOLANA_AGENT_DEBUG === "TRUE";
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isWalletMenuOpen, setIsWalletMenuOpen] = useState(false);
-  const { currentUser, isWalletConnected, setIsWalletConnected } = useUser();
+  const { currentUser, isWalletConnected, setIsWalletConnected, serverLive, checkServerStatus } = useUser();
   const wallet = useWallet();
   const { publicKey, connected, disconnect, connecting } = wallet;
   const { setVisible } = useWalletModal();
   const navigate = useNavigate();
 
-  // Sync wallet state with context
   useEffect(() => {
     if (connected !== isWalletConnected) {
       setIsWalletConnected(connected);
@@ -27,9 +26,12 @@ export default function Header() {
           description: "Your wallet is now connected!",
           duration: 3000,
         });
+        checkServerStatus(); // Check server status on connect
+      } else if (!connected && isWalletConnected) {
+        checkServerStatus(); // Check server status on disconnect
       }
     }
-  }, [connected, isWalletConnected, setIsWalletConnected]);
+  }, [connected, isWalletConnected, setIsWalletConnected, checkServerStatus]);
 
   const handleWalletClick = async () => {
     try {
@@ -60,6 +62,7 @@ export default function Header() {
         duration: 3000,
       });
       navigate("/");
+      checkServerStatus(); // Check server status after disconnect
     } catch (error) {
       console.error("Disconnect error:", error);
     }
@@ -89,13 +92,23 @@ export default function Header() {
 
   return (
     <header className="fixed top-0 left-0 w-full px-4 md:px-8 flex items-center justify-between p-4 bg-black text-white shadow-md z-50 border-b border-[#494848]">
-      <div className="flex items-center gap-12">
+      <div className="flex items-center gap-2">
         <Link to="/">
           <div className="w-9 h-9 lg:w-12 lg:h-12 max-w-[150px]">
             <img src={Image1} className="w-full h-full object-contain" alt="Logo" />
           </div>
         </Link>
-        <div className="hidden lg:flex items-center gap-4"> {/* Added hidden lg:flex */}
+        <div
+          className={`lg:hidden w-3 h-3 rounded-full ${
+            serverLive === null
+              ? "bg-gray-400"
+              : serverLive
+              ? "bg-green-500"
+              : "bg-red-500"
+          }`}
+          title={serverLive === null ? "Checking server status" : serverLive ? "Server is live" : "Server is down"}
+        />
+        <div className="hidden lg:flex items-center gap-4">
           <a
             href="https://twitter.com/ValetAgents"
             target="_blank"
@@ -110,6 +123,21 @@ export default function Header() {
           >
             <Mail size={24} />
           </a>
+          <div
+            className={`p-2 flex items-center gap-2 ${
+              serverLive === null
+                ? "text-gray-400"
+                : serverLive
+                ? "text-green-500"
+                : "text-red-500"
+            }`}
+            title={serverLive === null ? "Checking server status" : serverLive ? "Server is live" : "Server is down"}
+          >
+            <Server size={24} />
+            <span className="hidden md:inline">
+              {serverLive === null ? "Checking..." : serverLive ? "Live" : "Down"}
+            </span>
+          </div>
         </div>
       </div>
       <div className="flex items-center gap-1">

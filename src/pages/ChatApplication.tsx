@@ -20,20 +20,43 @@ export default function ChatApplication() {
   const [isStreamChat, setIsStreamChat] = useState<boolean>(false);
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [serverError, setServerError] = useState<string>(""); // For server status errors
 
   const { connected: walletConnected } = useWallet();
-  const { currentUser } = useUser();
+  const { currentUser, serverLive, checkServerStatus } = useUser();
   const navigate = useNavigate();
 
+  // Check server status on page load
   useEffect(() => {
     if (!walletConnected || !currentUser?.userId) {
       navigate("/");
       return;
     }
 
+    const initialCheck = async () => {
+      console.log("Running initial server status check on ChatApplication load...");
+      await checkServerStatus();
+      console.log("Initial serverLive value:", serverLive);
+      if (serverLive === false) {
+        setServerError("Server is currently unavailable.");
+        setLoading(false); // Stop loading if server is down
+        toast.error("Server Unavailable", {
+          description: "Cannot load chat application at this time. Please try again later.",
+          duration: 3000,
+        });
+      }
+    };
+
+    initialCheck();
+  }, [walletConnected, currentUser, navigate, checkServerStatus, serverLive]);
+
+  // Fetch agents only if server is live
+  useEffect(() => {
+    if (!walletConnected || !currentUser?.userId || serverLive === false) return;
+
     const fetchAgents = async () => {
       try {
-        setLoading(true);
+        console.log("Fetching agents since server is live...");
         const userAgents = await getAgentsByUserId(currentUser.userId);
         setMyAgents(userAgents);
 
@@ -44,10 +67,12 @@ export default function ChatApplication() {
         if (userAgents.length > 0 && !selectedAgent) {
           setSelectedAgent(userAgents[0]);
         }
-      } catch (error) {
-        console.error("Error fetching agents:", error);
+      } catch (err: unknown) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        console.error("Error fetching agents:", err);
+        setServerError(errorMsg || "Failed to load agents.");
         toast.error("Failed to load agents", {
-          description: "Please try again later.",
+          description: errorMsg || "Please try again later.",
           duration: 3000,
         });
       } finally {
@@ -56,7 +81,7 @@ export default function ChatApplication() {
     };
 
     fetchAgents();
-  }, [walletConnected, currentUser, navigate]);
+  }, [walletConnected, currentUser, navigate, serverLive, selectedAgent]);
 
   const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const category = e.target.value as "myAgents" | "othersAgents";
@@ -99,8 +124,21 @@ export default function ChatApplication() {
     setMessages((prev) => [...prev, userMessage]);
     setInputMessage("");
 
-    if (isStreamChat) {
-      try {
+    try {
+      console.log("Checking server status before sending message...");
+      await checkServerStatus();
+      console.log("serverLive before chat:", serverLive);
+      if (serverLive === false) {
+        setServerError("Server is currently unavailable.");
+        toast.error("Server Unavailable", {
+          description: "Cannot send message at this time. Please try again later.",
+          duration: 3000,
+        });
+        setMessages((prev) => [...prev, { sender: "agent", text: "Server is currently unavailable." }]);
+        return;
+      }
+
+      if (isStreamChat) {
         setIsStreaming(true);
         await chatWithAgentStream(
           selectedAgent.agentId,
@@ -122,61 +160,36 @@ export default function ChatApplication() {
             console.log("Stream complete");
           }
         );
-      } catch (error) {
-        setIsStreaming(false);
-        console.error("Streaming chat error:", error);
-        let errorMessage = "Unable to stream response from the agent.";
-        if (error instanceof Error && error.message) {
-          try {
-            const errorData = JSON.parse(error.message);
-            if (errorData.status === 403) {
-              errorMessage = errorData.reply || "This agent is currently inactive.";
-            } else if (errorData.status === 404) {
-              errorMessage = "Agent not found.";
-            } else if (errorData.status === 400) {
-              errorMessage = errorData.reply || "Bad request. Check agent configuration.";
-            } else {
-              errorMessage = errorData.reply || "Streaming failed or agent configuration isn’t set up.";
-            }
-          } catch (parseError) {
-            // Fallback to generic message if parsing fails
-          }
-        }
-        toast.error("Stream Chat Failed", {
-          description: errorMessage,
-          duration: 3000,
-        });
-        setMessages((prev) => [...prev, { sender: "agent", text: errorMessage }]);
-      }
-    } else {
-      try {
+      } else {
         const response = await chatWithAgent(selectedAgent.agentId, inputMessage);
         setMessages((prev) => [...prev, { sender: "agent", text: response.reply }]);
-      } catch (error) {
-        console.error("Error chatting with agent:", error);
-        let errorMessage = "Unable to get a response from the agent.";
-        if (error instanceof Error && error.message) {
-          try {
-            const errorData = JSON.parse(error.message);
-            if (errorData.status === 403) {
-              errorMessage = errorData.reply || "This agent is currently inactive.";
-            } else if (errorData.status === 404) {
-              errorMessage = "Agent not found.";
-            } else if (errorData.status === 400) {
-              errorMessage = errorData.reply || "Bad request. Check agent configuration.";
-            } else {
-              errorMessage = errorData.reply || "Chat failed or agent configuration isn’t set up.";
-            }
-          } catch (parseError) {
-            // Fallback to generic message
-          }
-        }
-        toast.error("Chat Failed", {
-          description: errorMessage,
-          duration: 3000,
-        });
-        setMessages((prev) => [...prev, { sender: "agent", text: errorMessage }]);
       }
+    } catch (err: unknown) {
+      setIsStreaming(false);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.error("Chat error:", errorMessage);
+      let displayMessage = "Unable to get a response from the agent.";
+      if (err instanceof Error && err.message) {
+        try {
+          const errorData = JSON.parse(err.message);
+          if (errorData.status === 403) {
+            displayMessage = errorData.reply || "This agent is currently inactive.";
+          } else if (errorData.status === 404) {
+            displayMessage = "Agent not found.";
+          } else if (errorData.status === 400) {
+            displayMessage = errorData.reply || "Bad request. Check agent configuration.";
+          } else {
+            displayMessage = errorData.reply || "Chat failed or agent configuration isn’t set up.";
+          }
+        } catch (parseError) {
+          // Fallback to generic message
+        }
+      }
+      toast.error(isStreamChat ? "Stream Chat Failed" : "Chat Failed", {
+        description: displayMessage,
+        duration: 3000,
+      });
+      setMessages((prev) => [...prev, { sender: "agent", text: displayMessage }]);
     }
   };
 
@@ -184,7 +197,7 @@ export default function ChatApplication() {
 
   if (loading) {
     return (
-      <div className="h-screen bg-black text-white flex items-center justify-center p-4">
+      <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
         <div className="flex flex-col items-center justify-center">
           <FontAwesomeIcon
             icon={faSpinner}
@@ -193,6 +206,16 @@ export default function ChatApplication() {
           <p className="mt-4 text-lg font-medium text-gray-300 animate-pulse">
             Loading Chat Application...
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (serverError) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+        <div className="text-center text-red-500 text-xl md:text-2xl">
+          {serverError}
         </div>
       </div>
     );

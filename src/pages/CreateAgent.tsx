@@ -5,18 +5,16 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { fetchWrapper } from "../utils/fetchWrapper";
-import {
-  Connection,
-  PublicKey,
-  Transaction,
-} from "@solana/web3.js";
+import { Connection, PublicKey, Transaction } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, createTransferInstruction, getAssociatedTokenAddress, getAccount } from "@solana/spl-token";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 const RECEIVER_PUBLIC_KEY = import.meta.env.VITE_SOLANA_PAYMENT_WALLET;
 const SOLANA_ENDPOINT = import.meta.env.VITE_SOLANA_ENDPOINT;
 const TOKEN_MINT_ADDRESS = import.meta.env.VITE_VALLET_TOKEN_ADDRESS || "2ex5kxL5ZKSxv6mJHf5EiM86ZYCGJp56JY1MjKrgpump";
-const AGENT_CREATION_TOKEN_AMOUNT = 1000 * Math.pow(10, 6); // 1000 tokens with 6 decimals
+const AGENT_CREATION_TOKEN_AMOUNT = 1000 * Math.pow(10, 6);
 
 interface FormData {
   name: string;
@@ -36,23 +34,39 @@ export default function CreateAgent() {
     catchphrase: "",
     agentType: "basic",
   });
-  const [error, setError] = useState<string>("");
+  const [serverError, setServerError] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const { connected: walletConnected, publicKey } = useWallet();
-  const { currentUser } = useUser();
+  const { currentUser, serverLive, checkServerStatus } = useUser();
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log("Wallet connected:", walletConnected, "PublicKey:", publicKey?.toString());
-    if (!walletConnected) {
+    if (!walletConnected || !publicKey) {
       navigate("/");
+      return;
     }
-  }, [walletConnected, publicKey, navigate]);
 
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
+    const initialCheck = async () => {
+      console.log("Running initial server status check on CreateAgent load...");
+      await checkServerStatus();
+      if (serverLive === false) {
+        setServerError("Server is currently unavailable.");
+        setLoading(false);
+        toast.error("Server Unavailable", {
+          description: "Cannot load Create Agent page at this time. Please try again later.",
+          duration: 3000,
+        });
+      } else {
+        setLoading(false);
+      }
+    };
+
+    initialCheck();
+  }, [walletConnected, publicKey, navigate, checkServerStatus, serverLive]);
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
@@ -64,7 +78,7 @@ export default function CreateAgent() {
     e.preventDefault();
 
     if (!publicKey) {
-      setError("Wallet not connected properly.");
+      setServerError("Wallet not connected properly.");
       toast.error("Wallet Error", { description: "Please connect your wallet.", duration: 3000 });
       return;
     }
@@ -72,7 +86,7 @@ export default function CreateAgent() {
     const requiredFields = ["name", "bio", "tone", "formality", "catchphrase"];
     const missingFields = requiredFields.filter((field) => !formData[field as keyof FormData]);
     if (missingFields.length > 0) {
-      setError(`Missing required fields: ${missingFields.join(", ")}`);
+      setServerError(`Missing required fields: ${missingFields.join(", ")}`);
       toast.error("Form Submission Failed", {
         description: `Missing required fields: ${missingFields.join(", ")}`,
         duration: 3000,
@@ -81,7 +95,7 @@ export default function CreateAgent() {
     }
 
     if (!currentUser?.userId) {
-      setError("User must be logged in.");
+      setServerError("User must be logged in.");
       toast.error("Form Submission Failed", {
         description: "User must be logged in.",
         duration: 3000,
@@ -93,9 +107,17 @@ export default function CreateAgent() {
     const connection = new Connection(SOLANA_ENDPOINT, "confirmed");
 
     try {
-      console.log("RECEIVER_PUBLIC_KEY:", RECEIVER_PUBLIC_KEY);
-      console.log("TOKEN_MINT_ADDRESS:", TOKEN_MINT_ADDRESS);
-      console.log("SOLANA_ENDPOINT:", SOLANA_ENDPOINT);
+      console.log("Checking server status before agent creation...");
+      await checkServerStatus();
+      if (serverLive === false) {
+        setServerError("Server is currently unavailable.");
+        toast.error("Server Unavailable", {
+          description: "Cannot create agent at this time. Please try again later.",
+          duration: 3000,
+        });
+        return;
+      }
+
       if (!RECEIVER_PUBLIC_KEY || typeof RECEIVER_PUBLIC_KEY !== "string") {
         throw new Error("RECEIVER_PUBLIC_KEY is invalid or undefined. Check your .env file.");
       }
@@ -108,48 +130,20 @@ export default function CreateAgent() {
 
       const receiverPublicKey = new PublicKey(RECEIVER_PUBLIC_KEY);
       const tokenMintPublicKey = new PublicKey(TOKEN_MINT_ADDRESS);
-      console.log("receiverPublicKey:", receiverPublicKey.toString());
-      console.log("tokenMintPublicKey:", tokenMintPublicKey.toString());
-      console.log("publicKey:", publicKey.toString());
-
       const solBalance = await connection.getBalance(publicKey);
-      console.log("Sender SOL balance:", solBalance / 1e9, "SOL");
       if (solBalance < 5000) {
-        console.error("Insufficient SOL balance:", solBalance / 1e9, "SOL");
         throw new Error("Insufficient SOL for transaction fees. Please add at least 0.01 SOL to your wallet.");
       }
 
       const senderATA = await getAssociatedTokenAddress(tokenMintPublicKey, publicKey);
       const receiverATA = await getAssociatedTokenAddress(tokenMintPublicKey, receiverPublicKey);
-      console.log("senderATA:", senderATA.toString());
-      console.log("receiverATA:", receiverATA.toString());
 
-      try {
-        const senderAccount = await getAccount(connection, senderATA, "confirmed");
-        const balance = Number(senderAccount.amount);
-        console.log("Sender token balance:", balance / Math.pow(10, 6), "tokens");
-        if (balance < AGENT_CREATION_TOKEN_AMOUNT) {
-          console.error("Insufficient token balance:", balance / Math.pow(10, 6), "tokens");
-          throw new Error("Insufficient token balance. Please ensure you have at least 1000 tokens.");
-        }
-      } catch (err: any) {
-        console.error("Sender ATA check failed:", err);
-        if (err.name === "TokenAccountNotFoundError" || err.message.includes("could not find account")) {
-          throw new Error("Sender's token account does not exist. Please add the token to your wallet.");
-        }
-        throw new Error("Failed to verify sender's token account.");
+      const senderAccount = await getAccount(connection, senderATA, "confirmed");
+      if (Number(senderAccount.amount) < AGENT_CREATION_TOKEN_AMOUNT) {
+        throw new Error("Insufficient token balance. Please ensure you have at least 1000 tokens.");
       }
 
-      try {
-        await getAccount(connection, receiverATA, "confirmed");
-        console.log("Receiver ATA exists.");
-      } catch (err: any) {
-        console.error("Receiver ATA check failed:", err);
-        if (err.name === "TokenAccountNotFoundError" || err.message.includes("could not find account")) {
-          throw new Error("Receiver's token account does not exist. Please contact support to initialize the treasury wallet.");
-        }
-        throw new Error("Failed to verify receiver's token account.");
-      }
+      await getAccount(connection, receiverATA, "confirmed");
 
       const transferTx = new Transaction().add(
         createTransferInstruction(
@@ -165,7 +159,6 @@ export default function CreateAgent() {
       const { blockhash } = await connection.getLatestBlockhash();
       transferTx.recentBlockhash = blockhash;
       transferTx.feePayer = publicKey;
-      console.log("Recent blockhash:", blockhash);
 
       const provider = window.solana;
       if (!provider || !provider.isPhantom) {
@@ -173,7 +166,6 @@ export default function CreateAgent() {
       }
 
       const { signature } = await provider.signAndSendTransaction(transferTx);
-      console.log("Transaction signature:", signature);
       await connection.confirmTransaction(signature, "confirmed");
 
       const agentData = {
@@ -192,7 +184,6 @@ export default function CreateAgent() {
         vision: "A helpful future",
       };
 
-      console.log("Sending to backend:", { txSignature: signature, ...agentData });
       const response = await fetchWrapper<{ message: string; agentId: string }>(
         `${BASE_URL}/agents`,
         {
@@ -201,9 +192,8 @@ export default function CreateAgent() {
           headers: { "Content-Type": "application/json" },
         }
       );
-      console.log("Backend response:", response);
 
-      setError("");
+      setServerError("");
       toast.success("Agent Created", {
         description: `Successfully created agent: ${formData.name} (ID: ${response.agentId})`,
         duration: 3000,
@@ -218,16 +208,18 @@ export default function CreateAgent() {
       });
     } catch (err: any) {
       console.error("Error creating agent:", err.message || err);
-      if (err.message.includes("Wallet not connected") || err.message.includes("Missing required fields") || err.message.includes("User must be logged in")) {
-        setError(err.message);
-        toast.error("Agent Creation Failed", {
-          description: err.message,
+      const errorMsg = err.message || "Something went wrong.";
+
+      // Check if the error is due to user canceling the transaction
+      if (errorMsg.includes("User rejected the request") || (err.code && err.code === 4001)) {
+        toast.error("Transaction Canceled", {
+          description: "You canceled the transaction. Please try again if you wish to proceed.",
           duration: 3000,
         });
       } else {
-        setError("Something went wrong.");
+        setServerError(errorMsg);
         toast.error("Agent Creation Failed", {
-          description: "Something went wrong. Please try again later.",
+          description: errorMsg,
           duration: 3000,
         });
       }
@@ -235,6 +227,27 @@ export default function CreateAgent() {
       setIsSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+        <div className="flex flex-col items-center justify-center">
+          <FontAwesomeIcon icon={faSpinner} className="text-[#6894f3] text-4xl animate-spin" />
+          <p className="mt-4 text-lg font-medium text-gray-300 animate-pulse">
+            Loading Create Agent Page...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (serverError && !isSubmitting) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+        <div className="text-center text-red-500 text-xl md:text-2xl">{serverError}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full bg-black text-white flex items-center justify-center p-0 lg:p-0 mt-5">
@@ -249,14 +262,10 @@ export default function CreateAgent() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div
                   className="flex flex-col lg:flex-row items-center border border-[#494848] px-2 py-4 xl:px-4 xl:py-4 rounded-lg text-center duration-700 lg:text-left cursor-pointer hover:bg-gray-900"
-                  onClick={() =>
-                    setFormData((prev) => ({ ...prev, agentType: "basic" }))
-                  }
+                  onClick={() => setFormData((prev) => ({ ...prev, agentType: "basic" }))}
                 >
                   <div className="flex-1">
-                    <div className="font-semibold text-white text-sm md:text-base">
-                      Basic Agent
-                    </div>
+                    <div className="font-semibold text-white text-sm md:text-base">Basic Agent</div>
                     <div className="text-xs md:text-sm text-gray-400 mt-2 md:mt-0">
                       Standard AI Framework
                     </div>
@@ -273,15 +282,9 @@ export default function CreateAgent() {
                 <div
                   className="flex flex-col lg:flex-row items-center border border-[#494848] px-2 py-4 xl:px-4 xl:py-4 rounded-lg text-center lg:text-left opacity-50 cursor-not-allowed"
                 >
-                  <img
-                    src={puppet}
-                    className="w-14 h-14 lg:w-10 lg:h-10 mb-4 lg:mb-0 lg:mr-4 rounded-lg"
-                    alt="PuppetOS"
-                  />
+                  <img src={puppet} className="w-14 h-14 lg:w-10 lg:h-10 mb-4 lg:mb-0 lg:mr-4 rounded-lg" alt="PuppetOS" />
                   <div className="flex-1">
-                    <div className="font-semibold text-white text-sm md:text-base">
-                      PuppetOS
-                    </div>
+                    <div className="font-semibold text-white text-sm md:text-base">PuppetOS</div>
                     <div className="text-xs md:text-sm text-gray-400 mt-2 md:mt-0">
                       Coming Soon{" "}
                       <a
@@ -311,9 +314,7 @@ export default function CreateAgent() {
             <div className="mx-auto py-2 mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
                 <div className="flex flex-col">
-                  <label htmlFor="name" className="mb-1 text-white">
-                    Name *
-                  </label>
+                  <label htmlFor="name" className="mb-1 text-white">Name *</label>
                   <input
                     id="name"
                     name="name"
@@ -328,9 +329,7 @@ export default function CreateAgent() {
                   />
                 </div>
                 <div className="flex flex-col">
-                  <label htmlFor="tone" className="mb-1 text-white">
-                    Tone *
-                  </label>
+                  <label htmlFor="tone" className="mb-1 text-white">Tone *</label>
                   <input
                     id="tone"
                     name="tone"
@@ -347,9 +346,7 @@ export default function CreateAgent() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
                 <div className="flex flex-col">
-                  <label htmlFor="formality" className="mb-1 text-white">
-                    Formality *
-                  </label>
+                  <label htmlFor="formality" className="mb-1 text-white">Formality *</label>
                   <input
                     id="formality"
                     name="formality"
@@ -364,9 +361,7 @@ export default function CreateAgent() {
                   />
                 </div>
                 <div className="flex flex-col">
-                  <label htmlFor="catchphrase" className="mb-1 text-white">
-                    Catchphrase *
-                  </label>
+                  <label htmlFor="catchphrase" className="mb-1 text-white">Catchphrase *</label>
                   <input
                     id="catchphrase"
                     name="catchphrase"
@@ -382,9 +377,7 @@ export default function CreateAgent() {
                 </div>
               </div>
               <div className="flex flex-col mb-2">
-                <label htmlFor="bio" className="mb-1 text-white">
-                  Bio *
-                </label>
+                <label htmlFor="bio" className="mb-1 text-white">Bio *</label>
                 <textarea
                   id="bio"
                   name="bio"
@@ -399,7 +392,7 @@ export default function CreateAgent() {
               </div>
             </div>
 
-            {error && <p className="text-red-500 text-center mt-2">{error}</p>}
+            {serverError && <p className="text-red-500 text-center mt-2">{serverError}</p>}
 
             <div className="text-center w-full">
               <button

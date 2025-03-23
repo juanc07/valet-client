@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCopy, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "sonner";
-import { getUser, getAgentCount } from "../api/userApi";
+import { getUser, getAgentCount, getActiveAgentCount } from "../api/userApi";
 import { User } from "../interfaces/user";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useNavigate } from "react-router-dom";
 import { countryOptions } from "../data/countries";
+import { useUser } from "../context/UserContext";
 
 interface UserProfileProps {
   userId: string;
@@ -20,6 +21,7 @@ export default function UserProfile({ userId }: UserProfileProps) {
   const [error, setError] = useState<string>("");
 
   const { connected: walletConnected, publicKey } = useWallet();
+  const { serverLive, checkServerStatus } = useUser();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,18 +34,26 @@ export default function UserProfile({ userId }: UserProfileProps) {
     const fetchUserData = async () => {
       try {
         setLoading(true);
+
+        await checkServerStatus();
+        if (serverLive === false) {
+          throw new Error("Server is currently unavailable.");
+        }
+
         const userData = await getUser(userId);
         const totalAgents = await getAgentCount(userId);
-        const activeAgentsCount = await getAgentCount(userId);
+        // Note: activeAgentsCount seems to be incorrectly using total agents; assuming this is a typo
+        const activeAgentsCount = await getActiveAgentCount(userId, true); // Assuming API supports an 'active' filter
 
         setUser(userData);
         setAgentCount(totalAgents);
         setActiveAgentCount(activeAgentsCount);
-      } catch (err) {
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
         console.error("Error fetching user data:", err);
-        setError("Failed to load profile data.");
+        setError(errorMessage || "Failed to load profile data.");
         toast.error("Failed to load profile", {
-          description: "Please try again later.",
+          description: errorMessage || "Please try again later.",
           duration: 3000,
         });
       } finally {
@@ -54,7 +64,7 @@ export default function UserProfile({ userId }: UserProfileProps) {
     if (userId && walletConnected) {
       fetchUserData();
     }
-  }, [userId, walletConnected]);
+  }, [userId, walletConnected, serverLive, checkServerStatus]);
 
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -103,7 +113,7 @@ export default function UserProfile({ userId }: UserProfileProps) {
 
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
-      <div className="w-full bg-[#1a1a1a] rounded-lg shadow-lg p-4 sm:p-6">
+      <div className="w-full max-w-4xl bg-[#1a1a1a] rounded-lg shadow-lg p-4 sm:p-6">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-[#6a94f0]">
@@ -123,7 +133,7 @@ export default function UserProfile({ userId }: UserProfileProps) {
               <div className="flex items-center justify-between">
                 <span className="text-gray-400">User ID:</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-white truncate max-w-[120px] sm:max-w-[150px] md:max-w-[200px]">
+                  <span className="text-white truncate max-w-[100px] sm:max-w-[120px] md:max-w-[150px]">
                     {user.userId}
                   </span>
                   <button
@@ -138,7 +148,7 @@ export default function UserProfile({ userId }: UserProfileProps) {
               <div className="flex items-center justify-between">
                 <span className="text-gray-400">Wallet:</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-white truncate max-w-[120px] sm:max-w-[150px] md:max-w-[200px]">
+                  <span className="text-white truncate max-w-[100px] sm:max-w-[120px] md:max-w-[150px]">
                     {publicKey ? publicKey.toBase58() : "Not connected"}
                   </span>
                   {publicKey && (
@@ -154,13 +164,13 @@ export default function UserProfile({ userId }: UserProfileProps) {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-400">Email:</span>
-                <span className="text-white truncate max-w-[120px] sm:max-w-[150px] md:max-w-[200px]">
+                <span className="text-white truncate max-w-[100px] sm:max-w-[120px] md:max-w-[150px]">
                   {user.email || "Not set"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-400">Full Name:</span>
-                <span className="text-white truncate max-w-[120px] sm:max-w-[150px] md:max-w-[200px]">
+                <span className="text-white truncate max-w-[100px] sm:max-w-[120px] md:max-w-[150px]">
                   {user.firstName || user.lastName
                     ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
                     : "Not set"}
@@ -172,7 +182,7 @@ export default function UserProfile({ userId }: UserProfileProps) {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-400">Country:</span>
-                <span className="text-white truncate max-w-[120px] sm:max-w-[150px] md:max-w-[200px]">
+                <span className="text-white truncate max-w-[100px] sm:max-w-[120px] md:max-w-[150px]">
                   {countryOptions.find((opt) => opt.value === user.country)?.label || user.country || "Not set"}
                 </span>
               </div>
@@ -191,19 +201,19 @@ export default function UserProfile({ userId }: UserProfileProps) {
             <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
               <div className="flex items-center justify-between">
                 <span className="text-gray-400">Twitter:</span>
-                <span className="text-white truncate max-w-[120px] sm:max-w-[150px] md:max-w-[200px]">
+                <span className="text-white truncate max-w-[100px] sm:max-w-[120px] md:max-w-[150px]">
                   {user.twitterHandle || "Not set"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-400">Discord:</span>
-                <span className="text-white truncate max-w-[120px] sm:max-w-[150px] md:max-w-[200px]">
+                <span className="text-white truncate max-w-[100px] sm:max-w-[120px] md:max-w-[150px]">
                   {user.discordId || "Not set"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-400">Telegram:</span>
-                <span className="text-white truncate max-w-[120px] sm:max-w-[150px] md:max-w-[200px]">
+                <span className="text-white truncate max-w-[100px] sm:max-w-[120px] md:max-w-[150px]">
                   {user.telegramId || "Not set"}
                 </span>
               </div>

@@ -197,23 +197,25 @@ export default function AgentProfile() {
     { id: "wallets", label: "Wallets" },
     { id: "personality", label: "Personality" },
     { id: "knowledge", label: "Knowledge" },
-    ...(isCreator ? [
-      { id: "settings", label: "Settings" },
-      { id: "twitter", label: "Twitter" },
-      { id: "api", label: "API Keys" },
-    ] : []),
+    ...(isCreator
+      ? [
+          { id: "settings", label: "Settings" },
+          { id: "twitter", label: "Twitter" },
+          { id: "api", label: "API Keys" },
+        ]
+      : []),
   ];
 
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
-      <div className="w-full bg-[#1a1a1a] rounded-lg shadow-lg p-4 sm:p-6 flex flex-col min-h-[80vh]">
+      <div className="w-full max-w-4xl bg-[#1a1a1a] rounded-lg shadow-lg p-4 sm:p-6 flex flex-col min-h-[80vh] relative">
         {/* Back Button */}
         <button
           onClick={handleBack}
           className="absolute top-4 left-4 text-[#6a94f0] hover:text-[#8faef0] flex items-center gap-2 text-xs sm:text-sm"
         >
           <FontAwesomeIcon icon={faArrowLeft} />
-          <span>Back</span>
+          <span>Back to Agents</span>
         </button>
 
         {/* Header with Profile Image */}
@@ -228,12 +230,15 @@ export default function AgentProfile() {
             </div>
           )}
           <div className="text-center mt-3 sm:mt-0 sm:text-left">
-            <h1 className="text-lg sm:text-xl md:text-3xl font-bold text-[#6a94f0] break-words max-w-[180px] sm:max-w-[200px] mx-auto sm:mx-0 md:max-w-none">
+            <h1 className="text-lg sm:text-xl md:text-3xl font-bold text-[#6a94f0] break-words max-w-[180px] sm:max-w-[200px] md:max-w-[300px] mx-auto sm:mx-0">
               {agentData.name || "Unnamed Agent"}
             </h1>
             <div className="flex justify-center sm:justify-start items-center gap-2 mt-2">
               <p className="text-gray-400 text-xs sm:text-sm">
-                ID: <span className="truncate max-w-[120px] sm:max-w-[150px] md:max-w-[200px]">{agentData.agentId || "Not set"}</span>
+                ID:{" "}
+                <span className="truncate max-w-[100px] sm:max-w-[120px] md:max-w-[150px]">
+                  {agentData.agentId || "Not set"}
+                </span>
               </p>
               {agentData.agentId && (
                 <button
@@ -246,7 +251,8 @@ export default function AgentProfile() {
               )}
             </div>
             <p className="text-xs sm:text-sm mt-1">
-              Status: <span className={agentData.isActive ? "text-green-400" : "text-red-400"}>
+              Status:{" "}
+              <span className={agentData.isActive ? "text-green-400" : "text-red-400"}>
                 {agentData.isActive ? "Active" : "Inactive"}
               </span>
             </p>
@@ -270,21 +276,23 @@ export default function AgentProfile() {
           ))}
         </div>
 
-        {/* Tab Content with Fixed Height and Scroll */}
+        {/* Tab Content */}
         <div className="bg-[#222128] rounded-lg p-4 flex-1 overflow-y-auto text-xs sm:text-sm">
           {activeTab === "basic" && (
             <div className="space-y-2 sm:space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Type:</span>
-                <span className="truncate max-w-[200px]">{agentData.agentType || "Not set"}</span>
+                <span className="truncate max-w-[150px] sm:max-w-[200px]">{agentData.agentType || "Not set"}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Created By:</span>
-                <span className="truncate max-w-[200px]">{agentData.createdBy || "Not set"}</span>
+                <span className="truncate max-w-[150px] sm:max-w-[200px]">{agentData.createdBy || "Not set"}</span>
               </div>
               <div>
                 <span className="text-gray-400 block mb-1">Description:</span>
-                <p className="bg-[#1a1a1a] p-2 rounded-md whitespace-pre-wrap break-words">{agentData.description || "Not set"}</p>
+                <p className="bg-[#1a1a1a] p-2 rounded-md whitespace-pre-wrap break-words">
+                  {agentData.description || "Not set"}
+                </p>
               </div>
               <div>
                 <span className="text-gray-400 block mb-1">Bio:</span>
@@ -292,7 +300,9 @@ export default function AgentProfile() {
               </div>
               <div>
                 <span className="text-gray-400 block mb-1">Mission:</span>
-                <p className="bg-[#1a1a1a] p-2 rounded-md whitespace-pre-wrap break-words">{agentData.mission || "Not set"}</p>
+                <p className="bg-[#1a1a1a] p-2 rounded-md whitespace-pre-wrap break-words">
+                  {agentData.mission || "Not set"}
+                </p>
               </div>
               <div>
                 <span className="text-gray-400 block mb-1">Vision:</span>
@@ -305,23 +315,29 @@ export default function AgentProfile() {
             <div className="space-y-2 sm:space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Email:</span>
-                <span className="truncate max-w-[200px]">{agentData.contact?.email || "Not set"}</span>
+                <span className="truncate max-w-[150px] sm:max-w-[200px]">{agentData.contact?.email || "Not set"}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Website:</span>
-                <span className="truncate max-w-[200px]">{agentData.contact?.website || "Not set"}</span>
+                <span className="truncate max-w-[150px] sm:max-w-[200px]">{agentData.contact?.website || "Not set"}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Twitter:</span>
-                <span className="truncate max-w-[200px]">{agentData.contact?.socials?.twitter || "Not set"}</span>
+                <span className="truncate max-w-[150px] sm:max-w-[200px]">
+                  {agentData.contact?.socials?.twitter || "Not set"}
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">GitHub:</span>
-                <span className="truncate max-w-[200px]">{agentData.contact?.socials?.github || "Not set"}</span>
+                <span className="truncate max-w-[150px] sm:max-w-[200px]">
+                  {agentData.contact?.socials?.github || "Not set"}
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">LinkedIn:</span>
-                <span className="truncate max-w-[200px]">{agentData.contact?.socials?.linkedin || "Not set"}</span>
+                <span className="truncate max-w-[150px] sm:max-w-[200px]">
+                  {agentData.contact?.socials?.linkedin || "Not set"}
+                </span>
               </div>
             </div>
           )}
@@ -332,12 +348,14 @@ export default function AgentProfile() {
                 <div key={type} className="flex justify-between items-center">
                   <span className="text-gray-400 capitalize">{type}:</span>
                   <div className="flex items-center gap-2">
-                    <span className="truncate max-w-[120px] sm:max-w-[150px] md:max-w-[200px]">
+                    <span className="truncate max-w-[100px] sm:max-w-[120px] md:max-w-[150px]">
                       {agentData.wallets?.[type as keyof Agent["wallets"]] || "Not set"}
                     </span>
                     {agentData.wallets?.[type as keyof Agent["wallets"]] && (
                       <button
-                        onClick={() => handleCopy(agentData.wallets![type as keyof Agent["wallets"]]!, `${type} Wallet`)}
+                        onClick={() =>
+                          handleCopy(agentData.wallets![type as keyof Agent["wallets"]]!, `${type} Wallet`)
+                        }
                         className="text-[#6a94f0] hover:text-[#8faef0]"
                         title={`Copy ${type} Wallet`}
                       >
@@ -354,11 +372,13 @@ export default function AgentProfile() {
             <div className="space-y-2 sm:space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Tone:</span>
-                <span className="truncate max-w-[200px]">{agentData.personality?.tone || "Not set"}</span>
+                <span className="truncate max-w-[150px] sm:max-w-[200px]">{agentData.personality?.tone || "Not set"}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Formality:</span>
-                <span className="truncate max-w-[200px]">{agentData.personality?.formality || "Not set"}</span>
+                <span className="truncate max-w-[150px] sm:max-w-[200px]">
+                  {agentData.personality?.formality || "Not set"}
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Humor:</span>
@@ -366,15 +386,21 @@ export default function AgentProfile() {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Catchphrase:</span>
-                <span className="truncate max-w-[200px]">{agentData.personality?.catchphrase || "Not set"}</span>
+                <span className="truncate max-w-[150px] sm:max-w-[200px]">
+                  {agentData.personality?.catchphrase || "Not set"}
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Topics:</span>
-                <span className="truncate max-w-[200px]">{agentData.personality?.preferences?.topics?.join(", ") || "Not set"}</span>
+                <span className="truncate max-w-[150px] sm:max-w-[200px]">
+                  {agentData.personality?.preferences?.topics?.join(", ") || "Not set"}
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Languages:</span>
-                <span className="truncate max-w-[200px]">{agentData.personality?.preferences?.languages?.join(", ") || "Not set"}</span>
+                <span className="truncate max-w-[150px] sm:max-w-[200px]">
+                  {agentData.personality?.preferences?.languages?.join(", ") || "Not set"}
+                </span>
               </div>
             </div>
           )}
@@ -402,36 +428,44 @@ export default function AgentProfile() {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Platforms:</span>
-                <span className="truncate max-w-[200px]">{agentData.settings?.platforms?.join(", ") || "Not set"}</span>
+                <span className="truncate max-w-[150px] sm:max-w-[200px]">
+                  {agentData.settings?.platforms?.join(", ") || "Not set"}
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Rule IDs:</span>
-                <span className="truncate max-w-[200px]">{agentData.ruleIds?.join(", ") || "Not set"}</span>
+                <span className="truncate max-w-[150px] sm:max-w-[200px]">
+                  {agentData.ruleIds?.join(", ") || "Not set"}
+                </span>
               </div>
             </div>
           )}
 
           {isCreator && activeTab === "twitter" && (
             <div className="space-y-2 sm:space-y-4">
-              {(["twitterHandle", "twitterAppKey", "twitterAppSecret", "twitterAccessToken", "twitterAccessSecret"] as const).map((field) => (
-                <div key={field} className="flex justify-between items-center">
-                  <span className="text-gray-400 capitalize">{field.replace(/([A-Z])/g, " $1").trim()}:</span>
-                  <div className="flex items-center gap-2">
-                    <span className="truncate max-w-[120px] sm:max-w-[150px] md:max-w-[200px]">
-                      {(agentData[field] as string | undefined) || "Not set"}
-                    </span>
-                    {agentData[field] && (
-                      <button
-                        onClick={() => handleCopy(agentData[field] as string, field.replace(/([A-Z])/g, " $1").trim())}
-                        className="text-[#6a94f0] hover:text-[#8faef0]"
-                        title={`Copy ${field.replace(/([A-Z])/g, " $1").trim()}`}
-                      >
-                        <FontAwesomeIcon icon={faCopy} size="sm" />
-                      </button>
-                    )}
+              {(["twitterHandle", "twitterAppKey", "twitterAppSecret", "twitterAccessToken", "twitterAccessSecret"] as const).map(
+                (field) => (
+                  <div key={field} className="flex justify-between items-center">
+                    <span className="text-gray-400 capitalize">{field.replace(/([A-Z])/g, " $1").trim()}:</span>
+                    <div className="flex items-center gap-2">
+                      <span className="truncate max-w-[100px] sm:max-w-[120px] md:max-w-[150px]">
+                        {(agentData[field] as string | undefined) || "Not set"}
+                      </span>
+                      {agentData[field] && (
+                        <button
+                          onClick={() =>
+                            handleCopy(agentData[field] as string, field.replace(/([A-Z])/g, " $1").trim())
+                          }
+                          className="text-[#6a94f0] hover:text-[#8faef0]"
+                          title={`Copy ${field.replace(/([A-Z])/g, " $1").trim()}`}
+                        >
+                          <FontAwesomeIcon icon={faCopy} size="sm" />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              )}
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Enable Tweet Posting:</span>
                 <span>{agentData.enablePostTweet ? "Yes" : "No"}</span>
@@ -452,7 +486,7 @@ export default function AgentProfile() {
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">OpenAI API Key:</span>
                 <div className="flex items-center gap-2">
-                  <span className="truncate max-w-[120px] sm:max-w-[150px] md:max-w-[200px]">
+                  <span className="truncate max-w-[100px] sm:max-w-[120px] md:max-w-[150px]">
                     {agentData.openaiApiKey || "Not set"}
                   </span>
                   {agentData.openaiApiKey && (
