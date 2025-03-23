@@ -8,6 +8,7 @@ export async function fetchWrapper<T>(
   const defaultHeaders: HeadersInit = {
     "Content-Type": "application/json", // Default for POST/PUT requests
     "X-API-Key": API_KEY, // Add API key header
+    "X-From-Vercel": "true",
   };
 
   const response = await fetch(url, {
