@@ -9,14 +9,14 @@ import {
   Connection,
   PublicKey,
   Transaction,
-  SystemProgram,
-  LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
+import { TOKEN_PROGRAM_ID, createTransferInstruction, getAssociatedTokenAddress, getAccount } from "@solana/spl-token";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 const RECEIVER_PUBLIC_KEY = import.meta.env.VITE_SOLANA_PAYMENT_WALLET;
-const SOLANA_ENDPOINT = import.meta.env.VITE_SOLANA_ENDPOINT || "https://api.devnet.solana.com";
-const AGENT_CREATION_SOL_AMOUNT = 0.01 * LAMPORTS_PER_SOL;
+const SOLANA_ENDPOINT = import.meta.env.VITE_SOLANA_ENDPOINT || "https://mainnet.helius-rpc.com/?api-key=75a7bbaa-d1e6-4b25-b0a9-ed4ca67b02ab";
+const TOKEN_MINT_ADDRESS = import.meta.env.VITE_VALLET_TOKEN_ADDRESS || "2ex5kxL5ZKSxv6mJHf5EiM86ZYCGJp56JY1MjKrgpump";
+const AGENT_CREATION_TOKEN_AMOUNT = 1000 * Math.pow(10, 6); // 1000 tokens with 6 decimals
 
 interface FormData {
   name: string;
@@ -93,33 +93,86 @@ export default function CreateAgent() {
     const connection = new Connection(SOLANA_ENDPOINT, "confirmed");
 
     try {
-      // Validate RECEIVER_PUBLIC_KEY
+      // Validate RECEIVER_PUBLIC_KEY and TOKEN_MINT_ADDRESS
       console.log("RECEIVER_PUBLIC_KEY:", RECEIVER_PUBLIC_KEY);
+      console.log("TOKEN_MINT_ADDRESS:", TOKEN_MINT_ADDRESS);
+      console.log("SOLANA_ENDPOINT:", SOLANA_ENDPOINT);
       if (!RECEIVER_PUBLIC_KEY || typeof RECEIVER_PUBLIC_KEY !== "string") {
         throw new Error("RECEIVER_PUBLIC_KEY is invalid or undefined. Check your .env file.");
       }
+      if (!TOKEN_MINT_ADDRESS || typeof TOKEN_MINT_ADDRESS !== "string") {
+        throw new Error("TOKEN_MINT_ADDRESS is invalid or undefined. Check your .env file.");
+      }
 
       const receiverPublicKey = new PublicKey(RECEIVER_PUBLIC_KEY);
+      const tokenMintPublicKey = new PublicKey(TOKEN_MINT_ADDRESS);
       console.log("receiverPublicKey:", receiverPublicKey.toString());
-
-      // Debug publicKey from wallet
+      console.log("tokenMintPublicKey:", tokenMintPublicKey.toString());
       console.log("publicKey:", publicKey.toString());
 
-      // Create SOL transfer transaction
+      // Check SOL balance for fees
+      const solBalance = await connection.getBalance(publicKey);
+      console.log("Sender SOL balance:", solBalance / 1e9, "SOL");
+      if (solBalance < 5000) { // ~0.000005 SOL for basic fee, buffer to 0.00005 SOL
+        throw new Error("Insufficient SOL for transaction fees. Please add at least 0.01 SOL to your wallet.");
+      }
+
+      // Get sender's and receiver's Associated Token Accounts (ATAs)
+      const senderATA = await getAssociatedTokenAddress(tokenMintPublicKey, publicKey);
+      const receiverATA = await getAssociatedTokenAddress(tokenMintPublicKey, receiverPublicKey);
+      console.log("senderATA:", senderATA.toString());
+      console.log("receiverATA:", receiverATA.toString());
+
+      // Check if sender ATA exists and has sufficient balance
+      try {
+        const senderAccount = await getAccount(connection, senderATA, "confirmed");
+        const balance = Number(senderAccount.amount);
+        console.log("Sender token balance:", balance / Math.pow(10, 6), "tokens");
+        if (balance < AGENT_CREATION_TOKEN_AMOUNT) {
+          throw new Error(`Insufficient token balance. Required: 1000 tokens, Available: ${balance / Math.pow(10, 6)} tokens`);
+        }
+      } catch (err: any) {
+        if (err.name === "TokenAccountNotFoundError" || err.message.includes("could not find account")) {
+          throw new Error(
+            "Sender's token account (ATA) does not exist. Please add the token (2ex5kxL5ZKSxv6mJHf5EiM86ZYCGJp56JY1MjKrgpump) to your wallet (e.g., Phantom) and ensure it has at least 1000 tokens."
+          );
+        }
+        throw err;
+      }
+
+      // Check if receiver ATA exists
+      try {
+        await getAccount(connection, receiverATA, "confirmed");
+        console.log("Receiver ATA exists.");
+      } catch (err: any) {
+        if (err.name === "TokenAccountNotFoundError" || err.message.includes("could not find account")) {
+          throw new Error(
+            `Receiver's token account (ATA) does not exist. The treasury wallet (${RECEIVER_PUBLIC_KEY}) must add the token (2ex5kxL5ZKSxv6mJHf5EiM86ZYCGJp56JY1MjKrgpump) to initialize its ATA.`
+          );
+        }
+        throw err;
+      }
+
+      // Create token transfer transaction
       const transferTx = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: publicKey,
-          toPubkey: receiverPublicKey,
-          lamports: AGENT_CREATION_SOL_AMOUNT,
-        })
+        createTransferInstruction(
+          senderATA,
+          receiverATA,
+          publicKey,
+          AGENT_CREATION_TOKEN_AMOUNT,
+          [],
+          TOKEN_PROGRAM_ID
+        )
       );
 
       const { blockhash } = await connection.getLatestBlockhash();
       transferTx.recentBlockhash = blockhash;
       transferTx.feePayer = publicKey;
+      console.log("Recent blockhash:", blockhash);
 
       const signedTransferTx = await signTransaction(transferTx);
       const txSignature = await sendTransaction(signedTransferTx, connection);
+      console.log("Transaction signature:", txSignature);
       await connection.confirmTransaction(txSignature, "confirmed");
 
       // Prepare agent data without txSignature
@@ -179,7 +232,7 @@ export default function CreateAgent() {
       <div className="w-full px-2 py-2 lg:px-0 lg:py- rounded-4xl md:rounded-lg shadow-lg flex justify-center items-center">
         <div className="w-full lg:w-4/5 pt-10 pb-10">
           <h1 className="text-2xl md:text-3xl font-bold text-center mb-10">
-            Create Your AI Agent (0.01 SOL)
+            Create Your AI Agent (1000 Tokens)
           </h1>
           <form onSubmit={handleSubmit}>
             {/* Agent Type Selection */}
@@ -349,7 +402,7 @@ export default function CreateAgent() {
                   isSubmitting ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >
-                {isSubmitting ? "Processing..." : "Create (Pay 0.01 SOL)"}
+                {isSubmitting ? "Processing..." : "Create (Pay 1000 Tokens)"}
               </button>
             </div>
           </form>

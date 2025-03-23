@@ -13,7 +13,7 @@ import {
 import { toast } from "sonner";
 
 const RECEIVER_PUBLIC_KEY = import.meta.env.VITE_SOLANA_PAYMENT_WALLET;
-const SOLANA_ENDPOINT = import.meta.env.VITE_SOLANA_ENDPOINT || "https://api.devnet.solana.com";
+const SOLANA_ENDPOINT = import.meta.env.VITE_SOLANA_ENDPOINT || "https://api.mainnet-beta.solana.com";
 
 // Credit plans with dynamic SOL prices
 const CREDIT_PLANS = {
