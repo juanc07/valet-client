@@ -15,13 +15,13 @@ export default function TwitterTestPage() {
   const [tweetMessage, setTweetMessage] = useState("");
   const [loading, setLoading] = useState<boolean>(true);
   const [tweetResponse, setTweetResponse] = useState<string | null>(null);
-  const [serverError, setServerError] = useState<string>(""); // Renamed for consistency
+  const [serverError, setServerError] = useState<string>("");
+  const [postError, setPostError] = useState<string>("");
 
   const { connected: walletConnected } = useWallet();
   const { currentUser, serverLive, checkServerStatus } = useUser();
   const navigate = useNavigate();
 
-  // Initial server status check on mount
   useEffect(() => {
     if (!walletConnected || !currentUser?.userId) {
       navigate("/");
@@ -33,7 +33,7 @@ export default function TwitterTestPage() {
       await checkServerStatus();
       if (serverLive === false) {
         setServerError("Server is currently unavailable.");
-        setLoading(false); // Stop loading if server is down
+        setLoading(false);
         toast.error("Server Unavailable", {
           description: "Cannot load Twitter Test Page at this time. Please try again later.",
           duration: 3000,
@@ -44,7 +44,6 @@ export default function TwitterTestPage() {
     initialCheck();
   }, [walletConnected, currentUser, navigate, checkServerStatus, serverLive]);
 
-  // Fetch agents with server status check
   useEffect(() => {
     if (!walletConnected || !currentUser?.userId || serverLive === false) return;
 
@@ -77,12 +76,15 @@ export default function TwitterTestPage() {
     const agent = myAgents.find((a) => a.agentId === agentId) || null;
     setSelectedAgent(agent);
     setTweetResponse(null);
+    setPostError("");
   };
 
   const handlePostTweet = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedAgent || !tweetMessage.trim()) return;
 
+    setPostError("");
+    setTweetResponse(null);
     try {
       console.log("Checking server status before posting tweet...");
       await checkServerStatus();
@@ -96,6 +98,11 @@ export default function TwitterTestPage() {
       }
 
       const response = await postTweetManually(selectedAgent.agentId, tweetMessage);
+      
+      if (!response.tweetedMessage) {
+        throw new Error("No tweet message returned from server, please check your config.");
+      }
+
       setTweetResponse(response.tweetedMessage);
       setTweetMessage("");
       toast.success("Tweet posted successfully!", {
@@ -105,7 +112,7 @@ export default function TwitterTestPage() {
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       console.error("Error posting tweet:", err);
-      setServerError(errorMsg || "Failed to post tweet.");
+      setPostError(errorMsg || "Failed to post tweet.");
       toast.error("Failed to post tweet", {
         description: errorMsg || "Check your agent configuration or try again.",
         duration: 3000,
@@ -122,14 +129,6 @@ export default function TwitterTestPage() {
             Loading Twitter Test Page...
           </p>
         </div>
-      </div>
-    );
-  }
-
-  if (serverError) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
-        <div className="text-center text-red-500 text-xl md:text-2xl">{serverError}</div>
       </div>
     );
   }
@@ -153,6 +152,12 @@ export default function TwitterTestPage() {
         </div>
 
         <div className="py-4">
+          {serverError && (
+            <div className="mb-4 p-3 bg-red-900/20 text-red-500 rounded-lg text-sm sm:text-base">
+              {serverError}
+            </div>
+          )}
+
           {selectedAgent ? (
             <form onSubmit={handlePostTweet} className="flex flex-col gap-4">
               <textarea
@@ -167,11 +172,16 @@ export default function TwitterTestPage() {
                 <button
                   type="submit"
                   className="w-full sm:w-auto py-2 px-4 bg-[#6a94f0] text-black rounded-lg hover:bg-white/10 hover:text-white transition-all duration-400 disabled:opacity-50 text-sm sm:text-base"
-                  disabled={!tweetMessage.trim()}
+                  disabled={!tweetMessage.trim() || !!serverError}
                 >
                   Post Tweet
                 </button>
               </div>
+              {postError && (
+                <div className="mt-2 p-3 bg-red-900/20 text-red-500 rounded-lg text-sm sm:text-base">
+                  {postError}
+                </div>
+              )}
             </form>
           ) : (
             <div className="text-center text-gray-400 text-sm sm:text-base">
