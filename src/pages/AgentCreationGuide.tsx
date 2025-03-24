@@ -112,7 +112,7 @@ export default function AgentCreationGuide() {
             <div>
               <h3 className="text-lg sm:text-xl font-medium mb-2">Step 4: Submit and Pay</h3>
               <p className="text-gray-300 text-sm sm:text-base">
-                Click "Create (Pay 1000 Valet Tokens)" to submit. Your wallet will prompt you to approve the transaction using 1000 Valet Tokens (plus a small SOL fee). Once confirmed, you’ll see an "Agent Created" notification with your agent’s ID. <strong>Warning:</strong> We do not refund agent creation tokens, so make sure everything is correct before proceeding!
+                Click "Create (Pay 1000 Valet Tokens)" to submit. Your wallet will prompt you to approve the transaction using 1000 Valet Tokens (plus a small SOL fee). Once confirmed, you’ll see an "Agent Created" notification with your agent’s ID. <strong>Warning:</strong> We do not refund agent creation tokens, so please ensure you are not creating agents randomly or impulsively triggering the 'Create Agent' option! Additionally, if your agent isn’t working because you didn’t configure it correctly or lacked the proper credentials, we still do not offer refunds.
               </p>
             </div>
 
