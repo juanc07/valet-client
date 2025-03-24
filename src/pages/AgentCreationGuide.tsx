@@ -33,7 +33,7 @@ export default function AgentCreationGuide() {
         <section className="mb-10 sm:mb-12">
           <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">Welcome to Valet App Agent Creation</h2>
           <p className="text-gray-300 text-sm sm:text-base">
-            This guide walks you through creating your own AI agent using the Valet platform. Whether you’re building a basic agent or exploring future frameworks like PuppetOS, you’ll learn how to get started with just 0.01 SOL.
+            This guide walks you through creating your own AI agent using the Valet platform. We now use Valet Tokens to create agents and SOL to buy credits (though please don’t buy credits for now—that’s a future feature). We do not refund agent creation tokens or SOL that you use to buy credits, so make sure to think carefully before proceeding!
           </p>
         </section>
 
@@ -50,11 +50,7 @@ export default function AgentCreationGuide() {
               />
             </li>
             <li>
-              <strong>SOL Balance</strong>: Right now, we’re in testing, so Devnet is fine—ensure you have at least 0.01 SOL (plus a small fee) using a faucet like{" "}
-              <a href="https://faucet.solana.com" target="_blank" rel="noopener noreferrer" className="text-[#6894f3] hover:underline">
-                Solana Faucet
-              </a>{" "}
-              to get test SOL. Once we publish, you’ll need real SOL on a live wallet (Mainnet).
+              <strong>Valet Tokens & SOL Balance</strong>: You’ll need 1000 Valet Tokens to create an agent and a small amount of SOL for transaction fees. Buying credits uses SOL, but please don’t buy credits yet—it’s a future feature. Ensure you have enough SOL in your wallet on Solana Mainnet.
               <img
                 src={solanaLogo}
                 alt="Solana Logo"
@@ -116,7 +112,7 @@ export default function AgentCreationGuide() {
             <div>
               <h3 className="text-lg sm:text-xl font-medium mb-2">Step 4: Submit and Pay</h3>
               <p className="text-gray-300 text-sm sm:text-base">
-                Click "Create (Pay 0.01 SOL)" to submit. Your wallet will prompt you to approve a 0.01 SOL payment to the Valet receiver address. Once confirmed, you’ll see a "Agent Created" notification with your agent’s ID.
+                Click "Create (Pay 1000 Valet Tokens)" to submit. Your wallet will prompt you to approve the transaction using 1000 Valet Tokens (plus a small SOL fee). Once confirmed, you’ll see an "Agent Created" notification with your agent’s ID. <strong>Warning:</strong> We do not refund agent creation tokens, so make sure everything is correct before proceeding!
               </p>
             </div>
 
@@ -140,6 +136,9 @@ export default function AgentCreationGuide() {
           <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">Twitter Config Setup</h2>
           <p className="text-gray-300 text-sm sm:text-base mb-4">
             To enable your agent to post on Twitter, follow these steps to configure the Twitter integration after creating your agent.
+          </p>
+          <p className="text-gray-300 text-sm sm:text-base mb-4">
+            <strong>Important Warning:</strong> You need to make sure you set up the agent correctly and use a correct and valid API Key from OpenAI and credentials from Twitter. Also, free Twitter Developer accounts only offer posting capabilities—not tweet mentions or replies. If you need tweet mention or reply features for your agent, you must have a paid Twitter Developer account.
           </p>
           <div className="space-y-6 sm:space-y-8">
             {/* Step 1 */}
@@ -284,7 +283,7 @@ export default function AgentCreationGuide() {
               <strong>Wallet Not Connecting</strong>: Ensure your wallet extension is installed and unlocked. Refresh the page and try again.
             </li>
             <li>
-              <strong>Insufficient SOL</strong>: During testing, ensure you have enough SOL on Devnet using a faucet. After launch, verify your live wallet balance on Mainnet.
+              <strong>Insufficient Tokens or SOL</strong>: Ensure you have 1000 Valet Tokens and enough SOL for fees in your wallet on Solana Mainnet. Buying credits uses SOL, but that’s not available yet—don’t buy credits now.
             </li>
             <li>
               <strong>Form Errors</strong>: Fill all required fields (*). Check character limits in the form.
