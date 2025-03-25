@@ -30,7 +30,7 @@ export const uploadProfileImage = async (
   return fetchWrapper(`${BASE_URL}/images/${agentId}/profile-image`, {
     method: 'POST',
     body: formData,
-    // Note: Don't set 'Content-Type' manually for FormData; the browser sets it with the correct boundary
+    // No headers needed here; fetchWrapper adds X-API-Key, and FormData sets Content-Type
   });
 };
 
@@ -38,7 +38,7 @@ export const uploadProfileImage = async (
 export const getProfileImage = async (agentId: string): Promise<GetImageResponse> => {
   return fetchWrapper(`${BASE_URL}/images/${agentId}/profile-image`, {
     method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
+    // No Content-Type needed for GET requests
   });
 };
 
