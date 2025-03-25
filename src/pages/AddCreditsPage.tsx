@@ -28,7 +28,7 @@ export default function AddCreditsPage() {
   const [serverError, setServerError] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
 
-  const { connected: walletConnected, publicKey, signTransaction, sendTransaction } = useWallet();
+  const { connected: walletConnected, publicKey } = useWallet(); // Removed signTransaction, sendTransaction
   const { currentUser, serverLive, checkServerStatus } = useUser();
   const navigate = useNavigate();
 
@@ -61,7 +61,7 @@ export default function AddCreditsPage() {
   };
 
   const handlePurchase = async () => {
-    if (!publicKey || !signTransaction || !sendTransaction || !selectedPlan || !currentUser?.userId) {
+    if (!publicKey || !selectedPlan || !currentUser?.userId) {
       setServerError("Wallet not connected or user not logged in.");
       setShowFailureDialog(true);
       toast.error("Purchase Error", {
@@ -100,11 +100,15 @@ export default function AddCreditsPage() {
       transferTx.recentBlockhash = blockhash;
       transferTx.feePayer = publicKey;
 
-      const signedTransferTx = await signTransaction(transferTx);
-      const txSignature = await sendTransaction(signedTransferTx, connection);
-      await connection.confirmTransaction(txSignature, "confirmed");
+      const provider = window.solana;
+      if (!provider || !provider.isPhantom) {
+        throw new Error("Phantom wallet not detected.");
+      }
 
-      const response = await addUserCredits(currentUser.userId, txSignature, selectedPlan);
+      const { signature } = await provider.signAndSendTransaction(transferTx);
+      await connection.confirmTransaction(signature, "confirmed");
+
+      const response = await addUserCredits(currentUser.userId, signature, selectedPlan);
       setNewCreditBalance(response.newCreditBalance);
       setShowSuccessDialog(true);
       toast.success("Purchase Successful", {
@@ -115,7 +119,6 @@ export default function AddCreditsPage() {
       const errorMsg = err.message || String(err);
       console.error("Error purchasing credits:", err);
 
-      // Check if the error is due to user canceling the transaction
       if (errorMsg.includes("User rejected the request") || (err.code && err.code === 4001)) {
         toast.error("Transaction Canceled", {
           description: "You canceled the transaction. Please try again if you wish to proceed.",
@@ -134,7 +137,7 @@ export default function AddCreditsPage() {
     } finally {
       setIsSubmitting(false);
       if (!showSuccessDialog) {
-        setSelectedPlan(null); // Only reset on failure or cancellation, not success
+        setSelectedPlan(null);
       }
     }
   };
