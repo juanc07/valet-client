@@ -236,7 +236,7 @@ export default function AgentCreationGuide() {
               <div className="mt-4">
                 <h4 className="text-md sm:text-lg font-medium mb-2">Note on OpenAI API Key Permissions</h4>
                 <p className="text-gray-300 text-sm sm:text-base">
-                  To ensure your agent can generate tweets using the OpenAI API, the API key must have the correct permissions. In the OpenAI dashboard, navigate to the "API Keys" section, edit your key, and select the <strong>Restricted</strong> tab. Under "Model capabilities," set the permission to <strong>Write</strong>. This permission allows the key to generate responses using models like <code>gpt-3.5-turbo</code> via the <code>/v1/chat/completions</code> endpoint, as well as access other capabilities in this group. The image below shows an example of the permissions setup—ensure "Model capabilities" is set to <strong>Write</strong> (unlike the example, which shows it as <strong>None</strong>).
+                  To ensure your agent can generate tweets using the OpenAI API, the API key must have the correct permissions. In the OpenAI dashboard, navigate to the "API Keys" section, edit your key, and select the <strong>Restricted</strong> tab. Under "Model capabilities," set the permission to <strong>Write</strong>. This permission allows the key to generate responses using models like <code>gpt-3.5-turbo</code> via the <code>/v1/chat/completions</code> endpoint, as well as access other capabilities in this group. The image below shows an example of the permissions setup—ensure "Model capabilities" is set to <strong>Write</strong>.
                 </p>
                 <img
                   src={openAiApiPermission}
