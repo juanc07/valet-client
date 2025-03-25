@@ -55,7 +55,6 @@ export default function AgentProfile() {
   const { currentUser } = useUser();
   const navigate = useNavigate();
 
-  // Array of default images
   const defaultImages = [
     agentDefaultImage1,
     agentDefaultImage2,
@@ -66,7 +65,6 @@ export default function AgentProfile() {
     agentDefaultImage7,
   ];
 
-  // Function to get a random default image
   const getRandomDefaultImage = () => {
     const randomIndex = Math.floor(Math.random() * defaultImages.length);
     return defaultImages[randomIndex];
@@ -196,9 +194,9 @@ export default function AgentProfile() {
     { id: "contact", label: "Contact" },
     { id: "wallets", label: "Wallets" },
     { id: "personality", label: "Personality" },
-    { id: "knowledge", label: "Knowledge" },
     ...(isCreator
       ? [
+          { id: "knowledge", label: "Knowledge" },
           { id: "settings", label: "Settings" },
           { id: "twitter", label: "Twitter" },
           { id: "api", label: "API Keys" },
@@ -405,7 +403,7 @@ export default function AgentProfile() {
             </div>
           )}
 
-          {activeTab === "knowledge" && (
+          {isCreator && activeTab === "knowledge" && (
             <div className="space-y-2 sm:space-y-4">
               {Object.entries(agentData.knowledge).length > 0 ? (
                 Object.entries(agentData.knowledge).map(([key, value]) => (
