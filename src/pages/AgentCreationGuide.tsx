@@ -13,6 +13,7 @@ import agentProfile from "../assets/AgentProfile.jpg"; // New image for Showcase
 import easyToUpdateKnowledge from "../assets/EasyToUpdateKnowledge.jpg"; // New image for Showcase
 import twitterDeveloperCreds from "../assets/twitterDeveloperCreds.jpg"; // New image for Twitter Credentials Source
 import twitterDeveloperAuthSettings from "../assets/twitterDeveloperAuthSettings.jpg"; // New image for Twitter Auth Settings
+import openAiApiPermission from "../assets/open-ai-api-permission.jpg"; // New image for OpenAI API Permissions Note
 
 export default function AgentCreationGuide() {
   useEffect(() => {
@@ -207,7 +208,7 @@ export default function AgentCreationGuide() {
               />
             </div>
 
-            {/* NEW: Twitter Authentication Settings */}
+            {/* Twitter Authentication Settings */}
             <div>
               <h3 className="text-lg sm:text-xl font-medium mb-2">Twitter Authentication Settings</h3>
               <p className="text-gray-300 text-sm sm:text-base">
@@ -231,6 +232,18 @@ export default function AgentCreationGuide() {
                 alt="Adding OpenAI API Key in API Keys Tab"
                 className="mt-3 sm:mt-4 rounded-lg shadow-md w-full sm:w-full md:w-full lg:w-3/4 h-auto"
               />
+              {/* Note on OpenAI API Key Permissions */}
+              <div className="mt-4">
+                <h4 className="text-md sm:text-lg font-medium mb-2">Note on OpenAI API Key Permissions</h4>
+                <p className="text-gray-300 text-sm sm:text-base">
+                  To ensure your agent can generate tweets using the OpenAI API, the API key must have the correct permissions. In the OpenAI dashboard, navigate to the "API Keys" section, edit your key, and select the <strong>Restricted</strong> tab. Under "Model capabilities," set the permission to <strong>Write</strong>. This permission allows the key to generate responses using models like <code>gpt-3.5-turbo</code> via the <code>/v1/chat/completions</code> endpoint, as well as access other capabilities in this group. The image below shows an example of the permissions setup—ensure "Model capabilities" is set to <strong>Write</strong> (unlike the example, which shows it as <strong>None</strong>).
+                </p>
+                <img
+                  src={openAiApiPermission}
+                  alt="OpenAI API Key Permissions Setup"
+                  className="mt-3 sm:mt-4 rounded-lg shadow-md w-full sm:w-full md:w-full lg:w-3/4 h-auto"
+                />
+              </div>
             </div>
 
             {/* Showcase Section */}
