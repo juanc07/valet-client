@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { House, Users, UserPlus, User, MessageSquare, Edit, Twitter, CreditCard, BookOpen } from "lucide-react";
+import { House, Users, UserPlus, User, MessageSquare, Edit, Twitter, CreditCard, BookOpen, Shield } from "lucide-react";
 import { useUser } from "../context/UserContext";
 
 const isAgentDebug = import.meta.env.VITE_SOLANA_AGENT_DEBUG === "TRUE";
@@ -27,6 +27,7 @@ const Sidebar = () => {
         ]
       : []),
     { name: "Guides", path: "/guides", icon: <BookOpen className="text-2xl" /> },
+    { name: "Privacy Policy", path: "/privacy-policy", icon: <Shield className="text-2xl" /> },
   ];
 
   return (

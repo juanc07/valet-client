@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import Image1 from "../assets/logo.png";
-import { Logs, House, Users, UserPlus, User, MessageSquare, Edit, Twitter, CreditCard, BookOpen, Mail, Server } from "lucide-react";
+import { Logs, House, Users, UserPlus, User, MessageSquare, Edit, Twitter, CreditCard, BookOpen, Mail, Server, Shield } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
@@ -86,8 +86,9 @@ export default function Header() {
         ]
       : []),
     { name: "Guides", path: "/guides", icon: <BookOpen className="text-2xl" /> },
+    { name: "Privacy policy", path: "/privacy-policy", icon: <Shield className="text-2xl" /> },
     { name: "Twitter", path: "https://twitter.com/ValetAgents", icon: <Twitter className="text-2xl" /> },
-    { name: "Contact US", path: "mailto:valwea329@gmail.com", icon: <Mail className="text-2xl" /> },
+    { name: "Contact US", path: "mailto:valwea329@gmail.com", icon: <Mail className="text-2xl" /> },    
   ];
 
   return (
