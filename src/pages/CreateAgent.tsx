@@ -1,3 +1,4 @@
+// src/pages/CreateAgent.tsx
 import { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import puppet from "../assets/puppet.jpg";
 import { toast } from "sonner";
@@ -182,6 +183,9 @@ export default function CreateAgent() {
         description: "A new AI agent",
         mission: "To assist users",
         vision: "A helpful future",
+        settings: {
+          platforms: ["web"], // Default to "web" since no user selection
+        },
       };
 
       const response = await fetchWrapper<{ message: string; agentId: string }>(
@@ -206,12 +210,20 @@ export default function CreateAgent() {
         catchphrase: "",
         agentType: "basic",
       });
-    } catch (err: any) {
-      console.error("Error creating agent:", err.message || err);
-      const errorMsg = err.message || "Something went wrong.";
+    } catch (err: unknown) {
+      console.error("Error creating agent:", err);
+      let errorMsg = "Something went wrong.";
 
-      // Check if the error is due to user canceling the transaction
-      if (errorMsg.includes("User rejected the request") || (err.code && err.code === 4001)) {
+      if (err instanceof Error) {
+        errorMsg = err.message;
+      } else if (typeof err === "object" && err !== null && "message" in err) {
+        errorMsg = (err as { message: string }).message;
+      }
+
+      if (
+        errorMsg.includes("User rejected the request") ||
+        (typeof err === "object" && err !== null && "code" in err && (err as { code: number }).code === 4001)
+      ) {
         toast.error("Transaction Canceled", {
           description: "You canceled the transaction. Please try again if you wish to proceed.",
           duration: 3000,

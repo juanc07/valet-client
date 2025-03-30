@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { House, Users, UserPlus, User, MessageSquare, Edit, Twitter, CreditCard, BookOpen, Shield } from "lucide-react";
+import { House, Users, UserPlus, User, MessageSquare, Edit, MessageCircle, CreditCard, BookOpen, Shield } from "lucide-react";
 import { useUser } from "../context/UserContext";
 
 const isAgentDebug = import.meta.env.VITE_SOLANA_AGENT_DEBUG === "TRUE";
@@ -7,7 +7,7 @@ const isAgentDebug = import.meta.env.VITE_SOLANA_AGENT_DEBUG === "TRUE";
 const Sidebar = () => {
   const location = useLocation();
   const active = location.pathname;
-  const { currentUser } = useUser(); // No need for serverLive here
+  const { currentUser } = useUser();
 
   const menuItems = [
     { name: "Home", path: "/", icon: <House className="text-2xl" /> },
@@ -16,7 +16,7 @@ const Sidebar = () => {
     ...(isAgentDebug
       ? [
           { name: "Chat Test", path: "/chat", icon: <MessageSquare className="text-2xl" /> },
-          { name: "Twitter Test", path: "/twitter-test", icon: <Twitter className="text-2xl" /> },
+          { name: "Social Test", path: "/social-test", icon: <MessageCircle className="text-2xl" /> }, // Updated
         ]
       : []),
     ...(currentUser

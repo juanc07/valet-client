@@ -43,6 +43,9 @@ export default function AgentProfile() {
     enablePostTweet: false,
     postTweetInterval: 0,
     isTwitterPaid: false,
+    telegramBotToken: "", // Added Telegram fields
+    telegramGroupId: "",
+    enableTelegramReplies: false,
     agentType: "basic",
     createdBy: "",
     profileImageId: "",
@@ -124,6 +127,10 @@ export default function AgentProfile() {
           enablePostTweet: agent.enablePostTweet || false,
           postTweetInterval: agent.postTweetInterval || 0,
           isTwitterPaid: agent.isTwitterPaid || false,
+          telegramBotToken: agent.telegramBotToken || "", // Populate Telegram fields
+          telegramGroupId: agent.telegramGroupId || "",
+          enableTelegramReplies: agent.enableTelegramReplies || false,
+          agentType: agent.agentType || "basic",
           profileImageId: agent.profileImageId || "",
         }));
 
@@ -133,7 +140,7 @@ export default function AgentProfile() {
         } else {
           setProfileImageUrl(getRandomDefaultImage());
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Fetch agent or image error:", error);
         toast.error("Failed to Load Agent", {
           description: "Unable to fetch agent data or image. Please try again later.",
@@ -199,6 +206,7 @@ export default function AgentProfile() {
           { id: "knowledge", label: "Knowledge" },
           { id: "settings", label: "Settings" },
           { id: "twitter", label: "Twitter" },
+          { id: "telegram", label: "Telegram" }, // Added Telegram tab
           { id: "api", label: "API Keys" },
         ]
       : []),
@@ -475,6 +483,49 @@ export default function AgentProfile() {
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Twitter Paid Developer Account:</span>
                 <span>{agentData.isTwitterPaid ? "Yes" : "No"}</span>
+              </div>
+            </div>
+          )}
+
+          {isCreator && activeTab === "telegram" && (
+            <div className="space-y-2 sm:space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400">Telegram Bot Token:</span>
+                <div className="flex items-center gap-2">
+                  <span className="truncate max-w-[100px] sm:max-w-[120px] md:max-w-[150px]">
+                    {agentData.telegramBotToken || "Not set"}
+                  </span>
+                  {agentData.telegramBotToken && (
+                    <button
+                      onClick={() => handleCopy(agentData.telegramBotToken!, "Telegram Bot Token")}
+                      className="text-[#6a94f0] hover:text-[#8faef0]"
+                      title="Copy Telegram Bot Token"
+                    >
+                      <FontAwesomeIcon icon={faCopy} size="sm" />
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400">Telegram Group ID:</span>
+                <div className="flex items-center gap-2">
+                  <span className="truncate max-w-[100px] sm:max-w-[120px] md:max-w-[150px]">
+                    {agentData.telegramGroupId || "Not set"}
+                  </span>
+                  {agentData.telegramGroupId && (
+                    <button
+                      onClick={() => handleCopy(agentData.telegramGroupId!, "Telegram Group ID")}
+                      className="text-[#6a94f0] hover:text-[#8faef0]"
+                      title="Copy Telegram Group ID"
+                    >
+                      <FontAwesomeIcon icon={faCopy} size="sm" />
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400">Enable Telegram Replies:</span>
+                <span>{agentData.enableTelegramReplies ? "Yes" : "No"}</span>
               </div>
             </div>
           )}

@@ -14,7 +14,7 @@ import UpdateProfile from "./pages/UpdateProfile.tsx";
 import UpdateAgent from "./pages/UpdateAgent";
 import AgentProfile from "./pages/AgentProfile";
 import ChatApplication from "./pages/ChatApplication";
-import TwitterTestPage from "./pages/TwitterTestPage.tsx";
+import SocialTestPage from "./pages/SocialTestPage.tsx";
 import AddCreditsPage from "./pages/AddCreditsPage.tsx";
 import AgentCreationGuide from "./pages/AgentCreationGuide";
 import LegalInfoPage from "./pages/LegalInfoPage"; 
@@ -199,7 +199,7 @@ function MainContent() {
               <Route path="/youragent" element={<YourAgent />} />
               <Route path="/add-credits" element={<AddCreditsPage />} />
               <Route path="/chat" element={<ChatApplication />} />
-              <Route path="/twitter-test" element={<TwitterTestPage />} />
+              <Route path="/social-test" element={<SocialTestPage />} />
               <Route
                 path="/profile"
                 element={

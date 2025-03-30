@@ -1,18 +1,16 @@
+// src/pages/UpdateAgent.tsx
 import { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Agent } from "../interfaces/agent";
 import { getAgentById, updateAgent } from "../api/agentApi";
 import { getProfileImage } from "../api/imageApi";
-//import { requestTwitterOAuth } from "../api/twitterApi";
 import { toast } from "sonner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCopy, faArrowLeft, faPlus, faMinus } from "@fortawesome/free-solid-svg-icons";
 import { useUser } from "../context/UserContext";
-//import Cookies from "js-cookie";
 import ProfileImage from "../components/ProfileImage";
 
-// Import default agent images
 import agentDefaultImage1 from "../assets/agent-default-image/agent_default-1.jpg";
 import agentDefaultImage2 from "../assets/agent-default-image/agent_default-2.jpg";
 import agentDefaultImage3 from "../assets/agent-default-image/agent_default-3.jpg";
@@ -45,22 +43,24 @@ export default function UpdateAgent() {
     twitterHandle: "",
     enablePostTweet: false,
     postTweetInterval: 0,
-    isTwitterPaid: false, // Added isTwitterPaid property
+    isTwitterPaid: false,
     agentType: "basic",
     createdBy: "",
     profileImageId: "",
+    telegramBotToken: "",
+    telegramHandle: "",
+    telegramGroupId: "",
+    enableTelegramReplies: false,
   });
   const [activeTab, setActiveTab] = useState("basic");
   const [newKnowledgeKey, setNewKnowledgeKey] = useState("");
   const [newKnowledgeValue, setNewKnowledgeValue] = useState("");
-  // Removed isAdvancedTwitterSetup state since it’s always true now
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
 
   const { connected: walletConnected } = useWallet();
   const { currentUser, setCurrentUser } = useUser();
   const navigate = useNavigate();
 
-  // Array of default images
   const defaultImages = [
     agentDefaultImage1,
     agentDefaultImage2,
@@ -71,7 +71,6 @@ export default function UpdateAgent() {
     agentDefaultImage7,
   ];
 
-  // Function to get a random default image
   const getRandomDefaultImage = () => {
     const randomIndex = Math.floor(Math.random() * defaultImages.length);
     return defaultImages[randomIndex];
@@ -97,8 +96,12 @@ export default function UpdateAgent() {
           ruleIds: agentData.ruleIds || [],
           enablePostTweet: agentData.enablePostTweet || false,
           postTweetInterval: agentData.postTweetInterval || 0,
-          isTwitterPaid: agentData.isTwitterPaid || false, // Added isTwitterPaid
+          isTwitterPaid: agentData.isTwitterPaid || false,
           profileImageId: agentData.profileImageId || "",
+          telegramBotToken: agentData.telegramBotToken || "",
+          telegramHandle: agentData.telegramHandle || "",
+          telegramGroupId: agentData.telegramGroupId || "",
+          enableTelegramReplies: agentData.enableTelegramReplies || false,
         }));
 
         if (agentData.profileImageId) {
@@ -107,7 +110,7 @@ export default function UpdateAgent() {
         } else {
           setProfileImageUrl(getRandomDefaultImage());
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Fetch agent or image error:", error);
         if (!formData.profileImageId) {
           setProfileImageUrl(getRandomDefaultImage());
@@ -116,16 +119,6 @@ export default function UpdateAgent() {
     };
     if (agentId && (walletConnected || currentUser)) fetchAgentData();
   }, [agentId, walletConnected, currentUser]);
-
-  // Removed cookie-based advanced setup logic since it’s always advanced now
-  /*
-  useEffect(() => {
-    const savedAdvancedSetup = Cookies.get("isAdvancedTwitterSetup");
-    if (savedAdvancedSetup !== undefined) {
-      setIsAdvancedTwitterSetup(savedAdvancedSetup === "true");
-    }
-  }, []);
-  */
 
   useEffect(() => {
     const isOAuthCallback = window.location.search.includes("oauth_callback");
@@ -157,17 +150,27 @@ export default function UpdateAgent() {
     if (name.includes(".")) {
       const parts = name.split(".");
       setFormData((prevData) => {
-        let current = { ...prevData };
-        let ref: any = current;
-        for (let i = 0; i < parts.length - 1; i++) ref = ref[parts[i]];
+        const current: Agent = { ...prevData };
+        let ref: unknown = current;
+
+        // Traverse nested properties safely
+        for (let i = 0; i < parts.length - 1; i++) {
+          ref = (ref as Record<string, unknown>)[parts[i]];
+        }
         const finalKey = parts[parts.length - 1];
-        ref[finalKey] = type === "checkbox" ? checked : value;
+
+        // Update the final property with type safety
+        if (type === "checkbox" && checked !== undefined) {
+          (ref as Record<string, boolean>)[finalKey] = checked;
+        } else {
+          (ref as Record<string, string | number>)[finalKey] = type === "number" ? Number(value) : value;
+        }
         return current;
       });
     } else {
       setFormData((prevData) => ({
         ...prevData,
-        [name]: type === "checkbox" ? checked : value,
+        [name]: type === "checkbox" && checked !== undefined ? checked : type === "number" ? Number(value) : value,
       }));
     }
   };
@@ -181,10 +184,16 @@ export default function UpdateAgent() {
     const value = e.target.value.split(",").map((item) => item.trim());
     setFormData((prev) => {
       if (subField) {
-        if (field === "personality" && (subField === "topics" || subField === "languages")) return { ...prev, personality: { ...prev.personality, preferences: { ...prev.personality.preferences, [subField]: value } } };
-        if (field === "settings" && subField === "platforms") return { ...prev, settings: { ...prev.settings, platforms: value } };
+        if (field === "personality" && (subField === "topics" || subField === "languages")) {
+          return { ...prev, personality: { ...prev.personality, preferences: { ...prev.personality.preferences, [subField]: value } } };
+        }
+        if (field === "settings" && subField === "platforms") {
+          return { ...prev, settings: { ...prev.settings, platforms: value } };
+        }
       }
-      if (field === "ruleIds") return { ...prev, ruleIds: value };
+      if (field === "ruleIds") {
+        return { ...prev, ruleIds: value };
+      }
       return prev;
     });
   };
@@ -212,62 +221,41 @@ export default function UpdateAgent() {
   };
 
   const handleRemoveKnowledge = (key: string) => {
-    setFormData((prev) => {
-      const { [key]: _, ...rest } = prev.knowledge;
-      return { ...prev, knowledge: rest };
-    });
+    setFormData((prev) => ({
+      ...prev,
+      knowledge: Object.fromEntries(Object.entries(prev.knowledge).filter(([k]) => k !== key)),
+    }));
   };
 
   const handleCopyWalletAddress = (walletType: keyof Agent["wallets"]) => {
     const walletAddress = formData.wallets[walletType];
     if (walletAddress) {
-      navigator.clipboard.writeText(walletAddress).then(() => toast.success(`${walletType} Address Copied`, { description: `The ${walletType} wallet address has been copied to your clipboard.`, duration: 3000 }));
+      navigator.clipboard.writeText(walletAddress).then(() =>
+        toast.success(`${walletType} Address Copied`, { description: `The ${walletType} wallet address has been copied to your clipboard.`, duration: 3000 })
+      );
     }
   };
-
-  /*const handleTwitterOAuth = async () => {
-    try {
-      if (!agentId) throw new Error("Agent ID is required");
-      sessionStorage.removeItem("hasCheckedWallet");
-      sessionStorage.setItem("activeTab", "twitter");
-      if (currentUser) {
-        sessionStorage.setItem("currentUser", JSON.stringify(currentUser));
-      }
-      console.log("Cleared hasCheckedWallet, set activeTab to twitter, saved currentUser:", currentUser);
-      const { redirectUrl } = await requestTwitterOAuth(agentId);
-      if (redirectUrl) {
-        window.location.href = redirectUrl;
-      } else {
-        throw new Error("No redirect URL received");
-      }
-    } catch (error) {
-      console.error("Twitter OAuth initiation failed:", error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      toast.error("Twitter Connection Failed", {
-        description: `Unable to start Twitter authentication: ${errorMessage}`,
-        duration: 3000,
-      });
-    }
-  };*/
-
-  // Removed handleAdvancedTwitterSetupChange since checkbox is hidden
-  /*
-  const handleAdvancedTwitterSetupChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const isChecked = e.target.checked;
-    setIsAdvancedTwitterSetup(isChecked);
-    Cookies.set("isAdvancedTwitterSetup", isChecked.toString(), { expires: 365 });
-  };
-  */
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!agentId) return;
 
-    const requiredFields: (keyof Agent | string)[] = ["name", "description", "bio", "mission", "vision", "personality.tone", "personality.formality", "personality.catchphrase", "agentType"];
+    const requiredFields: (keyof Agent | string)[] = [
+      "name",
+      "description",
+      "bio",
+      "mission",
+      "vision",
+      "personality.tone",
+      "personality.formality",
+      "personality.catchphrase",
+      "agentType",
+    ];
     const missingFields = requiredFields.filter((field) => {
       if (field.includes(".")) {
         const [parent, child] = field.split(".") as [keyof Agent, string];
-        return !(formData[parent] as any)?.[child];
+        const parentObj = formData[parent];
+        return !parentObj || !(parentObj as Record<string, unknown>)[child];
       }
       return !formData[field as keyof Agent];
     });
@@ -277,12 +265,13 @@ export default function UpdateAgent() {
       return;
     }
 
-    const { _id, ...updatePayload } = formData as Agent & { _id?: string };
+    const updatePayload: Agent = { ...formData };
     try {
       await updateAgent(agentId, updatePayload);
       toast.success("Agent Updated", { description: `Successfully updated agent: ${formData.name}`, duration: 3000 });
       navigate("/youragent");
-    } catch (error: any) {
+    } catch (error: unknown) {
+      console.error("Update error:", error);
       toast.error("Update Failed", { description: "Please try again.", duration: 3000 });
     }
   };
@@ -297,6 +286,7 @@ export default function UpdateAgent() {
     { id: "knowledge", label: "Knowledge" },
     { id: "settings", label: "Settings" },
     { id: "twitter", label: "Twitter Config" },
+    { id: "telegram", label: "Telegram Config" },
     { id: "api", label: "API Keys" },
   ];
 
@@ -327,7 +317,6 @@ export default function UpdateAgent() {
             <div className="space-y-6 min-h-[400px]">
               {activeTab === "basic" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Profile Image Section */}
                   <div className="col-span-1 md:col-span-2 flex justify-center mb-6">
                     <ProfileImage
                       agentId={agentId}
@@ -363,7 +352,7 @@ export default function UpdateAgent() {
                       required
                       className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
                     >
-                      <option value="basic">Basic</option>                      
+                      <option value="basic">Basic</option>
                     </select>
                   </div>
                   <div>
@@ -809,7 +798,6 @@ export default function UpdateAgent() {
                       className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
                     />
                   </div>
-                  {/* Always show advanced fields; no conditional rendering */}
                   <div>
                     <label htmlFor="twitterAppKey" className="block text-lg mb-2">
                       Twitter App Key
@@ -901,33 +889,66 @@ export default function UpdateAgent() {
                       Twitter Paid Developer Account
                     </label>
                   </div>
-                  {/* Checkbox removed from UI */}
-                  {/* 
+                </div>
+              )}
+
+              {activeTab === "telegram" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="telegramBotToken" className="block text-lg mb-2">
+                      Telegram Bot Token
+                    </label>
+                    <input
+                      id="telegramBotToken"
+                      name="telegramBotToken"
+                      type="text"
+                      value={formData.telegramBotToken}
+                      onChange={handleChange}
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                      placeholder="Bot token from BotFather"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="telegramHandle" className="block text-lg mb-2">
+                      Telegram Handle
+                    </label>
+                    <input
+                      id="telegramHandle"
+                      name="telegramHandle"
+                      type="text"
+                      value={formData.telegramHandle}
+                      onChange={handleChange}
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                      placeholder="@AgentName"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="telegramGroupId" className="block text-lg mb-2">
+                      Telegram Group ID
+                    </label>
+                    <input
+                      id="telegramGroupId"
+                      name="telegramGroupId"
+                      type="text"
+                      value={formData.telegramGroupId}
+                      onChange={handleChange}
+                      className="w-full border border-[#494848] text-white p-2 rounded-lg outline-none focus:ring-1 focus:ring-[#6a94f0] bg-black"
+                      placeholder="e.g., -123456789"
+                    />
+                  </div>
                   <div className="flex items-center">
                     <input
-                      id="advancedTwitterSetup"
+                      id="enableTelegramReplies"
+                      name="enableTelegramReplies"
                       type="checkbox"
-                      checked={isAdvancedTwitterSetup}
-                      onChange={handleAdvancedTwitterSetupChange}
+                      checked={formData.enableTelegramReplies}
+                      onChange={handleChange}
                       className="mr-2 text-[#6a94f0] border-[#494848] bg-black focus:ring-[#6a94f0]"
                     />
-                    <label htmlFor="advancedTwitterSetup" className="text-lg">
-                      Advanced Setup
+                    <label htmlFor="enableTelegramReplies" className="text-lg">
+                      Enable Telegram Replies
                     </label>
                   </div>
-                  */}
-                  {/* Basic functionality (Connect with Twitter) commented out for future use */}
-                  {/* 
-                  <div className="col-span-1 md:col-span-2">
-                    <button
-                      type="button"
-                      onClick={handleTwitterOAuth}
-                      className="w-full py-2 px-4 bg-[#1DA1F2] text-white rounded-lg hover:bg-[#1a91da] transition-all duration-400"
-                    >
-                      Connect with Twitter
-                    </button>
-                  </div>
-                  */}
                 </div>
               )}
 
