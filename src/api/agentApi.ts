@@ -1,15 +1,25 @@
-// agentApi.ts
 import { Agent } from "../interfaces/agent";
 import { fetchWrapper } from "../utils/fetchWrapper";
 
+export interface Task {
+  task_id: string;
+  status: "pending" | "in_progress" | "awaiting_external" | "completed" | "failed";
+  result?: string;
+  task_type?: "chat" | "api_call" | "blockchain_tx" | "mcp_action";
+  external_service?: {
+    service_name: string;
+    response_data?: string | object;
+    status?: "pending" | "success" | "failed";
+    error?: string;
+  };
+}
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 
-// CRUD operations for Agent
 export const createAgent = async (agentData: Omit<Agent, "id">): Promise<Agent & { _id: string }> => {
   return fetchWrapper(`${BASE_URL}/agents`, {
     method: "POST",
     body: JSON.stringify(agentData),
-    // fetchWrapper adds Content-Type and X-API-Key
   });
 };
 
@@ -46,92 +56,97 @@ export const deleteAllAgents = async (): Promise<{ message: string }> => {
   });
 };
 
-// Chat with Agent (Non-Streaming)
-export const chatWithAgent = async (agentId: string, message: string): Promise<{ agentId: string; reply: string }> => {
+export const chatWithAgent = async (agentId: string, message: string, userId?: string): Promise<{ agentId: string; reply: string; task_id?: string; isTask?: boolean }> => {
   return fetchWrapper(`${BASE_URL}/chat/${agentId}`, {
     method: "POST",
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ message, userId }),
   });
 };
 
-// Chat with Agent (Streaming)
 export const chatWithAgentStream = (
   agentId: string,
   message: string,
-  onMessage: (content: string) => void,
+  userId: string | undefined,
+  onMessage: (content: string, task_id?: string, isTask?: boolean) => void,
   onDone: () => void
 ): Promise<void> => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const API_KEY = import.meta.env.VITE_API_KEY || "your-default-api-key"; // Get API key
+  return new Promise((resolve, reject) => {
+    const API_KEY = import.meta.env.VITE_API_KEY || "your-default-api-key";
 
-      // Initiate the stream with a POST request, including X-API-Key
-      const response = await fetch(`${BASE_URL}/chat/stream/${agentId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "text/event-stream",
-          "X-API-Key": API_KEY, // Add API key header
-        },
-        body: JSON.stringify({ message }),
-      });
+    fetch(`${BASE_URL}/chat/stream/${agentId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "text/event-stream",
+        "X-API-Key": API_KEY,
+      },
+      body: JSON.stringify({ message, userId }),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          return response.json().then((errorData) => {
+            throw new Error(JSON.stringify({ status: response.status, ...errorData }));
+          });
+        }
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(JSON.stringify({ status: response.status, ...errorData }));
-      }
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error("Response body not readable");
+        }
 
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error("Response body not readable");
-      }
+        const decoder = new TextDecoder();
+        let buffer = "";
 
-      const decoder = new TextDecoder();
-      let buffer = "";
+        const processStream = async () => {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+              onDone();
+              resolve();
+              break;
+            }
 
-      const processStream = async () => {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) {
-            onDone();
-            resolve();
-            break;
-          }
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n\n");
 
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n\n"); // Split by SSE event boundary
-
-          for (let i = 0; i < lines.length - 1; i++) {
-            const line = lines[i].trim();
-            if (line.startsWith("data:")) {
-              const dataStr = line.slice(5).trim();
-              if (dataStr === "[DONE]") {
-                onDone();
-                resolve();
-                reader.cancel();
-                return;
-              }
-              try {
-                const data = JSON.parse(dataStr);
-                if (data.content) {
-                  onMessage(data.content);
+            for (let i = 0; i < lines.length - 1; i++) {
+              const line = lines[i].trim();
+              if (line.startsWith("data:")) {
+                const dataStr = line.slice(5).trim();
+                if (dataStr === "[DONE]") {
+                  onDone();
+                  resolve();
+                  reader.cancel();
+                  return;
                 }
-              } catch (e) {
-                console.error("Error parsing stream data:", e);
+                try {
+                  const data = JSON.parse(dataStr);
+                  if (data.content) {
+                    onMessage(data.content, data.task_id, data.isTask);
+                  }
+                } catch (e) {
+                  console.error("Error parsing stream data:", e);
+                }
               }
             }
+            buffer = lines[lines.length - 1];
           }
-          buffer = lines[lines.length - 1];
-        }
-      };
+        };
 
-      processStream().catch((error) => {
-        console.error("Stream processing error:", error);
+        processStream().catch((error) => {
+          console.error("Stream processing error:", error);
+          reject(error);
+        });
+      })
+      .catch((error) => {
+        console.error("Streaming error:", error);
         reject(error);
       });
-    } catch (error) {
-      console.error("Streaming error:", error);
-      reject(error);
-    }
+  });
+};
+
+export const getTaskStatus = async (taskId: string): Promise<Task> => {
+  return fetchWrapper(`${BASE_URL}/tasks/${taskId}/status`, {
+    method: "GET",
   });
 };

@@ -1,32 +1,41 @@
 import { useState, useEffect, ChangeEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Agent } from "../interfaces/agent";
-import { getAllAgents, chatWithAgent, chatWithAgentStream } from "../api/agentApi";
+import { getAllAgents, chatWithAgent, chatWithAgentStream, getTaskStatus, Task } from "../api/agentApi"; // Modified: Imported Task
 import { getAgentsByUserId } from "../api/userApi";
 import { useUser } from "../context/UserContext";
 import { toast } from "sonner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
+interface Message {
+  sender: "user" | "agent";
+  text: string;
+  task_id?: string;
+  isTask?: boolean;
+  imageUrl?: string;
+}
+
 export default function ChatApplication() {
   const [myAgents, setMyAgents] = useState<Agent[]>([]);
   const [otherAgents, setOtherAgents] = useState<Agent[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<"myAgents" | "othersAgents">("myAgents");
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
-  const [messages, setMessages] = useState<{ sender: "user" | "agent"; text: string }[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [loading, setLoading] = useState<boolean>(true);
   const [isStreamChat, setIsStreamChat] = useState<boolean>(false);
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
-  const [serverError, setServerError] = useState<string>(""); // For server status errors
+  const [serverError, setServerError] = useState<string>("");
+  const [pollingTasks, setPollingTasks] = useState<{ taskId: string; startTime: number }[]>([]);
 
   const { connected: walletConnected } = useWallet();
   const { currentUser, serverLive, checkServerStatus } = useUser();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Check server status on page load
   useEffect(() => {
     if (!walletConnected || !currentUser?.userId) {
       navigate("/");
@@ -39,7 +48,7 @@ export default function ChatApplication() {
       console.log("Initial serverLive value:", serverLive);
       if (serverLive === false) {
         setServerError("Server is currently unavailable.");
-        setLoading(false); // Stop loading if server is down
+        setLoading(false);
         toast.error("Server Unavailable", {
           description: "Cannot load chat application at this time. Please try again later.",
           duration: 3000,
@@ -50,7 +59,6 @@ export default function ChatApplication() {
     initialCheck();
   }, [walletConnected, currentUser, navigate, checkServerStatus, serverLive]);
 
-  // Fetch agents only if server is live
   useEffect(() => {
     if (!walletConnected || !currentUser?.userId || serverLive === false) return;
 
@@ -83,12 +91,91 @@ export default function ChatApplication() {
     fetchAgents();
   }, [walletConnected, currentUser, navigate, serverLive, selectedAgent]);
 
+  useEffect(() => {
+    if (pollingTasks.length === 0) return;
+
+    const pollTasks = async () => {
+      const now = Date.now();
+      const updatedTasks = [...pollingTasks];
+
+      for (const task of pollingTasks) {
+        const elapsed = (now - task.startTime) / 1000;
+        if (elapsed > 30) {
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.task_id === task.taskId
+                ? { ...msg, text: "Image generation timed out. Please try again.", isTask: false }
+                : msg
+            )
+          );
+          updatedTasks.splice(updatedTasks.findIndex((t) => t.taskId === task.taskId), 1);
+          continue;
+        }
+
+        try {
+          const taskData: Task = await getTaskStatus(task.taskId); // Modified: Used Task interface
+          if (taskData.status === "completed") {
+            let messageText = "Task completed!";
+            let imageUrl: string | undefined;
+
+            if (taskData.task_type === "api_call" && taskData.external_service?.service_name === "image_generation") {
+              imageUrl = taskData.result;
+              messageText = "Image generated successfully!";
+            } else {
+              messageText = taskData.result || "Task completed!";
+            }
+
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.task_id === task.taskId
+                  ? { ...msg, text: messageText, imageUrl, isTask: false }
+                  : msg
+              )
+            );
+            updatedTasks.splice(updatedTasks.findIndex((t) => t.taskId === task.taskId), 1);
+          } else if (taskData.status === "failed") {
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.task_id === task.taskId
+                  ? { ...msg, text: `Task failed: ${taskData.external_service?.error || "Unknown error"}`, isTask: false }
+                  : msg
+              )
+            );
+            updatedTasks.splice(updatedTasks.findIndex((t) => t.taskId === task.taskId), 1);
+          }
+        } catch (error) {
+          console.error(`Error polling task ${task.taskId}:`, error);
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.task_id === task.taskId
+                ? { ...msg, text: "Error checking task status.", isTask: false }
+                : msg
+            )
+          );
+          updatedTasks.splice(updatedTasks.findIndex((t) => t.taskId === task.taskId), 1);
+        }
+      }
+
+      setPollingTasks(updatedTasks);
+    };
+
+    const interval = setInterval(pollTasks, 5000);
+    return () => clearInterval(interval);
+  }, [pollingTasks]);
+
+  useEffect(() => {
+    return () => {
+      setPollingTasks([]);
+    };
+  }, [location]);
+
   const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const category = e.target.value as "myAgents" | "othersAgents";
     setSelectedCategory(category);
     const agentList = category === "myAgents" ? myAgents : otherAgents;
     setSelectedAgent(agentList.length > 0 ? agentList[0] : null);
     setMessages([]);
+    setPollingTasks([]);
   };
 
   const handleAgentChange = (e: ChangeEvent<HTMLSelectElement>) => {
@@ -97,11 +184,13 @@ export default function ChatApplication() {
     const agent = agentList.find((a) => a.agentId === agentId) || null;
     setSelectedAgent(agent);
     setMessages([]);
+    setPollingTasks([]);
   };
 
   const handleToggleChatType = (e: ChangeEvent<HTMLInputElement>) => {
     setIsStreamChat(e.target.checked);
     setMessages([]);
+    setPollingTasks([]);
   };
 
   const handleCopy = async (text: string, index: number) => {
@@ -120,7 +209,7 @@ export default function ChatApplication() {
     e.preventDefault();
     if (!inputMessage.trim() || !selectedAgent) return;
 
-    const userMessage = { sender: "user" as const, text: inputMessage };
+    const userMessage: Message = { sender: "user", text: inputMessage };
     setMessages((prev) => [...prev, userMessage]);
     setInputMessage("");
 
@@ -143,16 +232,22 @@ export default function ChatApplication() {
         await chatWithAgentStream(
           selectedAgent.agentId,
           inputMessage,
-          (content) => {
+          currentUser?.userId,
+          (content, task_id, isTask) => {
             setMessages((prev) => {
               const lastMsg = prev[prev.length - 1];
-              if (lastMsg.sender === "agent" && !lastMsg.text.startsWith("Unable")) {
+              if (lastMsg.sender === "agent" && !lastMsg.text.startsWith("Unable") && !isTask) {
                 return [
                   ...prev.slice(0, -1),
                   { sender: "agent", text: lastMsg.text + content },
                 ];
               }
-              return [...prev, { sender: "agent", text: content }];
+              const newMessage: Message = { sender: "agent", text: content, task_id, isTask };
+              if (isTask && task_id) {
+                // Modified: Ensured task_id is string
+                setPollingTasks((prev) => [...prev, { taskId: task_id, startTime: Date.now() }]);
+              }
+              return [...prev, newMessage];
             });
           },
           () => {
@@ -161,8 +256,18 @@ export default function ChatApplication() {
           }
         );
       } else {
-        const response = await chatWithAgent(selectedAgent.agentId, inputMessage);
-        setMessages((prev) => [...prev, { sender: "agent", text: response.reply }]);
+        const response = await chatWithAgent(selectedAgent.agentId, inputMessage, currentUser?.userId);
+        const newMessage: Message = {
+          sender: "agent",
+          text: response.reply,
+          task_id: response.task_id,
+          isTask: response.isTask,
+        };
+        setMessages((prev) => [...prev, newMessage]);
+        if (response.isTask && response.task_id) {
+          // Modified: Fixed type mismatch with task_id
+          setPollingTasks((prev) => [...prev, { taskId: response.task_id as string, startTime: Date.now() }]);
+        }
       }
     } catch (err: unknown) {
       setIsStreaming(false);
@@ -181,8 +286,8 @@ export default function ChatApplication() {
           } else {
             displayMessage = errorData.reply || "Chat failed or agent configuration isn’t set up.";
           }
-        } catch (parseError) {
-          // Fallback to generic message
+        } catch (parseError: unknown) {
+          console.error("Error parsing error message:", parseError);
         }
       }
       toast.error(isStreamChat ? "Stream Chat Failed" : "Chat Failed", {
@@ -224,7 +329,6 @@ export default function ChatApplication() {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-4xl h-[calc(100vh-8rem)] sm:h-[80vh] flex flex-col rounded-lg shadow-lg bg-[#222128] border border-[#494848]">
-        {/* Header */}
         <div className="p-4 border-b border-[#494848] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h1 className="text-xl sm:text-2xl font-bold">Chat with Agents</h1>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
@@ -265,7 +369,6 @@ export default function ChatApplication() {
           </div>
         </div>
 
-        {/* Chat Area */}
         <div className="flex-1 p-4 overflow-y-auto">
           {selectedAgent ? (
             messages.length > 0 || isStreaming ? (
@@ -281,6 +384,21 @@ export default function ChatApplication() {
                       }`}
                     >
                       <div className="text-sm whitespace-pre-wrap break-words">{msg.text}</div>
+                      {msg.imageUrl && (
+                        <div className="mt-2">
+                          <img
+                            src={msg.imageUrl}
+                            alt="Generated Image"
+                            className="max-w-full rounded-lg"
+                          />
+                        </div>
+                      )}
+                      {msg.isTask && pollingTasks.some((t) => t.taskId === msg.task_id) && (
+                        <div className="mt-2 text-gray-400 animate-pulse">
+                          <FontAwesomeIcon icon={faSpinner} className="mr-2" />
+                          Waiting for task...
+                        </div>
+                      )}
                       {msg.sender === "agent" && (
                         <div className="flex justify-end mt-2">
                           <button
@@ -343,7 +461,6 @@ export default function ChatApplication() {
           )}
         </div>
 
-        {/* Message Input */}
         <form onSubmit={handleSendMessage} className="p-4 border-t border-[#494848]">
           <div className="flex flex-col sm:flex-row gap-2">
             <input
