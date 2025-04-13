@@ -43,7 +43,8 @@ export default function AgentProfile() {
     enablePostTweet: false,
     postTweetInterval: 0,
     isTwitterPaid: false,
-    telegramBotToken: "", // Added Telegram fields
+    telegramBotToken: "",
+    telegramHandle: "", // Added telegramHandle to initial state
     telegramGroupId: "",
     enableTelegramReplies: false,
     agentType: "basic",
@@ -127,7 +128,8 @@ export default function AgentProfile() {
           enablePostTweet: agent.enablePostTweet || false,
           postTweetInterval: agent.postTweetInterval || 0,
           isTwitterPaid: agent.isTwitterPaid || false,
-          telegramBotToken: agent.telegramBotToken || "", // Populate Telegram fields
+          telegramBotToken: agent.telegramBotToken || "",
+          telegramHandle: agent.telegramHandle || "", // Populate telegramHandle
           telegramGroupId: agent.telegramGroupId || "",
           enableTelegramReplies: agent.enableTelegramReplies || false,
           agentType: agent.agentType || "basic",
@@ -206,7 +208,7 @@ export default function AgentProfile() {
           { id: "knowledge", label: "Knowledge" },
           { id: "settings", label: "Settings" },
           { id: "twitter", label: "Twitter" },
-          { id: "telegram", label: "Telegram" }, // Added Telegram tab
+          { id: "telegram", label: "Telegram" },
           { id: "api", label: "API Keys" },
         ]
       : []),
@@ -500,6 +502,23 @@ export default function AgentProfile() {
                       onClick={() => handleCopy(agentData.telegramBotToken!, "Telegram Bot Token")}
                       className="text-[#6a94f0] hover:text-[#8faef0]"
                       title="Copy Telegram Bot Token"
+                    >
+                      <FontAwesomeIcon icon={faCopy} size="sm" />
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400">Telegram Handle:</span>
+                <div className="flex items-center gap-2">
+                  <span className="truncate max-w-[100px] sm:max-w-[120px] md:max-w-[150px]">
+                    {agentData.telegramHandle || "Not set"}
+                  </span>
+                  {agentData.telegramHandle && (
+                    <button
+                      onClick={() => handleCopy(agentData.telegramHandle!, "Telegram Handle")}
+                      className="text-[#6a94f0] hover:text-[#8faef0]"
+                      title="Copy Telegram Handle"
                     >
                       <FontAwesomeIcon icon={faCopy} size="sm" />
                     </button>
